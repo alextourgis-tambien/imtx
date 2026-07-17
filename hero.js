@@ -2098,10 +2098,10 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       paragraphOneIn: 0.005,
       paragraphOneOut: 0.28,
 
-      videoThreeIn: 0.30,
-      videoTwoIn: 0.33,
-      videoOneIn: 0.36,
-      videoInDuration: 0.10,
+      videoOneIn: 0.30,
+      videoTwoIn: 0.325,
+      videoThreeIn: 0.35,
+      videoInDuration: 0.14,
 
       videoThreeOut: 0.68,
       videoTwoOut: 0.70,
@@ -2117,6 +2117,12 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       lineDuration: 0.055,
       lineStagger: 0.018,
       hiddenYPercent: 70
+    },
+
+    videoOffsetStep: {
+      desktop: 34,
+      tablet: 26,
+      mobile: 18
     },
 
     buttonDuration: 0.07,
@@ -2325,6 +2331,18 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       rebuildLines();
     }
 
+    function getVideoOffsetStep() {
+      if (window.innerWidth <= 767) {
+        return SECOND_CONFIG.videoOffsetStep.mobile;
+      }
+
+      if (window.innerWidth <= 991) {
+        return SECOND_CONFIG.videoOffsetStep.tablet;
+      }
+
+      return SECOND_CONFIG.videoOffsetStep.desktop;
+    }
+
     function createTimeline() {
       if (timeline) {
         if (timeline.scrollTrigger) {
@@ -2340,12 +2358,24 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       restoreWebflowState();
 
       const finalVideoScales = new Map();
+      const finalVideoY = new Map();
       videos.forEach(function (video) {
         finalVideoScales.set(
           video,
           Number(gsap.getProperty(video, "scaleX")) || 1
         );
+        finalVideoY.set(
+          video,
+          Number(gsap.getProperty(video, "y")) || 0
+        );
       });
+
+      const videoOffsetStep = getVideoOffsetStep();
+      const videoOffsets = new Map([
+        [videoOne, 0],
+        [videoTwo, -videoOffsetStep],
+        [videoThree, -videoOffsetStep * 2]
+      ]);
 
       gsap.set(allWords(paragraphOne), {
         opacity: 0,
@@ -2357,9 +2387,12 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
         yPercent: SECOND_CONFIG.text.hiddenYPercent
       });
 
-      gsap.set(videos, {
-        scale: 0,
-        transformOrigin: "50% 50%"
+      videos.forEach(function (video) {
+        gsap.set(video, {
+          y: finalVideoY.get(video) + videoOffsets.get(video),
+          scale: 0,
+          transformOrigin: "50% 50%"
+        });
       });
 
       gsap.set(button, {
@@ -2404,9 +2437,9 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       animateLinesOut(paragraphOne, timing.paragraphOneOut);
 
       [
-        [videoThree, timing.videoThreeIn],
+        [videoOne, timing.videoOneIn],
         [videoTwo, timing.videoTwoIn],
-        [videoOne, timing.videoOneIn]
+        [videoThree, timing.videoThreeIn]
       ].forEach(function (item) {
         const video = item[0];
         const start = item[1];
