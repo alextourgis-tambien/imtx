@@ -2128,7 +2128,8 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
     },
 
     videoStack: {
-      startStep: 10,
+      startStep: 28,
+      finalBlend: 0.65,
       gapDesktop: 30,
       gapTablet: 24,
       gapMobile: 16
@@ -2430,7 +2431,11 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
         stackedVideoY.set(
           video,
           finalVideoY.get(video) +
-            anchorRectangle.top + finalTopSteps.get(video) - rectangle.top
+            (
+              anchorRectangle.top +
+              finalTopSteps.get(video) -
+              rectangle.top
+            ) * SECOND_CONFIG.videoStack.finalBlend
         );
       });
 
