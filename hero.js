@@ -2137,9 +2137,9 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
     previousSection: {
       cancerScale: 1.15,
       targetLiftViewport: 0.22,
-      targetTextExitStart: 0.48,
-      targetTextExitDuration: 0.18,
-      targetTextLineStagger: 0.035
+      targetTextExitStart: 0.18,
+      targetTextExitDuration: 0.15,
+      targetTextLineStagger: 0.025
     },
 
     buttonDuration: 0.07,
@@ -2582,7 +2582,12 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
         });
       }
 
-      if (previousTargetWrapper) {
+      const parallaxWrappers = [
+        previousTargetWrapper,
+        previousCancerWrapper
+      ].filter(Boolean);
+
+      if (parallaxWrappers.length) {
         const targetTransition = gsap.timeline({
           scrollTrigger: {
             trigger: wrapper,
@@ -2593,7 +2598,7 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
           }
         });
 
-        targetTransition.to(previousTargetWrapper, {
+        targetTransition.to(parallaxWrappers, {
           y: function () {
             const viewportHeight = window.visualViewport
               ? window.visualViewport.height
