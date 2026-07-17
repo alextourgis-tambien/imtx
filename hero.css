@@ -1,0 +1,358 @@
+/*==================================================
+HERO — LA HAUTEUR DU WRAPPER RESTE GÉRÉE DANS WEBFLOW
+==================================================*/
+
+.h-hero__wrapper{
+  position:relative;
+  background:#050505;
+}
+
+.h-hero{
+  position:sticky;
+  top:0;
+  display:flex;
+  flex-direction:column;
+  width:100%;
+  height:100svh;
+  overflow:hidden;
+  background:#050505;
+}
+
+.h-hero .header{
+  position:relative;
+  z-index:20;
+  flex:none;
+  will-change:transform;
+}
+
+.h-hero__content{
+  position:relative;
+  flex:1 1 auto;
+  width:100%;
+  min-height:0;
+  overflow:visible;
+  background:#050505;
+  will-change:transform;
+}
+
+/*==================================================
+PHOTOS + VIDÉO
+==================================================*/
+
+.h-hero__imgs__wrapper{
+  position:absolute;
+  inset:0;
+  z-index:3;
+  overflow:visible;
+  pointer-events:none;
+}
+
+.h-hero__bg{
+  position:absolute;
+  inset:0;
+  z-index:2;
+  overflow:hidden;
+  transform-origin:center center;
+  will-change:transform,width,height,border-radius;
+}
+
+.h-hero__bg video{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+.h-hero__embed{
+  position:absolute;
+  inset:0;
+  z-index:4;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  transform-origin:center center;
+  will-change:transform,opacity,width,height,border-radius;
+  pointer-events:none;
+}
+
+.h-hero__img-wrapper{
+  position:absolute;
+  top:50%;
+  left:50%;
+  z-index:1;
+  transform-origin:center center;
+  will-change:transform;
+  pointer-events:none;
+}
+
+.h-hero__img-wrapper img,
+.h-hero__img-wrapper video{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+/*==================================================
+VARIABLES DE GRILLE
+==================================================*/
+
+.hero-tile-wrapper,
+.h-hero__text-grid{
+  --grid-columns:20;
+  --grid-rows:11;
+  --grid-gap:2.5px;
+  --grid-padding:2.5px;
+  --tile-radius:10px;
+}
+
+/*==================================================
+MASQUE VIDÉO PERMANENT + TUILES D’INTRODUCTION
+==================================================*/
+
+.hero-tile-wrapper{
+  position:absolute;
+  inset:0;
+  z-index:1;
+  overflow:hidden;
+  pointer-events:none;
+}
+
+.hero-grid-overlay{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+}
+
+.hero-tile-grid{
+  position:absolute;
+  inset:auto;
+  z-index:2;
+  display:grid;
+  gap:var(--grid-gap);
+  box-sizing:border-box;
+  padding:var(--grid-padding);
+  perspective:1200px;
+}
+
+.hero-tile{
+  position:relative;
+  border-radius:var(--tile-radius);
+  transform:rotateY(0deg);
+  transform-style:preserve-3d;
+}
+
+.hero-tile-face{
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
+}
+
+.hero-tile-front{
+  inset:-1px;
+  background:#050505;
+  transform:translateZ(.5px);
+}
+
+.hero-tile-back{
+  background:transparent;
+  transform:rotateY(180deg) translateZ(.5px);
+}
+
+/*==================================================
+PREMIER PANNEAU DE TEXTE
+==================================================*/
+
+.h-hero__text-grid{
+  position:absolute;
+  inset:0;
+  z-index:5;
+  display:grid;
+  grid-template-columns:repeat(var(--grid-columns),1fr);
+  grid-template-rows:repeat(var(--grid-rows),1fr);
+  gap:var(--grid-gap);
+  box-sizing:border-box;
+  width:100%;
+  height:100%;
+  padding:var(--grid-padding);
+  pointer-events:none;
+  will-change:transform,opacity;
+}
+
+.h-hero__text-card{
+  grid-column:2 / 9;
+  grid-row:7 / 11;
+  display:flex;
+  align-items:center;
+  overflow:hidden;
+  border-radius:var(--tile-radius);
+  background:#050505;
+  pointer-events:auto;
+  will-change:transform,opacity;
+}
+
+.h-hero__title{
+  margin:0;
+  color:#fff;
+}
+
+/* Les mots restent dans leurs spans Webflow, dont .blue_span. */
+.hero-split-word{
+  display:inline-block;
+  will-change:transform,opacity;
+}
+
+/*==================================================
+CELLULES LOTTIE + DEUX TITRES
+==================================================*/
+
+.hh__cells-wrapper{
+  z-index:2;
+  overflow:visible;
+  visibility:hidden;
+  pointer-events:none;
+}
+
+html.hero-animation-ready .hh__cells-wrapper{
+  visibility:visible;
+}
+
+.hh__cell-title-wrapper{
+  position:absolute;
+  inset:0;
+  z-index:2;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  pointer-events:none;
+}
+
+.hh__cell-title{
+  position:absolute;
+  margin:0;
+  will-change:transform,opacity;
+}
+
+.hh__cells-lottie{
+  transform-origin:center center;
+  will-change:transform;
+  pointer-events:none;
+}
+
+/*==================================================
+SÉQUENCE TARGET
+==================================================*/
+
+.hh__target-wrapper{
+  z-index:2;
+  overflow:visible;
+  pointer-events:none;
+}
+
+.hh__target-main,
+.hh__target-title,
+.hh__target-p{
+  visibility:hidden;
+  will-change:transform,opacity;
+}
+
+/*
+Les textes deviennent visibles uniquement après que GSAP
+a placé toutes leurs lignes dans leur état initial caché.
+*/
+
+html.hero-animation-ready .hh__target-main,
+html.hero-animation-ready .hh__target-title,
+html.hero-animation-ready .hh__target-p{
+  visibility:visible;
+}
+
+.hh__target-lottie-wrapper{
+  opacity:0;
+  overflow:visible;
+  will-change:opacity;
+}
+
+.hh__target-lottie{
+  max-width:100%;
+  max-height:100%;
+  overflow:visible !important;
+}
+
+.hh__target-lottie svg,
+.hh__target-lottie canvas{
+  display:block;
+  max-width:100%;
+  max-height:100%;
+  overflow:visible !important;
+}
+
+/*==================================================
+TABLETTE
+==================================================*/
+
+@media (max-width:991px){
+  .hero-tile-wrapper,
+  .h-hero__text-grid{
+    --grid-columns:12;
+    --grid-rows:10;
+    --grid-gap:2px;
+    --grid-padding:2px;
+    --tile-radius:8px;
+  }
+
+  .h-hero__text-card{
+    grid-column:2 / 9;
+    grid-row:6 / 10;
+  }
+}
+
+/*==================================================
+MOBILE
+==================================================*/
+
+@media (max-width:767px){
+  .hero-tile-wrapper,
+  .h-hero__text-grid{
+    --grid-columns:8;
+    --grid-rows:14;
+    --grid-gap:2px;
+    --grid-padding:2px;
+    --tile-radius:7px;
+  }
+
+  .h-hero__text-card{
+    grid-column:2 / 8;
+    grid-row:10 / 14;
+  }
+}
+
+/*==================================================
+REDUCED MOTION
+==================================================*/
+
+@media (prefers-reduced-motion:reduce){
+  .h-hero__wrapper{
+    height:100svh;
+  }
+
+  .h-hero{
+    position:relative;
+  }
+
+  .header,
+  .h-hero__content,
+  .h-hero__bg,
+  .h-hero__embed,
+  .h-hero__img-wrapper,
+  .hh__cells-lottie,
+  .hh__cell-title,
+  .hh__target-main,
+  .hh__target-title,
+  .hh__target-p{
+    transform:none !important;
+  }
+}
