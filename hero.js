@@ -1587,21 +1587,14 @@
       Les positions Webflow doivent être mesurées sans le déplacement
       résiduel de la timeline précédente.
 
-      Sur mobile, aucun transform ne doit rester sur .h-hero__content :
-      sinon il devient le faux viewport des wrappers fixed et resserre
-      artificiellement les positions Webflow des cellules.
+      Aucun transform ne doit rester sur .h-hero__content : sinon il devient
+      le faux viewport des trois wrappers fixed et décale leurs positions
+      Webflow vers le bas. Le déplacement du contenu utilise uniquement top.
       */
-      if (currentSettings.mode === "mobile") {
-        gsap.set(heroContent, {
-          clearProps: "transform",
-          top: 0
-        });
-      } else {
-        gsap.set(heroContent, {
-          top: 0,
-          y: 0
-        });
-      }
+      gsap.set(heroContent, {
+        clearProps: "transform",
+        top: 0
+      });
 
       if (cellsWrapper) {
         gsap.set(cellsWrapper, { clearProps: "transform" });
@@ -1743,21 +1736,12 @@
         }, scroll.headerStart);
       }
 
-      if (currentSettings.mode === "mobile") {
-        timeline.to(heroContent, {
-          top: function () {
-            return -getContentCenterLift();
-          },
-          duration: scroll.headerEnd - scroll.headerStart
-        }, scroll.headerStart);
-      } else {
-        timeline.to(heroContent, {
-          y: function () {
-            return -getContentCenterLift();
-          },
-          duration: scroll.headerEnd - scroll.headerStart
-        }, scroll.headerStart);
-      }
+      timeline.to(heroContent, {
+        top: function () {
+          return -getContentCenterLift();
+        },
+        duration: scroll.headerEnd - scroll.headerStart
+      }, scroll.headerStart);
 
       timeline.to(orbitState, {
         reveal: 1,

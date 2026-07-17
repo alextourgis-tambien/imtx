@@ -32,7 +32,7 @@ HERO — LA HAUTEUR DU WRAPPER RESTE GÉRÉE DANS WEBFLOW
   min-height:0;
   overflow:visible;
   background:#050505;
-  will-change:transform;
+  will-change:top;
 }
 
 /*==================================================
@@ -335,10 +335,6 @@ MOBILE
 ==================================================*/
 
 @media (max-width:767px){
-
-  .h-hero__content{
-    will-change:top;
-  }
 
   .hh__cells-wrapper,
   .hh__target-wrapper{
