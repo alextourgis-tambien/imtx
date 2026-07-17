@@ -1506,13 +1506,15 @@
           ease: "sine.inOut",
           repeat: -1,
           yoyo: true,
-          paused: true
+          paused: false
         });
 
-        tween.progress((index * 0.173 + 0.11) % 1).pause();
+        tween.progress((index * 0.173 + 0.11) % 1).play();
         floatingTargets.push(target);
         floatingTweens.push(tween);
       });
+
+      floatingActive = true;
     }
 
     function updateFloating(scrollProgress) {
@@ -1682,7 +1684,6 @@
       }
 
       setInitialState();
-      createFloating();
 
       if (prefersReducedMotion) {
         gsap.set(cells, { opacity: 1 });
@@ -1712,7 +1713,7 @@
       Leur apparition hérite ainsi d’un mouvement continu, sans activation
       visible une fois leur placement terminé.
       */
-      updateFloating(0);
+      createFloating();
 
       const scroll = CONFIG.scroll;
 
@@ -2167,6 +2168,13 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
     const previousCancerWrapper = document.querySelector(
       ".hh__cancer-wrapper"
     );
+    const previousCancerTargets = previousCancerWrapper
+      ? Array.from(
+          previousCancerWrapper.querySelectorAll(".hh__cencer-lottie")
+        ).map(function (cell) {
+          return cell.querySelector("svg") || cell.firstElementChild;
+        }).filter(Boolean)
+      : [];
 
     [
       [parent, selectors.parent],
@@ -2531,19 +2539,20 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
 
     function createPreviousSectionTransition() {
       if (
-        !previousCancerWrapper ||
+        !previousCancerTargets.length ||
         window.matchMedia("(prefers-reduced-motion: reduce)").matches
       ) {
         return;
       }
 
-      const initialScale =
-        Number(gsap.getProperty(previousCancerWrapper, "scaleX")) || 1;
-
-      gsap.to(previousCancerWrapper, {
-        scale: initialScale * 1.08,
+      gsap.to(previousCancerTargets, {
+        scale: 1.15,
         transformOrigin: "50% 50%",
         ease: "none",
+        stagger: {
+          each: 0.002,
+          from: "random"
+        },
         scrollTrigger: {
           trigger: wrapper,
           start: "top bottom",
