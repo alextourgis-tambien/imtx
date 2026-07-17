@@ -2099,9 +2099,9 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       paragraphOneOut: 0.28,
 
       videoOneIn: 0.30,
-      videoTwoIn: 0.307,
-      videoThreeIn: 0.314,
-      videoInDuration: 0.09,
+      videoTwoIn: 0.303,
+      videoThreeIn: 0.306,
+      videoInDuration: 0.18,
 
       videoThreeOut: 0.68,
       videoTwoOut: 0.70,
