@@ -1055,21 +1055,28 @@
         return;
       }
 
-      const viewportWidth = window.visualViewport
-        ? window.visualViewport.width
-        : window.innerWidth;
-      const viewportHeight = window.visualViewport
-        ? window.visualViewport.height
-        : window.innerHeight;
+      const safeBounds = targetWrapper
+        ? targetWrapper.getBoundingClientRect()
+        : {
+          left: 0,
+          top: 0,
+          right: window.innerWidth,
+          bottom: window.innerHeight
+        };
       const centerX = surfaceBounds.left + surfaceBounds.width / 2;
-      const centerY = surfaceBounds.top + surfaceBounds.height / 2 -
-        CONFIG.contentLift.mobile;
+      const centerY = surfaceBounds.top + surfaceBounds.height / 2;
       const availableHalfWidth = Math.max(
-        Math.min(centerX - margin, viewportWidth - margin - centerX),
+        Math.min(
+          centerX - safeBounds.left - margin,
+          safeBounds.right - margin - centerX
+        ),
         1
       );
       const availableHalfHeight = Math.max(
-        Math.min(centerY - margin, viewportHeight - margin - centerY),
+        Math.min(
+          centerY - safeBounds.top - margin,
+          safeBounds.bottom - margin - centerY
+        ),
         1
       );
 

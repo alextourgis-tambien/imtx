@@ -320,6 +320,16 @@ MOBILE
     will-change:top;
   }
 
+  .hh__cells-wrapper,
+  .hh__target-wrapper{
+    position:fixed !important;
+    inset:0 0 auto 0 !important;
+    width:100% !important;
+    height:100svh !important;
+    min-height:100svh !important;
+    max-height:100svh !important;
+  }
+
   .hero-tile-wrapper,
   .h-hero__text-grid{
     --grid-columns:8;
