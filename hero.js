@@ -2119,11 +2119,7 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       hiddenYPercent: 70
     },
 
-    videoOffsetStep: {
-      desktop: 34,
-      tablet: 26,
-      mobile: 18
-    },
+    videoOffsetPercent: 10,
 
     buttonDuration: 0.07,
     resizeDebounce: 180
@@ -2331,18 +2327,6 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       rebuildLines();
     }
 
-    function getVideoOffsetStep() {
-      if (window.innerWidth <= 767) {
-        return SECOND_CONFIG.videoOffsetStep.mobile;
-      }
-
-      if (window.innerWidth <= 991) {
-        return SECOND_CONFIG.videoOffsetStep.tablet;
-      }
-
-      return SECOND_CONFIG.videoOffsetStep.desktop;
-    }
-
     function createTimeline() {
       if (timeline) {
         if (timeline.scrollTrigger) {
@@ -2359,6 +2343,7 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
 
       const finalVideoScales = new Map();
       const finalVideoY = new Map();
+      const finalVideoYPercent = new Map();
       videos.forEach(function (video) {
         finalVideoScales.set(
           video,
@@ -2368,13 +2353,21 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
           video,
           Number(gsap.getProperty(video, "y")) || 0
         );
+        finalVideoYPercent.set(
+          video,
+          Number(gsap.getProperty(video, "yPercent")) || 0
+        );
       });
 
-      const videoOffsetStep = getVideoOffsetStep();
       const videoOffsets = new Map([
         [videoOne, 0],
-        [videoTwo, -videoOffsetStep],
-        [videoThree, -videoOffsetStep * 2]
+        [videoTwo, -SECOND_CONFIG.videoOffsetPercent],
+        [videoThree, -SECOND_CONFIG.videoOffsetPercent * 2]
+      ]);
+      const videoDepth = new Map([
+        [videoOne, 3],
+        [videoTwo, 2],
+        [videoThree, 1]
       ]);
 
       gsap.set(allWords(paragraphOne), {
@@ -2389,7 +2382,10 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
 
       videos.forEach(function (video) {
         gsap.set(video, {
-          y: finalVideoY.get(video) + videoOffsets.get(video),
+          y: finalVideoY.get(video),
+          yPercent:
+            finalVideoYPercent.get(video) + videoOffsets.get(video),
+          zIndex: videoDepth.get(video),
           scale: 0,
           transformOrigin: "50% 50%"
         });
