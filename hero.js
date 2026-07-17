@@ -165,8 +165,8 @@
     },
 
     cellFloating: {
-      start: 0.60,
-      end: 0.90,
+      start: 0,
+      end: Number.POSITIVE_INFINITY,
       xDesktop: 12,
       yDesktop: 20,
       xMobile: 9,
@@ -1453,12 +1453,12 @@
         ? CONFIG.cellFloating.yMobile
         : CONFIG.cellFloating.yDesktop;
 
-      cells.forEach(function (cell, index) {
+      cells.concat(cancerCells).forEach(function (cell, index) {
         const target = cell.querySelector("svg") || cell.firstElementChild;
 
         if (!target) {
           console.warn(
-            "Hero : contenu flottant introuvable dans la cellule " +
+            "Hero : contenu flottant introuvable dans la cellule animée " +
             (index + 1) + "."
           );
           return;
@@ -1706,6 +1706,13 @@
         }
         return;
       }
+
+      /*
+      Le floating tourne déjà pendant que les cellules sont à scale:0.
+      Leur apparition hérite ainsi d’un mouvement continu, sans activation
+      visible une fois leur placement terminé.
+      */
+      updateFloating(0);
 
       const scroll = CONFIG.scroll;
 
@@ -2095,7 +2102,7 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
     },
 
     timing: {
-      paragraphOneIn: 0.005,
+      paragraphOneIn: 0,
       paragraphOneOut: 0.28,
 
       videoOneIn: 0.30,
@@ -2152,6 +2159,9 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
     const videoOne = wrapper.querySelector(selectors.videoOne);
     const videoTwo = wrapper.querySelector(selectors.videoTwo);
     const videoThree = wrapper.querySelector(selectors.videoThree);
+    const previousCancerWrapper = document.querySelector(
+      ".hh__cancer-wrapper"
+    );
 
     [
       [parent, selectors.parent],
@@ -2473,6 +2483,31 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       }, timing.buttonIn);
     }
 
+    function createPreviousSectionTransition() {
+      if (
+        !previousCancerWrapper ||
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      ) {
+        return;
+      }
+
+      const initialScale =
+        Number(gsap.getProperty(previousCancerWrapper, "scaleX")) || 1;
+
+      gsap.to(previousCancerWrapper, {
+        scale: initialScale * 1.08,
+        transformOrigin: "50% 50%",
+        ease: "none",
+        scrollTrigger: {
+          trigger: wrapper,
+          start: "top bottom",
+          end: "top top",
+          scrub: 1,
+          invalidateOnRefresh: true
+        }
+      });
+    }
+
     function handleResize() {
       const nextWidth = window.innerWidth;
 
@@ -2493,6 +2528,7 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
     }
 
     createTimeline();
+    createPreviousSectionTransition();
     window.addEventListener("resize", handleResize);
     window.addEventListener("orientationchange", function () {
       window.setTimeout(handleResize, 120);
