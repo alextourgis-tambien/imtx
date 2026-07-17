@@ -2125,6 +2125,8 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
     text: {
       lineDuration: 0.055,
       lineStagger: 0.018,
+      paragraphOneLineDuration: 0.032,
+      paragraphOneLineStagger: 0.009,
       hiddenYPercent: 70
     },
 
@@ -2320,15 +2322,21 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       );
     }
 
-    function animateLinesIn(paragraph, start) {
+    function animateLinesIn(paragraph, start, options) {
       const paragraphLines = lines.get(paragraph) || [];
+      const duration = options && options.duration !== undefined
+        ? options.duration
+        : SECOND_CONFIG.text.lineDuration;
+      const stagger = options && options.stagger !== undefined
+        ? options.stagger
+        : SECOND_CONFIG.text.lineStagger;
 
       paragraphLines.forEach(function (line, index) {
         timeline.to(line, {
           opacity: 1,
           yPercent: 0,
-          duration: SECOND_CONFIG.text.lineDuration
-        }, start + index * SECOND_CONFIG.text.lineStagger);
+          duration: duration
+        }, start + index * stagger);
       });
     }
 
@@ -2498,7 +2506,10 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
         }
       });
 
-      animateLinesIn(paragraphOne, timing.paragraphOneIn);
+      animateLinesIn(paragraphOne, timing.paragraphOneIn, {
+        duration: SECOND_CONFIG.text.paragraphOneLineDuration,
+        stagger: SECOND_CONFIG.text.paragraphOneLineStagger
+      });
       animateLinesOut(paragraphOne, timing.paragraphOneOut);
 
       [
