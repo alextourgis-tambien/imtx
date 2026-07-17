@@ -2126,7 +2126,12 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       hiddenYPercent: 70
     },
 
-    videoOffsetPercent: 14,
+    videoStack: {
+      startStep: 10,
+      gapDesktop: 30,
+      gapTablet: 24,
+      gapMobile: 16
+    },
 
     buttonDuration: 0.07,
     resizeDebounce: 180
@@ -2337,6 +2342,18 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       rebuildLines();
     }
 
+    function getVideoStackGap() {
+      if (window.innerWidth <= 767) {
+        return SECOND_CONFIG.videoStack.gapMobile;
+      }
+
+      if (window.innerWidth <= 991) {
+        return SECOND_CONFIG.videoStack.gapTablet;
+      }
+
+      return SECOND_CONFIG.videoStack.gapDesktop;
+    }
+
     function createTimeline() {
       if (timeline) {
         if (timeline.scrollTrigger) {
@@ -2354,6 +2371,7 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       const finalVideoScales = new Map();
       const finalVideoY = new Map();
       const finalVideoYPercent = new Map();
+      const videoRectangles = new Map();
       videos.forEach(function (video) {
         finalVideoScales.set(
           video,
@@ -2367,18 +2385,46 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
           video,
           Number(gsap.getProperty(video, "yPercent")) || 0
         );
+        videoRectangles.set(video, video.getBoundingClientRect());
       });
 
-      const videoOffsets = new Map([
+      const anchorRectangle = videoRectangles.get(videoOne);
+      const anchorCenterY =
+        anchorRectangle.top + anchorRectangle.height / 2;
+      const stackGap = getVideoStackGap();
+      const startSteps = new Map([
         [videoOne, 0],
-        [videoTwo, -SECOND_CONFIG.videoOffsetPercent],
-        [videoThree, -SECOND_CONFIG.videoOffsetPercent * 2]
+        [videoTwo, -SECOND_CONFIG.videoStack.startStep],
+        [videoThree, -SECOND_CONFIG.videoStack.startStep * 2]
+      ]);
+      const finalTopSteps = new Map([
+        [videoOne, 0],
+        [videoTwo, -stackGap],
+        [videoThree, -stackGap * 2]
       ]);
       const videoDepth = new Map([
         [videoOne, 3],
         [videoTwo, 2],
         [videoThree, 1]
       ]);
+      const startVideoY = new Map();
+      const stackedVideoY = new Map();
+
+      videos.forEach(function (video) {
+        const rectangle = videoRectangles.get(video);
+        const centerY = rectangle.top + rectangle.height / 2;
+
+        startVideoY.set(
+          video,
+          finalVideoY.get(video) +
+            anchorCenterY + startSteps.get(video) - centerY
+        );
+        stackedVideoY.set(
+          video,
+          finalVideoY.get(video) +
+            anchorRectangle.top + finalTopSteps.get(video) - rectangle.top
+        );
+      });
 
       gsap.set(allWords(paragraphOne), {
         opacity: 0,
@@ -2392,9 +2438,8 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
 
       videos.forEach(function (video) {
         gsap.set(video, {
-          y: finalVideoY.get(video),
-          yPercent:
-            finalVideoYPercent.get(video) + videoOffsets.get(video),
+          y: startVideoY.get(video),
+          yPercent: finalVideoYPercent.get(video),
           zIndex: videoDepth.get(video),
           scale: 0,
           transformOrigin: "50% 50%"
@@ -2451,6 +2496,7 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
         const start = item[1];
 
         timeline.to(video, {
+          y: stackedVideoY.get(video),
           scale: finalVideoScales.get(video),
           duration: timing.videoInDuration,
           ease: "power2.out"
