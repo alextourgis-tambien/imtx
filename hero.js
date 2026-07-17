@@ -162,11 +162,11 @@
     cellFloating: {
       start: 0.60,
       end: 0.90,
-      xDesktop: 10,
-      yDesktop: 16,
-      xMobile: 6,
-      yMobile: 10,
-      rotation: 1.3,
+      xDesktop: 12,
+      yDesktop: 20,
+      xMobile: 9,
+      yMobile: 15,
+      rotation: 1.5,
       durationMin: 2.8,
       durationMax: 4.6
     },
@@ -1439,18 +1439,24 @@
       Les positions Webflow doivent être mesurées sans le déplacement
       résiduel de la timeline précédente.
 
-      Sur mobile uniquement, le wrapper des cellules compense ensuite
-      les 32px de remontée de .h-hero__content. Les cellules retrouvent
-      ainsi exactement leurs coordonnées Webflow une fois en place.
+      Sur mobile, aucun transform ne doit rester sur .h-hero__content :
+      sinon il devient le faux viewport des wrappers fixed et resserre
+      artificiellement les positions Webflow des cellules.
       */
-      gsap.set(heroContent, { y: 0 });
+      if (currentSettings.mode === "mobile") {
+        gsap.set(heroContent, {
+          clearProps: "transform",
+          top: 0
+        });
+      } else {
+        gsap.set(heroContent, {
+          top: 0,
+          y: 0
+        });
+      }
 
       if (cellsWrapper) {
-        gsap.set(cellsWrapper, {
-          y: currentSettings.mode === "mobile"
-            ? currentSettings.contentLift
-            : 0
-        });
+        gsap.set(cellsWrapper, { clearProps: "transform" });
       }
 
       restoreTargetStyles();
@@ -1565,13 +1571,13 @@
           scrub: 1,
           invalidateOnRefresh: true,
           onUpdate: function (self) {
-            updateFloating(self.progress);
+            updateFloating(timeline ? timeline.time() : 0);
           },
           onRefresh: function (self) {
             currentSettings = getResponsiveSettings();
             positionOrbitItems();
             positionCells();
-            updateFloating(self.progress);
+            updateFloating(timeline ? timeline.time() : 0);
           }
         }
       });
@@ -1583,12 +1589,21 @@
         }, scroll.headerStart);
       }
 
-      timeline.to(heroContent, {
-        y: function () {
-          return -currentSettings.contentLift;
-        },
-        duration: scroll.headerEnd - scroll.headerStart
-      }, scroll.headerStart);
+      if (currentSettings.mode === "mobile") {
+        timeline.to(heroContent, {
+          top: function () {
+            return -currentSettings.contentLift;
+          },
+          duration: scroll.headerEnd - scroll.headerStart
+        }, scroll.headerStart);
+      } else {
+        timeline.to(heroContent, {
+          y: function () {
+            return -currentSettings.contentLift;
+          },
+          duration: scroll.headerEnd - scroll.headerStart
+        }, scroll.headerStart);
+      }
 
       timeline.to(orbitState, {
         reveal: 1,

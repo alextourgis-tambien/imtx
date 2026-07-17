@@ -315,6 +315,11 @@ MOBILE
 ==================================================*/
 
 @media (max-width:767px){
+
+  .h-hero__content{
+    will-change:top;
+  }
+
   .hero-tile-wrapper,
   .h-hero__text-grid{
     --grid-columns:8;
