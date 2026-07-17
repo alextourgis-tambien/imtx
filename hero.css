@@ -270,6 +270,26 @@ html.hero-animation-ready .hh__target-p{
   visibility:visible;
 }
 
+/*==================================================
+23 CELLULES CANCER — AJOUT APRÈS LA SÉQUENCE TARGET
+==================================================*/
+
+.hh__cancer-wrapper{
+  visibility:hidden;
+  overflow:visible;
+  pointer-events:none;
+}
+
+html.hero-animation-ready .hh__cancer-wrapper{
+  visibility:visible;
+}
+
+.hh__cencer-lottie{
+  transform-origin:center center;
+  will-change:transform;
+  pointer-events:none;
+}
+
 .hh__target-lottie-wrapper{
   opacity:0;
   overflow:visible;

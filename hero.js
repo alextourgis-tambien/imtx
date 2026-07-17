@@ -28,7 +28,8 @@
       targetTitleOne: ".hh__target-title.is--one",
       targetTitleTwo: ".hh__target-title.is--two",
       targetParagraphOne: ".hh__target-p.is--one",
-      targetParagraphTwo: ".hh__target-p.is--two"
+      targetParagraphTwo: ".hh__target-p.is--two",
+      cancerWrapper: ".hh__cancer-wrapper"
     },
 
     imageSelectors: [
@@ -55,6 +56,10 @@
       ".hh__cells-lottie.is--twelve",
       ".hh__cells-lottie.is--thirteen"
     ],
+
+    cancerCellSelectors: Array.from({ length: 23 }, function (_, index) {
+      return ".hh__cencer-lottie.is--" + (index + 1);
+    }),
 
     scroll: {
       headerStart: 0.005,
@@ -203,6 +208,12 @@
       mobileLottieMargin: 24,
       mobileLottieSafeScale: 0.78,
       mobileLottieMinimumScale: 0.1
+    },
+
+    cancerSequence: {
+      latestStartOffset: 0.09,
+      durationMin: 0.10,
+      durationMax: 0.18
     },
 
     resizeDebounce: 200,
@@ -633,6 +644,7 @@
     const targetParagraphTwo = document.querySelector(
       selectors.targetParagraphTwo
     );
+    const cancerWrapper = document.querySelector(selectors.cancerWrapper);
 
     const imageItems = CONFIG.imageSelectors.map(function (selector) {
       const element = document.querySelector(selector);
@@ -646,6 +658,14 @@
       const element = document.querySelector(selector);
       if (!element) {
         warnMissing("cellule Lottie", selector);
+      }
+      return element;
+    }).filter(Boolean);
+
+    const cancerCells = CONFIG.cancerCellSelectors.map(function (selector) {
+      const element = document.querySelector(selector);
+      if (!element) {
+        warnMissing("cellule cancer", selector);
       }
       return element;
     }).filter(Boolean);
@@ -680,6 +700,16 @@
     if (cells.length !== 13) {
       console.warn(
         "Hero : " + cells.length + "/13 cellules Lottie trouvées."
+      );
+    }
+
+    if (!cancerWrapper) {
+      warnMissing("wrapper cancer", selectors.cancerWrapper);
+    }
+
+    if (cancerCells.length !== 23) {
+      console.warn(
+        "Hero : " + cancerCells.length + "/23 cellules cancer trouvées."
       );
     }
 
@@ -732,6 +762,11 @@
       originalCellStyles.set(cell, cell.getAttribute("style"));
     });
 
+    const originalCancerCellStyles = new Map();
+    cancerCells.forEach(function (cell) {
+      originalCancerCellStyles.set(cell, cell.getAttribute("style"));
+    });
+
     const splitSources = [
       oldTitle,
       titleOne,
@@ -753,6 +788,7 @@
     let viewportWidth = window.innerWidth;
     let currentSettings = null;
     let cellMeasurements = [];
+    let cancerCellMeasurements = [];
     let titleLines = new Map();
     let floatingTweens = [];
     let floatingTargets = [];
@@ -792,6 +828,10 @@
 
     const cellExit = cells.map(function () {
       return { value: 1 };
+    });
+
+    const cancerProgress = cancerCells.map(function () {
+      return { value: 0 };
     });
 
     function getResponsiveSettings() {
@@ -1119,6 +1159,78 @@
     }
 
     /*==================================================
+    MESURE DES POSITIONS WEBFLOW DES 23 CELLULES CANCER
+    ==================================================*/
+
+    function restoreCancerCellStyle(cell) {
+      const originalStyle = originalCancerCellStyles.get(cell);
+      if (originalStyle === null) {
+        cell.removeAttribute("style");
+      } else {
+        cell.setAttribute("style", originalStyle);
+      }
+    }
+
+    function measureCancerCells() {
+      if (!cancerCells.length) {
+        cancerCellMeasurements = [];
+        return;
+      }
+
+      cancerCells.forEach(restoreCancerCellStyle);
+
+      const wrapperBounds = cancerWrapper
+        ? cancerWrapper.getBoundingClientRect()
+        : null;
+      const centerX = wrapperBounds && wrapperBounds.width
+        ? wrapperBounds.left + wrapperBounds.width / 2
+        : window.innerWidth / 2;
+      const centerY = wrapperBounds && wrapperBounds.height
+        ? wrapperBounds.top + wrapperBounds.height / 2
+        : window.innerHeight / 2;
+
+      cancerCellMeasurements = cancerCells.map(function (cell) {
+        const rectangle = cell.getBoundingClientRect();
+        const cellCenterX = rectangle.left + rectangle.width / 2;
+        const cellCenterY = rectangle.top + rectangle.height / 2;
+
+        return {
+          targetX: Number(gsap.getProperty(cell, "x")) || 0,
+          targetY: Number(gsap.getProperty(cell, "y")) || 0,
+          targetRotation: Number(gsap.getProperty(cell, "rotation")) || 0,
+          targetScale: Number(gsap.getProperty(cell, "scaleX")) || 1,
+          centerOffsetX: centerX - cellCenterX,
+          centerOffsetY: centerY - cellCenterY
+        };
+      });
+    }
+
+    function positionCancerCells() {
+      cancerCells.forEach(function (cell, index) {
+        const measurement = cancerCellMeasurements[index];
+        const progress = cancerProgress[index]
+          ? cancerProgress[index].value
+          : 0;
+
+        if (!measurement) {
+          return;
+        }
+
+        const startX = measurement.targetX + measurement.centerOffsetX;
+        const startY = measurement.targetY + measurement.centerOffsetY;
+
+        gsap.set(cell, {
+          x: gsap.utils.interpolate(startX, measurement.targetX, progress),
+          y: gsap.utils.interpolate(startY, measurement.targetY, progress),
+          scale: measurement.targetScale * progress,
+          rotation: measurement.targetRotation,
+          opacity: 1,
+          transformOrigin: "50% 50%"
+        });
+      });
+    }
+
+    /*==================================================
     POSITIONNEMENT DES MÉDIAS SUR L’ELLIPSE
     ==================================================*/
 
@@ -1427,6 +1539,9 @@
       cellExit.forEach(function (state) {
         state.value = 1;
       });
+      cancerProgress.forEach(function (state) {
+        state.value = 0;
+      });
 
       const backgroundStyle = heroBackground.getAttribute("style");
       const embedStyle = heroEmbed.getAttribute("style");
@@ -1468,6 +1583,7 @@
 
       restoreTargetStyles();
       measureCells();
+      measureCancerCells();
       rebuildTitleLines();
       measureTargetMainDirections();
 
@@ -1525,6 +1641,7 @@
       }
 
       positionCells();
+      positionCancerCells();
       positionOrbitItems();
 
       /* Anti-flash : on révèle seulement après tous les gsap.set initiaux. */
@@ -1555,6 +1672,10 @@
           state.visibility = 1;
         });
         positionCells();
+        cancerProgress.forEach(function (state) {
+          state.value = 1;
+        });
+        positionCancerCells();
         if (titleOne) {
           gsap.set(flattenLines(titleOne), { opacity: 1, yPercent: 0 });
         }
@@ -1853,6 +1974,32 @@
         animateLinesIn(targetParagraphTwo, targetTiming.paragraphTwoIn);
         animateLinesOut(targetParagraphTwo, targetTiming.paragraphTwoOut);
       }
+
+      /*
+      Les 23 cellules cancer apparaissent pendant le second paragraphe.
+      Leurs départs et durées se chevauchent de façon déterministe afin
+      d’obtenir un rythme organique tout en restant stable après resize.
+      */
+      cancerProgress.forEach(function (state, index) {
+        const startOffset = deterministic(
+          index,
+          0,
+          CONFIG.cancerSequence.latestStartOffset,
+          81
+        );
+        const duration = deterministic(
+          index,
+          CONFIG.cancerSequence.durationMin,
+          CONFIG.cancerSequence.durationMax,
+          82
+        );
+
+        timeline.to(state, {
+          value: 1,
+          duration: duration,
+          onUpdate: positionCancerCells
+        }, targetTiming.paragraphTwoIn + startOffset);
+      });
 
       /*
       La Lottie disparaît pendant la disparition des deux titres,
