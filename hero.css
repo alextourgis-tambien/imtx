@@ -407,6 +407,8 @@ html.second-animation-ready .hs__button-wrapper{
 .hs_p{
   white-space:normal !important;
   flex-wrap:wrap;
+  justify-content:center;
+  text-align:center;
 }
 
 .hs__video{
