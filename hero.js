@@ -2136,6 +2136,11 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       gapMobile: 16
     },
 
+    previousSection: {
+      cancerScale: 1.15,
+      targetLiftViewport: 0.22
+    },
+
     buttonDuration: 0.07,
     resizeDebounce: 180
   };
@@ -2169,6 +2174,9 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
     const videoThree = wrapper.querySelector(selectors.videoThree);
     const previousCancerWrapper = document.querySelector(
       ".hh__cancer-wrapper"
+    );
+    const previousTargetWrapper = document.querySelector(
+      ".hh__target-wrapper"
     );
     const previousCancerTargets = previousCancerWrapper
       ? Array.from(
@@ -2545,28 +2553,51 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
 
     function createPreviousSectionTransition() {
       if (
-        !previousCancerTargets.length ||
+        (!previousCancerTargets.length && !previousTargetWrapper) ||
         window.matchMedia("(prefers-reduced-motion: reduce)").matches
       ) {
         return;
       }
 
-      gsap.to(previousCancerTargets, {
-        scale: 1.15,
-        transformOrigin: "50% 50%",
-        ease: "none",
-        stagger: {
-          each: 0.002,
-          from: "random"
-        },
-        scrollTrigger: {
-          trigger: wrapper,
-          start: "top bottom",
-          end: "top top",
-          scrub: 1,
-          invalidateOnRefresh: true
-        }
-      });
+      if (previousCancerTargets.length) {
+        gsap.to(previousCancerTargets, {
+          scale: SECOND_CONFIG.previousSection.cancerScale,
+          transformOrigin: "50% 50%",
+          ease: "none",
+          stagger: {
+            each: 0.002,
+            from: "random"
+          },
+          scrollTrigger: {
+            trigger: wrapper,
+            start: "top bottom",
+            end: "top top",
+            scrub: 1,
+            invalidateOnRefresh: true
+          }
+        });
+      }
+
+      if (previousTargetWrapper) {
+        gsap.to(previousTargetWrapper, {
+          y: function () {
+            const viewportHeight = window.visualViewport
+              ? window.visualViewport.height
+              : window.innerHeight;
+
+            return -viewportHeight *
+              SECOND_CONFIG.previousSection.targetLiftViewport;
+          },
+          ease: "none",
+          scrollTrigger: {
+            trigger: wrapper,
+            start: "top bottom",
+            end: "top top",
+            scrub: 1,
+            invalidateOnRefresh: true
+          }
+        });
+      }
     }
 
     function handleResize() {
