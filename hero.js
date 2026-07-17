@@ -2104,7 +2104,7 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
 
     timing: {
       paragraphOneIn: 0,
-      paragraphOneOut: 0.18,
+      paragraphOneOut: 0.23,
 
       videoOneIn: 0.30,
       videoTwoIn: 0.303,
