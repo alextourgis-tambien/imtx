@@ -197,7 +197,6 @@
       paragraphOneOut: 1.93,
 
       paragraphTwoIn: 2.03,
-      paragraphTwoOut: 2.50,
 
       lottieOutStart: 1.70,
       lottieOutEnd: 1.80,
@@ -1990,7 +1989,6 @@
 
       if (targetParagraphTwo) {
         animateLinesIn(targetParagraphTwo, targetTiming.paragraphTwoIn);
-        animateLinesOut(targetParagraphTwo, targetTiming.paragraphTwoOut);
       }
 
       /*
@@ -2031,13 +2029,13 @@
         }, targetTiming.lottieOutStart);
       }
 
-      /* Maintient le dernier état jusqu’à la fin du scroll du hero. */
+      /*
+      Maintient le second paragraphe visible jusqu’à l’arrivée de la
+      section suivante. Sa sortie est pilotée par le parallaxe ci-dessous.
+      */
       timeline.to({}, {
-        duration: Math.max(
-          targetTiming.end - targetTiming.paragraphTwoOut,
-          0.01
-        )
-      }, targetTiming.paragraphTwoOut);
+        duration: 0.01
+      }, targetTiming.end);
     }
 
     /*==================================================
@@ -2138,7 +2136,10 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
 
     previousSection: {
       cancerScale: 1.15,
-      targetLiftViewport: 0.22
+      targetLiftViewport: 0.22,
+      targetTextExitStart: 0.48,
+      targetTextExitDuration: 0.18,
+      targetTextLineStagger: 0.035
     },
 
     buttonDuration: 0.07,
@@ -2177,6 +2178,9 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
     );
     const previousTargetWrapper = document.querySelector(
       ".hh__target-wrapper"
+    );
+    const previousTargetParagraphTwo = document.querySelector(
+      ".hh__target-p.is--two"
     );
     const previousCancerTargets = previousCancerWrapper
       ? Array.from(
@@ -2579,7 +2583,17 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       }
 
       if (previousTargetWrapper) {
-        gsap.to(previousTargetWrapper, {
+        const targetTransition = gsap.timeline({
+          scrollTrigger: {
+            trigger: wrapper,
+            start: "top bottom",
+            end: "top top",
+            scrub: 1,
+            invalidateOnRefresh: true
+          }
+        });
+
+        targetTransition.to(previousTargetWrapper, {
           y: function () {
             const viewportHeight = window.visualViewport
               ? window.visualViewport.height
@@ -2589,14 +2603,47 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
               SECOND_CONFIG.previousSection.targetLiftViewport;
           },
           ease: "none",
-          scrollTrigger: {
-            trigger: wrapper,
-            start: "top bottom",
-            end: "top top",
-            scrub: 1,
-            invalidateOnRefresh: true
-          }
-        });
+          duration: 1
+        }, 0);
+
+        if (previousTargetParagraphTwo) {
+          const words = Array.from(
+            previousTargetParagraphTwo.querySelectorAll(
+              ".hero-split-word"
+            )
+          );
+          const visualLines = [];
+
+          words.forEach(function (word) {
+            const top = Math.round(word.getBoundingClientRect().top);
+            let line = visualLines.find(function (candidate) {
+              return Math.abs(candidate.top - top) <= 2;
+            });
+
+            if (!line) {
+              line = { top: top, words: [] };
+              visualLines.push(line);
+            }
+
+            line.words.push(word);
+          });
+
+          visualLines.sort(function (a, b) {
+            return a.top - b.top;
+          });
+
+          visualLines.forEach(function (line, index) {
+            targetTransition.to(line.words, {
+              opacity: 0,
+              yPercent: -75,
+              duration:
+                SECOND_CONFIG.previousSection.targetTextExitDuration
+            },
+            SECOND_CONFIG.previousSection.targetTextExitStart +
+              index *
+              SECOND_CONFIG.previousSection.targetTextLineStagger);
+          });
+        }
       }
     }
 
