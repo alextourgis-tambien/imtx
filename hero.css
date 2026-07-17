@@ -101,7 +101,7 @@ VARIABLES DE GRILLE
 .h-hero__text-grid{
   --grid-columns:20;
   --grid-rows:11;
-  --grid-gap:2.5px;
+  --grid-gap:1.5px;
   --grid-padding:2.5px;
   --tile-radius:10px;
 }
@@ -299,7 +299,7 @@ TABLETTE
   .h-hero__text-grid{
     --grid-columns:12;
     --grid-rows:10;
-    --grid-gap:2px;
+    --grid-gap:1.25px;
     --grid-padding:2px;
     --tile-radius:8px;
   }
@@ -319,7 +319,7 @@ MOBILE
   .h-hero__text-grid{
     --grid-columns:8;
     --grid-rows:14;
-    --grid-gap:2px;
+    --grid-gap:1.25px;
     --grid-padding:2px;
     --tile-radius:7px;
   }

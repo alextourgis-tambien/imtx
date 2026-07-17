@@ -200,9 +200,9 @@
       end: 2.32,
       exitViewportDistance: 0.35,
 
-      mobileLottieMargin: 16,
-      mobileLottieSafeScale: 0.86,
-      mobileLottieMinimumScale: 0.15
+      mobileLottieMargin: 24,
+      mobileLottieSafeScale: 0.78,
+      mobileLottieMinimumScale: 0.1
     },
 
     resizeDebounce: 200,
@@ -249,10 +249,10 @@
       return {
         columns: 8,
         rows: 14,
-        gap: 2,
+        gap: 1.25,
         padding: 2,
         radius: 7,
-        maskInset: 0.35,
+        maskInset: 0.15,
         textCard: {
           columnStart: 2,
           columnEnd: 8,
@@ -266,10 +266,10 @@
       return {
         columns: 12,
         rows: 10,
-        gap: 2,
+        gap: 1.25,
         padding: 2,
         radius: 8,
-        maskInset: 0.35,
+        maskInset: 0.15,
         textCard: {
           columnStart: 2,
           columnEnd: 9,
@@ -282,10 +282,10 @@
     return {
       columns: 20,
       rows: 11,
-      gap: 2.5,
+      gap: 1.5,
       padding: 2.5,
       radius: 10,
-      maskInset: 0.5,
+      maskInset: 0.2,
       textCard: {
         columnStart: 2,
         columnEnd: 9,
@@ -402,11 +402,8 @@
 
       const cardHeight = rowSpan * metrics.tileSize +
         Math.max(rowSpan - 1, 0) * settings.gap;
-      const visibleInset = settings.maskInset || 0;
-      const visibleCardHeight = Math.max(
-        cardHeight - visibleInset * 2,
-        1
-      );
+      const gridLineHalf = settings.gap / 2;
+      const alignedCardHeight = cardHeight + settings.gap;
 
       /*
       Si le crop vertical rapproche le panneau du bas, on le remonte
@@ -414,21 +411,18 @@
       */
       while (
         adjustedRowStart > 1 &&
-        getTop(adjustedRowStart) + visibleInset + visibleCardHeight >
+        getTop(adjustedRowStart) - gridLineHalf + alignedCardHeight >
           height - minimumBottomGap
       ) {
         adjustedRowStart -= 1;
       }
 
       const left = metrics.gridLeft + settings.padding +
-        (card.columnStart - 1) * pitch + visibleInset;
-      const top = getTop(adjustedRowStart) + visibleInset;
+        (card.columnStart - 1) * pitch - gridLineHalf;
+      const top = getTop(adjustedRowStart) - gridLineHalf;
       const cardWidth = columnSpan * metrics.tileSize +
         Math.max(columnSpan - 1, 0) * settings.gap;
-      const visibleCardWidth = Math.max(
-        cardWidth - visibleInset * 2,
-        1
-      );
+      const alignedCardWidth = cardWidth + settings.gap;
 
       gsap.set(textCard, {
         position: "absolute",
@@ -438,8 +432,8 @@
         top: top,
         right: "auto",
         bottom: "auto",
-        width: visibleCardWidth,
-        height: visibleCardHeight
+        width: alignedCardWidth,
+        height: alignedCardHeight
       });
     }
 
@@ -1043,6 +1037,13 @@
         transformOrigin: "50% 50%"
       });
 
+      if (targetLottieWrapper) {
+        gsap.set(targetLottieWrapper, {
+          scale: 1,
+          transformOrigin: "50% 50%"
+        });
+      }
+
       if (window.innerWidth > 767) {
         return;
       }
@@ -1078,7 +1079,7 @@
         CONFIG.targetSequence.mobileLottieSafeScale
       );
 
-      gsap.set(renderSurface, {
+      gsap.set(targetLottieWrapper || targetLottie, {
         scale: Math.max(
           fitScale,
           CONFIG.targetSequence.mobileLottieMinimumScale
