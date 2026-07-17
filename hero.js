@@ -197,12 +197,12 @@
       paragraphOneOut: 1.93,
 
       paragraphTwoIn: 2.03,
-      paragraphTwoOut: 2.25,
+      paragraphTwoOut: 2.50,
 
       lottieOutStart: 1.70,
       lottieOutEnd: 1.80,
 
-      end: 2.32,
+      end: 2.62,
       exitViewportDistance: 0.35,
 
       mobileLottieMargin: 24,
