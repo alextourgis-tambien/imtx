@@ -371,6 +371,50 @@ MOBILE
 }
 
 /*==================================================
+SECONDE SECTION — TEXTES + TROIS VIDÉOS
+La hauteur de .h-second__wrapper reste gérée dans Webflow.
+==================================================*/
+
+.h-second__wrapper{
+  position:relative;
+}
+
+.h-second__parent{
+  position:sticky;
+  top:0;
+  width:100%;
+  height:100svh;
+  overflow:hidden;
+}
+
+.hs_p,
+.hs__video,
+.hs__button-wrapper{
+  visibility:hidden;
+}
+
+html.second-animation-ready .hs_p,
+html.second-animation-ready .hs__video,
+html.second-animation-ready .hs__button-wrapper{
+  visibility:visible;
+}
+
+.hs_p,
+.hs__button-wrapper{
+  will-change:transform,opacity;
+}
+
+.hs__video{
+  transform-origin:center center;
+  will-change:transform;
+}
+
+.hs-split-word{
+  display:inline-block;
+  will-change:transform,opacity;
+}
+
+/*==================================================
 REDUCED MOTION
 ==================================================*/
 
@@ -392,7 +436,10 @@ REDUCED MOTION
   .hh__cell-title,
   .hh__target-main,
   .hh__target-title,
-  .hh__target-p{
+  .hh__target-p,
+  .hs_p,
+  .hs__video,
+  .hs__button-wrapper{
     transform:none !important;
   }
 }

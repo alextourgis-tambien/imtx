@@ -2073,3 +2073,401 @@
     ScrollTrigger.refresh();
   });
 })();
++
+
+/*==================================================
+SECONDE SECTION — TIMELINE INDÉPENDANTE
+==================================================*/
+
+(function () {
+  "use strict";
+
+  const SECOND_CONFIG = {
+    selectors: {
+      wrapper: ".h-second__wrapper",
+      parent: ".h-second__parent",
+      paragraphOne: ".hs_p.is--one",
+      paragraphTwo: ".hs_p.is--two",
+      button: ".hs__button-wrapper",
+      videoOne: ".hs__video.is--1",
+      videoTwo: ".hs__video.is--2",
+      videoThree: ".hs__video.is--3"
+    },
+
+    timing: {
+      paragraphOneIn: 0.05,
+      paragraphOneOut: 0.28,
+
+      videoThreeIn: 0.30,
+      videoTwoIn: 0.33,
+      videoOneIn: 0.36,
+      videoInDuration: 0.10,
+
+      videoThreeOut: 0.68,
+      videoTwoOut: 0.70,
+      videoOneOut: 0.72,
+      videoOutDuration: 0.10,
+
+      paragraphTwoIn: 0.83,
+      buttonIn: 0.92,
+      end: 1
+    },
+
+    text: {
+      lineDuration: 0.055,
+      lineStagger: 0.018,
+      hiddenYPercent: 70
+    },
+
+    buttonDuration: 0.07,
+    resizeDebounce: 180
+  };
+
+  window.addEventListener("load", function () {
+    if (
+      typeof window.gsap === "undefined" ||
+      typeof window.ScrollTrigger === "undefined"
+    ) {
+      console.warn(
+        "Seconde section : GSAP ou ScrollTrigger est absent."
+      );
+      return;
+    }
+
+    gsap.registerPlugin(ScrollTrigger);
+
+    const selectors = SECOND_CONFIG.selectors;
+    const wrapper = document.querySelector(selectors.wrapper);
+
+    if (!wrapper) {
+      return;
+    }
+
+    const parent = wrapper.querySelector(selectors.parent);
+    const paragraphOne = wrapper.querySelector(selectors.paragraphOne);
+    const paragraphTwo = wrapper.querySelector(selectors.paragraphTwo);
+    const button = wrapper.querySelector(selectors.button);
+    const videoOne = wrapper.querySelector(selectors.videoOne);
+    const videoTwo = wrapper.querySelector(selectors.videoTwo);
+    const videoThree = wrapper.querySelector(selectors.videoThree);
+
+    [
+      [parent, selectors.parent],
+      [paragraphOne, selectors.paragraphOne],
+      [paragraphTwo, selectors.paragraphTwo],
+      [button, selectors.button],
+      [videoOne, selectors.videoOne],
+      [videoTwo, selectors.videoTwo],
+      [videoThree, selectors.videoThree]
+    ].forEach(function (item) {
+      if (!item[0]) {
+        console.warn(
+          "Seconde section : élément absent — " + item[1]
+        );
+      }
+    });
+
+    if (
+      !parent ||
+      !paragraphOne ||
+      !paragraphTwo ||
+      !button ||
+      !videoOne ||
+      !videoTwo ||
+      !videoThree
+    ) {
+      return;
+    }
+
+    const paragraphs = [paragraphOne, paragraphTwo];
+    const videos = [videoThree, videoTwo, videoOne];
+
+    const originalParagraphMarkup = new Map();
+    paragraphs.forEach(function (paragraph) {
+      originalParagraphMarkup.set(paragraph, paragraph.innerHTML);
+    });
+
+    const originalVideoStyles = new Map();
+    videos.forEach(function (video) {
+      originalVideoStyles.set(video, video.getAttribute("style"));
+    });
+
+    const originalButtonStyle = button.getAttribute("style");
+
+    let lines = new Map();
+    let timeline = null;
+    let resizeTimer = null;
+    let viewportWidth = window.innerWidth;
+
+    function restoreInlineStyle(element, originalStyle) {
+      if (originalStyle === null) {
+        element.removeAttribute("style");
+      } else {
+        element.setAttribute("style", originalStyle);
+      }
+    }
+
+    function splitParagraphIntoLines(paragraph) {
+      paragraph.innerHTML = originalParagraphMarkup.get(paragraph);
+
+      const walker = document.createTreeWalker(
+        paragraph,
+        NodeFilter.SHOW_TEXT,
+        {
+          acceptNode: function (node) {
+            if (!node.nodeValue || !node.nodeValue.trim()) {
+              return NodeFilter.FILTER_REJECT;
+            }
+            return NodeFilter.FILTER_ACCEPT;
+          }
+        }
+      );
+
+      const textNodes = [];
+      let textNode = walker.nextNode();
+
+      while (textNode) {
+        textNodes.push(textNode);
+        textNode = walker.nextNode();
+      }
+
+      textNodes.forEach(function (node) {
+        const fragment = document.createDocumentFragment();
+        const pieces = node.nodeValue.match(/\s+|[^\s]+/g) || [];
+
+        pieces.forEach(function (piece) {
+          if (/^\s+$/.test(piece)) {
+            fragment.appendChild(document.createTextNode(piece));
+            return;
+          }
+
+          const word = document.createElement("span");
+          word.className = "hs-split-word";
+          word.textContent = piece;
+          fragment.appendChild(word);
+        });
+
+        node.parentNode.replaceChild(fragment, node);
+      });
+
+      const lineGroups = [];
+
+      Array.from(
+        paragraph.querySelectorAll(".hs-split-word")
+      ).forEach(function (word) {
+        const top = Math.round(word.getBoundingClientRect().top);
+        let line = lineGroups.find(function (candidate) {
+          return Math.abs(candidate.top - top) <= 2;
+        });
+
+        if (!line) {
+          line = { top: top, words: [] };
+          lineGroups.push(line);
+        }
+
+        line.words.push(word);
+      });
+
+      lineGroups.sort(function (a, b) {
+        return a.top - b.top;
+      });
+
+      return lineGroups.map(function (line) {
+        return line.words;
+      });
+    }
+
+    function rebuildLines() {
+      lines = new Map();
+      paragraphs.forEach(function (paragraph) {
+        lines.set(paragraph, splitParagraphIntoLines(paragraph));
+      });
+    }
+
+    function allWords(paragraph) {
+      return (lines.get(paragraph) || []).reduce(
+        function (words, line) {
+          return words.concat(line);
+        },
+        []
+      );
+    }
+
+    function animateLinesIn(paragraph, start) {
+      const paragraphLines = lines.get(paragraph) || [];
+
+      paragraphLines.forEach(function (line, index) {
+        timeline.to(line, {
+          opacity: 1,
+          yPercent: 0,
+          duration: SECOND_CONFIG.text.lineDuration
+        }, start + index * SECOND_CONFIG.text.lineStagger);
+      });
+    }
+
+    function animateLinesOut(paragraph, start) {
+      const paragraphLines = lines.get(paragraph) || [];
+
+      paragraphLines.forEach(function (line, index) {
+        timeline.to(line, {
+          opacity: 0,
+          yPercent: -SECOND_CONFIG.text.hiddenYPercent,
+          duration: SECOND_CONFIG.text.lineDuration
+        }, start + index * SECOND_CONFIG.text.lineStagger);
+      });
+    }
+
+    function restoreWebflowState() {
+      videos.forEach(function (video) {
+        restoreInlineStyle(video, originalVideoStyles.get(video));
+      });
+      restoreInlineStyle(button, originalButtonStyle);
+      rebuildLines();
+    }
+
+    function createTimeline() {
+      if (timeline) {
+        if (timeline.scrollTrigger) {
+          timeline.scrollTrigger.kill();
+        }
+        timeline.kill();
+      }
+
+      document.documentElement.classList.remove(
+        "second-animation-ready"
+      );
+
+      restoreWebflowState();
+
+      const finalVideoScales = new Map();
+      videos.forEach(function (video) {
+        finalVideoScales.set(
+          video,
+          Number(gsap.getProperty(video, "scaleX")) || 1
+        );
+      });
+
+      gsap.set(allWords(paragraphOne), {
+        opacity: 0,
+        yPercent: SECOND_CONFIG.text.hiddenYPercent
+      });
+
+      gsap.set(allWords(paragraphTwo), {
+        opacity: 0,
+        yPercent: SECOND_CONFIG.text.hiddenYPercent
+      });
+
+      gsap.set(videos, {
+        scale: 0,
+        transformOrigin: "50% 50%"
+      });
+
+      gsap.set(button, {
+        opacity: 0,
+        y: 20
+      });
+
+      document.documentElement.classList.add(
+        "second-animation-ready"
+      );
+
+      const prefersReducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)"
+      ).matches;
+
+      if (prefersReducedMotion) {
+        gsap.set(allWords(paragraphTwo), {
+          opacity: 1,
+          yPercent: 0
+        });
+        gsap.set(button, {
+          opacity: 1,
+          y: 0
+        });
+        return;
+      }
+
+      const timing = SECOND_CONFIG.timing;
+
+      timeline = gsap.timeline({
+        defaults: { ease: "none" },
+        scrollTrigger: {
+          trigger: wrapper,
+          start: "top top",
+          end: "bottom bottom",
+          scrub: 1,
+          invalidateOnRefresh: true
+        }
+      });
+
+      animateLinesIn(paragraphOne, timing.paragraphOneIn);
+      animateLinesOut(paragraphOne, timing.paragraphOneOut);
+
+      [
+        [videoThree, timing.videoThreeIn],
+        [videoTwo, timing.videoTwoIn],
+        [videoOne, timing.videoOneIn]
+      ].forEach(function (item) {
+        const video = item[0];
+        const start = item[1];
+
+        timeline.to(video, {
+          scale: finalVideoScales.get(video),
+          duration: timing.videoInDuration,
+          ease: "power2.out"
+        }, start);
+      });
+
+      [
+        [videoThree, timing.videoThreeOut],
+        [videoTwo, timing.videoTwoOut],
+        [videoOne, timing.videoOneOut]
+      ].forEach(function (item) {
+        timeline.to(item[0], {
+          scale: 0,
+          duration: timing.videoOutDuration,
+          ease: "power2.in"
+        }, item[1]);
+      });
+
+      animateLinesIn(paragraphTwo, timing.paragraphTwoIn);
+
+      timeline.to(button, {
+        opacity: 1,
+        y: 0,
+        duration: SECOND_CONFIG.buttonDuration,
+        ease: "power2.out"
+      }, timing.buttonIn);
+
+      timeline.to({}, {
+        duration: Math.max(timing.end - timing.buttonIn, 0.01)
+      }, timing.buttonIn);
+    }
+
+    function handleResize() {
+      const nextWidth = window.innerWidth;
+
+      if (
+        nextWidth <= 991 &&
+        Math.abs(nextWidth - viewportWidth) < 2
+      ) {
+        return;
+      }
+
+      viewportWidth = nextWidth;
+      window.clearTimeout(resizeTimer);
+
+      resizeTimer = window.setTimeout(function () {
+        createTimeline();
+        ScrollTrigger.refresh();
+      }, SECOND_CONFIG.resizeDebounce);
+    }
+
+    createTimeline();
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("orientationchange", function () {
+      window.setTimeout(handleResize, 120);
+    });
+    ScrollTrigger.refresh();
+  });
+})();
