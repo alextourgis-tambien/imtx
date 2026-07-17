@@ -864,6 +864,32 @@
       };
     }
 
+    /*
+    Le header reste dans le flux après sa sortie visuelle. On mesure donc
+    la géométrie réelle du hero pour replacer le centre de son contenu
+    exactement au centre du viewport, quelle que soit la hauteur du header.
+    */
+    function getContentCenterLift() {
+      const hero = heroContent.closest(".h-hero");
+
+      if (!hero) {
+        return currentSettings.contentLift;
+      }
+
+      const heroHeight = hero.clientHeight || window.innerHeight;
+      const contentHeight = heroContent.offsetHeight;
+      const contentTop = heroContent.offsetTop;
+
+      if (!heroHeight || !contentHeight) {
+        return currentSettings.contentLift;
+      }
+
+      return Math.max(
+        contentTop + contentHeight / 2 - heroHeight / 2,
+        0
+      );
+    }
+
     /*==================================================
     DÉCOUPE VISUELLE DES TITRES — CONSERVE .blue_span
     ==================================================*/
@@ -1720,14 +1746,14 @@
       if (currentSettings.mode === "mobile") {
         timeline.to(heroContent, {
           top: function () {
-            return -currentSettings.contentLift;
+            return -getContentCenterLift();
           },
           duration: scroll.headerEnd - scroll.headerStart
         }, scroll.headerStart);
       } else {
         timeline.to(heroContent, {
           y: function () {
-            return -currentSettings.contentLift;
+            return -getContentCenterLift();
           },
           duration: scroll.headerEnd - scroll.headerStart
         }, scroll.headerStart);
