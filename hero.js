@@ -2099,9 +2099,9 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       paragraphOneOut: 0.28,
 
       videoOneIn: 0.30,
-      videoTwoIn: 0.325,
-      videoThreeIn: 0.35,
-      videoInDuration: 0.14,
+      videoTwoIn: 0.307,
+      videoThreeIn: 0.314,
+      videoInDuration: 0.09,
 
       videoThreeOut: 0.68,
       videoTwoOut: 0.70,
@@ -2119,7 +2119,7 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       hiddenYPercent: 70
     },
 
-    videoOffsetPercent: 10,
+    videoOffsetPercent: 14,
 
     buttonDuration: 0.07,
     resizeDebounce: 180
