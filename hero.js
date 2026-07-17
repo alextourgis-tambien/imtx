@@ -2129,7 +2129,7 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
 
     videoStack: {
       startStep: 28,
-      finalBlend: 0.65,
+      finalBlend: 0.58,
       gapDesktop: 30,
       gapTablet: 24,
       gapMobile: 16
