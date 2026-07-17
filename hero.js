@@ -201,7 +201,8 @@
       exitViewportDistance: 0.35,
 
       mobileLottieMargin: 16,
-      mobileLottieSafeScale: 0.86
+      mobileLottieSafeScale: 0.86,
+      mobileLottieMinimumScale: 0.15
     },
 
     resizeDebounce: 200,
@@ -401,6 +402,11 @@
 
       const cardHeight = rowSpan * metrics.tileSize +
         Math.max(rowSpan - 1, 0) * settings.gap;
+      const visibleInset = settings.maskInset || 0;
+      const visibleCardHeight = Math.max(
+        cardHeight - visibleInset * 2,
+        1
+      );
 
       /*
       Si le crop vertical rapproche le panneau du bas, on le remonte
@@ -408,17 +414,21 @@
       */
       while (
         adjustedRowStart > 1 &&
-        getTop(adjustedRowStart) + cardHeight >
+        getTop(adjustedRowStart) + visibleInset + visibleCardHeight >
           height - minimumBottomGap
       ) {
         adjustedRowStart -= 1;
       }
 
       const left = metrics.gridLeft + settings.padding +
-        (card.columnStart - 1) * pitch;
-      const top = getTop(adjustedRowStart);
+        (card.columnStart - 1) * pitch + visibleInset;
+      const top = getTop(adjustedRowStart) + visibleInset;
       const cardWidth = columnSpan * metrics.tileSize +
         Math.max(columnSpan - 1, 0) * settings.gap;
+      const visibleCardWidth = Math.max(
+        cardWidth - visibleInset * 2,
+        1
+      );
 
       gsap.set(textCard, {
         position: "absolute",
@@ -428,8 +438,8 @@
         top: top,
         right: "auto",
         bottom: "auto",
-        width: cardWidth,
-        height: cardHeight
+        width: visibleCardWidth,
+        height: visibleCardHeight
       });
     }
 
@@ -1039,22 +1049,40 @@
 
       const margin = CONFIG.targetSequence.mobileLottieMargin;
       const surfaceBounds = renderSurface.getBoundingClientRect();
-      const contentBounds = heroContent.getBoundingClientRect();
-      const availableWidth = Math.max(contentBounds.width - margin * 2, 1);
-      const availableHeight = Math.max(contentBounds.height - margin * 2, 1);
 
       if (!surfaceBounds.width || !surfaceBounds.height) {
         return;
       }
 
+      const viewportWidth = window.visualViewport
+        ? window.visualViewport.width
+        : window.innerWidth;
+      const viewportHeight = window.visualViewport
+        ? window.visualViewport.height
+        : window.innerHeight;
+      const centerX = surfaceBounds.left + surfaceBounds.width / 2;
+      const centerY = surfaceBounds.top + surfaceBounds.height / 2 -
+        CONFIG.contentLift.mobile;
+      const availableHalfWidth = Math.max(
+        Math.min(centerX - margin, viewportWidth - margin - centerX),
+        1
+      );
+      const availableHalfHeight = Math.max(
+        Math.min(centerY - margin, viewportHeight - margin - centerY),
+        1
+      );
+
       const fitScale = Math.min(
-        availableWidth / surfaceBounds.width,
-        availableHeight / surfaceBounds.height,
+        availableHalfWidth * 2 / surfaceBounds.width,
+        availableHalfHeight * 2 / surfaceBounds.height,
         CONFIG.targetSequence.mobileLottieSafeScale
       );
 
       gsap.set(renderSurface, {
-        scale: Math.max(fitScale, 0.5),
+        scale: Math.max(
+          fitScale,
+          CONFIG.targetSequence.mobileLottieMinimumScale
+        ),
         transformOrigin: "50% 50%"
       });
     }

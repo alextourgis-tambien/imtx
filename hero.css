@@ -328,6 +328,15 @@ MOBILE
     grid-column:2 / 8;
     grid-row:10 / 14;
   }
+
+  .hh__target-wrapper,
+  .hh__target-lottie-wrapper,
+  .hh__target-lottie,
+  .hh__target-lottie > div,
+  .hh__target-lottie svg,
+  .hh__target-lottie canvas{
+    overflow:visible !important;
+  }
 }
 
 /*==================================================
