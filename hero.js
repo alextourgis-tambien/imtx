@@ -2095,7 +2095,7 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
     },
 
     timing: {
-      paragraphOneIn: 0.05,
+      paragraphOneIn: 0.005,
       paragraphOneOut: 0.28,
 
       videoThreeIn: 0.30,
@@ -2237,7 +2237,7 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
 
         pieces.forEach(function (piece) {
           if (/^\s+$/.test(piece)) {
-            fragment.appendChild(document.createTextNode(piece));
+            fragment.appendChild(document.createTextNode("\u200B"));
             return;
           }
 

@@ -404,6 +404,11 @@ html.second-animation-ready .hs__button-wrapper{
   will-change:transform,opacity;
 }
 
+.hs_p{
+  white-space:normal !important;
+  flex-wrap:wrap;
+}
+
 .hs__video{
   transform-origin:center center;
   will-change:transform;
@@ -411,6 +416,7 @@ html.second-animation-ready .hs__button-wrapper{
 
 .hs-split-word{
   display:inline-block;
+  margin-right:.25em;
   will-change:transform,opacity;
 }
 
