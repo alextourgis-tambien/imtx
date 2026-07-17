@@ -197,7 +197,7 @@
       paragraphOneOut: 1.93,
 
       paragraphTwoIn: 2.03,
-      paragraphTwoOut: 2.18,
+      paragraphTwoOut: 2.25,
 
       lottieOutStart: 1.70,
       lottieOutEnd: 1.80,
