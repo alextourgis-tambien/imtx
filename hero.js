@@ -1435,6 +1435,24 @@
         heroEmbed.setAttribute("style", embedStyle);
       }
 
+      /*
+      Les positions Webflow doivent être mesurées sans le déplacement
+      résiduel de la timeline précédente.
+
+      Sur mobile uniquement, le wrapper des cellules compense ensuite
+      les 32px de remontée de .h-hero__content. Les cellules retrouvent
+      ainsi exactement leurs coordonnées Webflow une fois en place.
+      */
+      gsap.set(heroContent, { y: 0 });
+
+      if (cellsWrapper) {
+        gsap.set(cellsWrapper, {
+          y: currentSettings.mode === "mobile"
+            ? currentSettings.contentLift
+            : 0
+        });
+      }
+
       restoreTargetStyles();
       measureCells();
       rebuildTitleLines();
@@ -1455,7 +1473,6 @@
         gsap.set(header, { yPercent: 0 });
       }
 
-      gsap.set(heroContent, { y: 0 });
       fitTargetLottieOnMobile();
       window.requestAnimationFrame(fitTargetLottieOnMobile);
 
