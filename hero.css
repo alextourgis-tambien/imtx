@@ -47,6 +47,27 @@ HERO — LA HAUTEUR DU WRAPPER RESTE GÉRÉE DANS WEBFLOW
   transform: translateY(0em) rotate(-45deg);
 }
 
+@media screen and (max-width: 767px) {
+
+  .twostep-nav__toggle .twostep-nav__toggle-bar,
+  .twostep-nav__toggle:hover .twostep-nav__toggle-bar {
+    transform: translateY(-0.35em) rotate(0.001deg);
+  }
+
+  .twostep-nav__toggle .twostep-nav__toggle-bar:nth-child(2),
+  .twostep-nav__toggle:hover .twostep-nav__toggle-bar:nth-child(2) {
+    transform: translateY(0.35em) rotate(0.001deg);
+  }
+
+  [data-nav-status="active"] .twostep-nav__toggle .twostep-nav__toggle-bar {
+    transform: translateY(0em) rotate(45deg);
+  }
+
+  [data-nav-status="active"] .twostep-nav__toggle .twostep-nav__toggle-bar:nth-child(2) {
+    transform: translateY(0em) rotate(-45deg);
+  }
+}
+
 
 /* Page dark overlay */
 .twostep-nav__bg {
