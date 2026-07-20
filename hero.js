@@ -2395,6 +2395,42 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
         stageRectangle,
         settings.exclusionPadding
       );
+      const orderedExclusions = exclusions.slice().sort(function (
+        exclusionA,
+        exclusionB
+      ) {
+        return exclusionA.top - exclusionB.top;
+      });
+      const separatorRows = new Set();
+
+      for (
+        let separatorIndex = 0;
+        separatorIndex < orderedExclusions.length - 1;
+        separatorIndex++
+      ) {
+        const currentExclusion = orderedExclusions[separatorIndex];
+        const nextExclusion = orderedExclusions[separatorIndex + 1];
+        const availableGap = nextExclusion.top - currentExclusion.bottom;
+
+        if (availableGap < tileSize * 0.6) {
+          continue;
+        }
+
+        const separatorCenter =
+          (currentExclusion.bottom + nextExclusion.top) / 2;
+        const separatorRow = Math.min(
+          rows - 1,
+          Math.max(
+            0,
+            Math.round(
+              (separatorCenter - originY - tileSize / 2) / step
+            )
+          )
+        );
+
+        separatorRows.add(separatorRow);
+      }
+
       const fragment = document.createDocumentFragment();
 
       for (let row = 0; row < rows; row++) {
@@ -2448,6 +2484,8 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
             tile.dataset.pipelineCover = String(
               contentOverlap.itemIndex
             );
+          } else if (separatorRows.has(row)) {
+            tile.classList.add("is--separator");
           } else if (decorativeReveal && nearestExclusion) {
             tile.classList.add("is--decorative-reveal");
             tile.dataset.pipelineDecorative = String(
