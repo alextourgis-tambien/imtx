@@ -177,12 +177,12 @@
     },
 
     /*
-    Cette séquence commence après la disparition des 13 cellules.
+    Cette séquence commence pendant la disparition des 13 cellules.
     Les valeurs supérieures à 1 prolongent volontairement la timeline.
     */
     targetSequence: {
-      mainOneIn: 1.02,
-      mainTwoIn: 1.08,
+      mainOneIn: 0.91,
+      mainTwoIn: 0.94,
 
       mainExitStart: 1.22,
       mainExitEnd: 1.34,
@@ -1917,7 +1917,7 @@
       });
 
       /*================================================
-      SÉQUENCE TARGET — APRÈS LES 13 CELLULES
+      SÉQUENCE TARGET — PENDANT LA SORTIE DES 13 CELLULES
       ================================================*/
 
       const targetTiming = CONFIG.targetSequence;
