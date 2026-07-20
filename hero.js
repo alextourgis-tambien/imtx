@@ -2108,7 +2108,7 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
       gap: 3,
       radius: 9,
       exclusionPadding: 18,
-      initialEmptyRate: 0.075,
+      decorativeRevealRate: 0.075,
       reshuffleOutRate: 0.09
     },
 
@@ -2119,7 +2119,7 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
       gap: 3,
       radius: 8,
       exclusionPadding: 15,
-      initialEmptyRate: 0.07,
+      decorativeRevealRate: 0.07,
       reshuffleOutRate: 0.085
     },
 
@@ -2130,7 +2130,7 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
       gap: 2.5,
       radius: 7,
       exclusionPadding: 11,
-      initialEmptyRate: 0.06,
+      decorativeRevealRate: 0.06,
       reshuffleOutRate: 0.075
     },
 
@@ -2242,6 +2242,9 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
       const coverTiles = Array.from(
         tileLayer.querySelectorAll(".pipeline__tile.is--content-cover")
       );
+      const decorativeRevealTiles = Array.from(
+        tileLayer.querySelectorAll(".pipeline__tile.is--decorative-reveal")
+      );
       const reshuffleOutTiles = Array.from(
         tileLayer.querySelectorAll(".pipeline__tile.is--reshuffle-out")
       );
@@ -2251,6 +2254,9 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
         typeof window.ScrollTrigger === "undefined"
       ) {
         coverTiles.forEach(function (tile) {
+          tile.style.display = "none";
+        });
+        decorativeRevealTiles.forEach(function (tile) {
           tile.style.display = "none";
         });
         reshuffleOutTiles.forEach(function (tile) {
@@ -2268,6 +2274,7 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
         window.matchMedia("(prefers-reduced-motion: reduce)").matches
       ) {
         gsap.set(coverTiles, { scale: 0 });
+        gsap.set(decorativeRevealTiles, { scale: 0 });
         gsap.set(reshuffleOutTiles, { scale: 0 });
         gsap.set(contentItems, { opacity: 1 });
         return;
@@ -2305,7 +2312,11 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
       contentItems.forEach(function (item, itemIndex) {
         const itemTiles = coverTiles.filter(function (tile) {
           return Number(tile.dataset.pipelineCover) === itemIndex;
-        });
+        }).concat(
+          decorativeRevealTiles.filter(function (tile) {
+            return Number(tile.dataset.pipelineDecorative) === itemIndex;
+          })
+        );
         const orderedTiles = itemTiles.slice().sort(function (tileA, tileB) {
           const valueA = deterministicValue(
             Number(tileA.dataset.pipelineRow) + itemIndex * 7,
@@ -2390,18 +2401,36 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
           const contentOverlap = exclusions.find(function (exclusion) {
             return rectanglesIntersect(tileRectangle, exclusion);
           });
-          const initialEmpty = deterministicValue(
+          const decorativeReveal = deterministicValue(
             row,
             column
-          ) < settings.initialEmptyRate;
+          ) < settings.decorativeRevealRate;
           const reshuffleOut = deterministicValue(
             row + 73,
             column + 109
           ) < settings.reshuffleOutRate;
+          const tileCenterX = left + tileSize / 2;
+          const tileCenterY = top + tileSize / 2;
+          const nearestExclusion = exclusions.reduce(function (
+            nearest,
+            exclusion
+          ) {
+            const exclusionCenterX = (exclusion.left + exclusion.right) / 2;
+            const exclusionCenterY = (exclusion.top + exclusion.bottom) / 2;
+            const distance = Math.hypot(
+              tileCenterX - exclusionCenterX,
+              tileCenterY - exclusionCenterY
+            );
 
-          if (initialEmpty && !contentOverlap) {
-            continue;
-          }
+            if (!nearest || distance < nearest.distance) {
+              return {
+                itemIndex: exclusion.itemIndex,
+                distance: distance
+              };
+            }
+
+            return nearest;
+          }, null);
 
           const tile = document.createElement("span");
           tile.className = "pipeline__tile";
@@ -2409,6 +2438,11 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
             tile.classList.add("is--content-cover");
             tile.dataset.pipelineCover = String(
               contentOverlap.itemIndex
+            );
+          } else if (decorativeReveal && nearestExclusion) {
+            tile.classList.add("is--decorative-reveal");
+            tile.dataset.pipelineDecorative = String(
+              nearestExclusion.itemIndex
             );
           } else if (reshuffleOut) {
             tile.classList.add("is--reshuffle-out");
