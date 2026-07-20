@@ -2199,12 +2199,12 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
     },
 
     mobile: {
-      tileViewportRatio: 0.18,
-      tileMin: 52,
-      tileMax: 68,
-      gap: 2.5,
-      radius: 7,
-      exclusionPadding: 11,
+      tileViewportRatio: 0.14,
+      tileMin: 42,
+      tileMax: 54,
+      gap: 2,
+      radius: 6,
+      exclusionPadding: 9,
       cardCleanupPaddingRatio: 0.42,
       decorativeRevealRate: 0.06,
       reshuffleOutRate: 0.075,
