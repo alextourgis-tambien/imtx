@@ -219,8 +219,12 @@
 
     tiles: {
       startDelay: 150,
-      stagger: 5,
-      randomDelay: 150,
+      originX: 0.5,
+      originY: 0,
+      horizontalWeight: 1,
+      verticalWeight: 1,
+      waveDuration: 1050,
+      randomDelay: 70,
       flipDuration: 650,
       removeDelay: 150
     }
@@ -531,23 +535,40 @@
       return buildPermanentGrid;
     }
 
-    const shuffledTiles = createAnimatedTiles();
+    const animatedTiles = createAnimatedTiles();
     wrapper.classList.add("is--grid-ready");
+    const settings = getGridSettings();
+    const waveTiles = animatedTiles.map(function (tile, index) {
+      const row = Math.floor(index / settings.columns);
+      const column = index % settings.columns;
+      const normalizedX =
+        ((column + 0.5) / settings.columns - CONFIG.tiles.originX) *
+        2 * CONFIG.tiles.horizontalWeight;
+      const normalizedY =
+        ((row + 0.5) / settings.rows - CONFIG.tiles.originY) *
+        CONFIG.tiles.verticalWeight;
 
-    for (let index = shuffledTiles.length - 1; index > 0; index -= 1) {
-      const randomIndex = Math.floor(Math.random() * (index + 1));
-      const temporary = shuffledTiles[index];
-      shuffledTiles[index] = shuffledTiles[randomIndex];
-      shuffledTiles[randomIndex] = temporary;
-    }
+      return {
+        tile: tile,
+        distance: Math.hypot(normalizedX, normalizedY)
+      };
+    });
+    const maximumDistance = waveTiles.length
+      ? Math.max.apply(
+          null,
+          waveTiles.map(function (entry) {
+            return entry.distance;
+          })
+        )
+      : 1;
 
-    shuffledTiles.forEach(function (tile, index) {
+    waveTiles.forEach(function (entry) {
       const delay = CONFIG.tiles.startDelay +
-        index * CONFIG.tiles.stagger +
+        entry.distance / maximumDistance * CONFIG.tiles.waveDuration +
         Math.random() * CONFIG.tiles.randomDelay;
 
       window.setTimeout(function () {
-        tile.animate(
+        entry.tile.animate(
           [
             { transform: "rotateY(0deg)" },
             { transform: "rotateY(180deg)" }
@@ -562,7 +583,7 @@
     });
 
     const totalDuration = CONFIG.tiles.startDelay +
-      shuffledTiles.length * CONFIG.tiles.stagger +
+      CONFIG.tiles.waveDuration +
       CONFIG.tiles.randomDelay +
       CONFIG.tiles.flipDuration;
 
