@@ -2,6 +2,16 @@
 HERO — LA HAUTEUR DU WRAPPER RESTE GÉRÉE DANS WEBFLOW
 ==================================================*/
 
+:root{
+  --imtx-viewport-height:100vh;
+}
+
+@supports (height:100dvh){
+  :root{
+    --imtx-viewport-height:100dvh;
+  }
+}
+
 .h-hero__wrapper{
   position:relative;
   background:#050505;
@@ -191,7 +201,7 @@ HERO — LA HAUTEUR DU WRAPPER RESTE GÉRÉE DANS WEBFLOW
   display:flex;
   flex-direction:column;
   width:100%;
-  height:100svh;
+  height:var(--imtx-viewport-height);
   overflow:hidden;
   background:#050505;
 }
@@ -545,13 +555,14 @@ MOBILE
   }
 
   .hh__cells-wrapper,
-  .hh__target-wrapper{
+  .hh__target-wrapper,
+  .hh__cancer-wrapper{
     position:fixed !important;
     inset:0 0 auto 0 !important;
     width:100% !important;
-    height:100svh !important;
-    min-height:100svh !important;
-    max-height:100svh !important;
+    height:var(--imtx-viewport-height) !important;
+    min-height:var(--imtx-viewport-height) !important;
+    max-height:var(--imtx-viewport-height) !important;
   }
 
   .hero-tile-wrapper,
@@ -591,7 +602,7 @@ La hauteur de .h-second__wrapper reste gérée dans Webflow.
   position:sticky;
   top:0;
   width:100%;
-  height:100svh;
+  height:var(--imtx-viewport-height);
   overflow:hidden;
 }
 
@@ -636,7 +647,7 @@ REDUCED MOTION
 
 @media (prefers-reduced-motion:reduce){
   .h-hero__wrapper{
-    height:100svh;
+    height:var(--imtx-viewport-height);
   }
 
   .h-hero{

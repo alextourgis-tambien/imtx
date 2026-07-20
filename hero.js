@@ -1,3 +1,51 @@
+(function syncDynamicMobileViewport() {
+  "use strict";
+
+  const propertyName = "--imtx-viewport-height";
+  let viewportTimer = null;
+
+  function updateViewportHeight() {
+    if (window.innerWidth > 991) {
+      document.documentElement.style.removeProperty(propertyName);
+      return;
+    }
+
+    const viewportHeight = window.visualViewport
+      ? window.visualViewport.height
+      : window.innerHeight;
+
+    if (!viewportHeight) {
+      return;
+    }
+
+    document.documentElement.style.setProperty(
+      propertyName,
+      Math.ceil(viewportHeight) + "px"
+    );
+  }
+
+  function queueViewportUpdate() {
+    window.clearTimeout(viewportTimer);
+    viewportTimer = window.setTimeout(updateViewportHeight, 30);
+  }
+
+  updateViewportHeight();
+  window.addEventListener("resize", queueViewportUpdate, {
+    passive: true
+  });
+  window.addEventListener("orientationchange", function () {
+    window.setTimeout(updateViewportHeight, 120);
+  });
+
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener(
+      "resize",
+      queueViewportUpdate,
+      { passive: true }
+    );
+  }
+})();
+
 (function () {
   "use strict";
 
