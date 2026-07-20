@@ -2108,7 +2108,8 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
       gap: 3,
       radius: 9,
       exclusionPadding: 18,
-      decorativeEmptyRate: 0.15
+      initialEmptyRate: 0.075,
+      reshuffleOutRate: 0.09
     },
 
     tablet: {
@@ -2118,7 +2119,8 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
       gap: 3,
       radius: 8,
       exclusionPadding: 15,
-      decorativeEmptyRate: 0.14
+      initialEmptyRate: 0.07,
+      reshuffleOutRate: 0.085
     },
 
     mobile: {
@@ -2128,17 +2130,17 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
       gap: 2.5,
       radius: 7,
       exclusionPadding: 11,
-      decorativeEmptyRate: 0.12
+      initialEmptyRate: 0.06,
+      reshuffleOutRate: 0.075
     },
 
     reveal: {
-      itemStarts: [0.12, 0.30, 0.48, 0.66],
-      tileLatestOffset: 0.07,
-      tileDurationMin: 0.10,
-      tileDurationMax: 0.15,
-      itemFadeDelay: 0.035,
-      itemFadeDuration: 0.08,
-      end: 1
+      reshuffleStart: "top 92%",
+      reshuffleEnd: "top 58%",
+      itemStart: "top 78%",
+      itemEnd: "top 48%",
+      tileStagger: 0.32,
+      itemFadeAt: 0.42
     },
 
     resizeDebounce: 160
@@ -2175,7 +2177,7 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
 
     let resizeTimer = null;
     let resizeObserver = null;
-    let revealTimeline = null;
+    let revealAnimations = [];
 
     function getSettings() {
       if (window.innerWidth <= 767) {
@@ -2224,17 +2226,27 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
       }).filter(Boolean);
     }
 
-    function createRevealTimeline() {
-      if (revealTimeline) {
-        if (revealTimeline.scrollTrigger) {
-          revealTimeline.scrollTrigger.kill();
+    function killRevealAnimations() {
+      revealAnimations.forEach(function (animation) {
+        if (animation.scrollTrigger) {
+          animation.scrollTrigger.kill();
         }
-        revealTimeline.kill();
-        revealTimeline = null;
-      }
+        animation.kill();
+      });
+      revealAnimations = [];
+    }
+
+    function createRevealAnimations() {
+      killRevealAnimations();
 
       const coverTiles = Array.from(
         tileLayer.querySelectorAll(".pipeline__tile.is--content-cover")
+      );
+      const initialEmptyTiles = Array.from(
+        tileLayer.querySelectorAll(".pipeline__tile.is--initial-empty")
+      );
+      const reshuffleOutTiles = Array.from(
+        tileLayer.querySelectorAll(".pipeline__tile.is--reshuffle-out")
       );
 
       if (
@@ -2242,6 +2254,12 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
         typeof window.ScrollTrigger === "undefined"
       ) {
         coverTiles.forEach(function (tile) {
+          tile.style.display = "none";
+        });
+        initialEmptyTiles.forEach(function (tile) {
+          tile.style.display = "block";
+        });
+        reshuffleOutTiles.forEach(function (tile) {
           tile.style.display = "none";
         });
         contentItems.forEach(function (item) {
@@ -2256,67 +2274,95 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
         window.matchMedia("(prefers-reduced-motion: reduce)").matches
       ) {
         gsap.set(coverTiles, { scale: 0 });
+        gsap.set(initialEmptyTiles, { scale: 1 });
+        gsap.set(reshuffleOutTiles, { scale: 0 });
         gsap.set(contentItems, { opacity: 1 });
         return;
       }
 
-      gsap.set(coverTiles, {
+      gsap.set(tileLayer.querySelectorAll(".pipeline__tile"), {
         scale: 1,
         transformOrigin: "50% 50%"
       });
+      gsap.set(initialEmptyTiles, { scale: 0 });
       gsap.set(contentItems, { opacity: 0 });
 
-      revealTimeline = gsap.timeline({
-        defaults: { ease: "none" },
+      const reveal = PIPELINE_GRID_CONFIG.reveal;
+      const reshuffleTimeline = gsap.timeline({
         scrollTrigger: {
-          trigger: wrapper,
-          start: "top top",
-          end: "bottom bottom",
+          trigger: stage,
+          start: reveal.reshuffleStart,
+          end: reveal.reshuffleEnd,
           scrub: 1,
           invalidateOnRefresh: true
         }
       });
 
-      const reveal = PIPELINE_GRID_CONFIG.reveal;
+      reshuffleTimeline.to(initialEmptyTiles, {
+        scale: 1,
+        duration: 0.72,
+        stagger: {
+          each: 0.025,
+          from: "random"
+        },
+        ease: "power2.inOut"
+      }, 0);
+
+      reshuffleTimeline.to(reshuffleOutTiles, {
+        scale: 0,
+        duration: 0.72,
+        stagger: {
+          each: 0.025,
+          from: "random"
+        },
+        ease: "power2.inOut"
+      }, 0.12);
+
+      revealAnimations.push(reshuffleTimeline);
 
       contentItems.forEach(function (item, itemIndex) {
-        const start = reveal.itemStarts[itemIndex] !== undefined
-          ? reveal.itemStarts[itemIndex]
-          : reveal.itemStarts[reveal.itemStarts.length - 1];
         const itemTiles = coverTiles.filter(function (tile) {
           return Number(tile.dataset.pipelineCover) === itemIndex;
         });
-
-        itemTiles.forEach(function (tile) {
-          const row = Number(tile.dataset.pipelineRow) || 0;
-          const column = Number(tile.dataset.pipelineColumn) || 0;
-          const random = deterministicValue(
-            row + itemIndex * 7,
-            column + itemIndex * 11
+        const orderedTiles = itemTiles.slice().sort(function (tileA, tileB) {
+          const valueA = deterministicValue(
+            Number(tileA.dataset.pipelineRow) + itemIndex * 7,
+            Number(tileA.dataset.pipelineColumn) + itemIndex * 11
           );
-          const duration = gsap.utils.interpolate(
-            reveal.tileDurationMin,
-            reveal.tileDurationMax,
-            deterministicValue(row + 31, column + 47)
+          const valueB = deterministicValue(
+            Number(tileB.dataset.pipelineRow) + itemIndex * 7,
+            Number(tileB.dataset.pipelineColumn) + itemIndex * 11
           );
-
-          revealTimeline.to(tile, {
-            scale: 0,
-            duration: duration,
-            ease: "power2.inOut"
-          }, start + random * reveal.tileLatestOffset);
+          return valueA - valueB;
         });
 
-        revealTimeline.to(item, {
-          opacity: 1,
-          duration: reveal.itemFadeDuration,
-          ease: "power2.out"
-        }, start + reveal.itemFadeDelay);
-      });
+        const itemTimeline = gsap.timeline({
+          scrollTrigger: {
+            trigger: item,
+            start: reveal.itemStart,
+            end: reveal.itemEnd,
+            scrub: 1,
+            invalidateOnRefresh: true
+          }
+        });
 
-      revealTimeline.to({}, {
-        duration: 0.01
-      }, reveal.end);
+        itemTimeline.to(orderedTiles, {
+          scale: 0,
+          duration: 0.68,
+          stagger: orderedTiles.length
+            ? reveal.tileStagger / orderedTiles.length
+            : 0,
+          ease: "power2.inOut"
+        }, 0);
+
+        itemTimeline.to(item, {
+          opacity: 1,
+          duration: 0.28,
+          ease: "power2.out"
+        }, reveal.itemFadeAt);
+
+        revealAnimations.push(itemTimeline);
+      });
     }
 
     function buildGrid() {
@@ -2362,14 +2408,14 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
           const contentOverlap = exclusions.find(function (exclusion) {
             return rectanglesIntersect(tileRectangle, exclusion);
           });
-          const decorativeEmpty = deterministicValue(
+          const initialEmpty = deterministicValue(
             row,
             column
-          ) < settings.decorativeEmptyRate;
-
-          if (decorativeEmpty && !contentOverlap) {
-            continue;
-          }
+          ) < settings.initialEmptyRate;
+          const reshuffleOut = deterministicValue(
+            row + 73,
+            column + 109
+          ) < settings.reshuffleOutRate;
 
           const tile = document.createElement("span");
           tile.className = "pipeline__tile";
@@ -2378,6 +2424,10 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
             tile.dataset.pipelineCover = String(
               contentOverlap.itemIndex
             );
+          } else if (initialEmpty) {
+            tile.classList.add("is--initial-empty");
+          } else if (reshuffleOut) {
+            tile.classList.add("is--reshuffle-out");
           }
           tile.style.left = left + "px";
           tile.style.top = top + "px";
@@ -2391,7 +2441,10 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
       }
 
       tileLayer.replaceChildren(fragment);
-      createRevealTimeline();
+      createRevealAnimations();
+      if (typeof window.ScrollTrigger !== "undefined") {
+        ScrollTrigger.refresh();
+      }
     }
 
     function queueBuild() {
