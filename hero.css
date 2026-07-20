@@ -51,12 +51,12 @@ HERO — LA HAUTEUR DU WRAPPER RESTE GÉRÉE DANS WEBFLOW
 
   .twostep-nav__toggle .twostep-nav__toggle-bar,
   .twostep-nav__toggle:hover .twostep-nav__toggle-bar {
-    transform: translateY(-0.35em) rotate(0.001deg);
+    transform: translateY(-0.70em) rotate(0.001deg);
   }
 
   .twostep-nav__toggle .twostep-nav__toggle-bar:nth-child(2),
   .twostep-nav__toggle:hover .twostep-nav__toggle-bar:nth-child(2) {
-    transform: translateY(0.35em) rotate(0.001deg);
+    transform: translateY(0.70em) rotate(0.001deg);
   }
 
   [data-nav-status="active"] .twostep-nav__toggle .twostep-nav__toggle-bar {
