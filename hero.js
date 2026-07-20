@@ -2080,6 +2080,245 @@
   });
 })();
 
+/*==================================================
+PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
+==================================================*/
+
+(function () {
+  "use strict";
+
+  const PIPELINE_GRID_CONFIG = {
+    selectors: {
+      stage: ".pipeline__stage",
+      tiles: ".pipeline__tiles",
+      content: ".pipeline__content",
+      items: [
+        ".pipeline__item.is--one",
+        ".pipeline__item.is--two",
+        ".pipeline__item.is--three",
+        ".pipeline__item.is--four"
+      ]
+    },
+
+    desktop: {
+      tileViewportRatio: 0.072,
+      tileMin: 64,
+      tileMax: 92,
+      gap: 3,
+      radius: 9,
+      exclusionPadding: 18,
+      decorativeEmptyRate: 0.15
+    },
+
+    tablet: {
+      tileViewportRatio: 0.09,
+      tileMin: 56,
+      tileMax: 74,
+      gap: 3,
+      radius: 8,
+      exclusionPadding: 15,
+      decorativeEmptyRate: 0.14
+    },
+
+    mobile: {
+      tileViewportRatio: 0.18,
+      tileMin: 52,
+      tileMax: 68,
+      gap: 2.5,
+      radius: 7,
+      exclusionPadding: 11,
+      decorativeEmptyRate: 0.12
+    },
+
+    resizeDebounce: 160
+  };
+
+  function initPipelineTileGrid() {
+    const selectors = PIPELINE_GRID_CONFIG.selectors;
+    const stage = document.querySelector(selectors.stage);
+    const tileLayer = document.querySelector(selectors.tiles);
+    const content = document.querySelector(selectors.content);
+
+    if (!stage || !tileLayer || !content) {
+      console.warn(
+        "Pipeline grid : .pipeline__stage, .pipeline__tiles ou " +
+        ".pipeline__content est absent."
+      );
+      return;
+    }
+
+    const contentItems = selectors.items.map(function (selector) {
+      const item = content.querySelector(selector);
+
+      if (!item) {
+        console.warn(
+          "Pipeline grid : élément absent — " + selector
+        );
+      }
+
+      return item;
+    }).filter(Boolean);
+
+    tileLayer.setAttribute("aria-hidden", "true");
+
+    let resizeTimer = null;
+    let resizeObserver = null;
+
+    function getSettings() {
+      if (window.innerWidth <= 767) {
+        return PIPELINE_GRID_CONFIG.mobile;
+      }
+
+      if (window.innerWidth <= 991) {
+        return PIPELINE_GRID_CONFIG.tablet;
+      }
+
+      return PIPELINE_GRID_CONFIG.desktop;
+    }
+
+    function deterministicValue(row, column) {
+      const value = Math.sin(
+        (row + 1) * 12.9898 + (column + 1) * 78.233
+      ) * 43758.5453;
+
+      return value - Math.floor(value);
+    }
+
+    function rectanglesIntersect(tile, exclusion) {
+      return (
+        tile.right > exclusion.left &&
+        tile.left < exclusion.right &&
+        tile.bottom > exclusion.top &&
+        tile.top < exclusion.bottom
+      );
+    }
+
+    function getExclusionRectangles(stageRectangle, padding) {
+      return contentItems.map(function (item) {
+        const rectangle = item.getBoundingClientRect();
+
+        if (!rectangle.width || !rectangle.height) {
+          return null;
+        }
+
+        return {
+          left: rectangle.left - stageRectangle.left - padding,
+          top: rectangle.top - stageRectangle.top - padding,
+          right: rectangle.right - stageRectangle.left + padding,
+          bottom: rectangle.bottom - stageRectangle.top + padding
+        };
+      }).filter(Boolean);
+    }
+
+    function buildGrid() {
+      const stageRectangle = stage.getBoundingClientRect();
+      const width = stageRectangle.width;
+      const height = stageRectangle.height;
+
+      if (!width || !height) {
+        return;
+      }
+
+      const settings = getSettings();
+      const tileSize = Math.min(
+        settings.tileMax,
+        Math.max(
+          settings.tileMin,
+          width * settings.tileViewportRatio
+        )
+      );
+      const step = tileSize + settings.gap;
+      const columns = Math.ceil((width + tileSize) / step) + 1;
+      const rows = Math.ceil((height + tileSize) / step) + 1;
+      const gridWidth = (columns - 1) * step + tileSize;
+      const gridHeight = (rows - 1) * step + tileSize;
+      const originX = (width - gridWidth) / 2;
+      const originY = (height - gridHeight) / 2;
+      const exclusions = getExclusionRectangles(
+        stageRectangle,
+        settings.exclusionPadding
+      );
+      const fragment = document.createDocumentFragment();
+
+      for (let row = 0; row < rows; row++) {
+        for (let column = 0; column < columns; column++) {
+          const left = originX + column * step;
+          const top = originY + row * step;
+          const tileRectangle = {
+            left: left,
+            top: top,
+            right: left + tileSize,
+            bottom: top + tileSize
+          };
+          const overlapsContent = exclusions.some(function (exclusion) {
+            return rectanglesIntersect(tileRectangle, exclusion);
+          });
+          const decorativeEmpty = deterministicValue(
+            row,
+            column
+          ) < settings.decorativeEmptyRate;
+
+          if (overlapsContent || decorativeEmpty) {
+            continue;
+          }
+
+          const tile = document.createElement("span");
+          tile.className = "pipeline__tile";
+          tile.style.left = left + "px";
+          tile.style.top = top + "px";
+          tile.style.width = tileSize + "px";
+          tile.style.height = tileSize + "px";
+          tile.style.borderRadius = settings.radius + "px";
+          tile.dataset.pipelineRow = String(row);
+          tile.dataset.pipelineColumn = String(column);
+          fragment.appendChild(tile);
+        }
+      }
+
+      tileLayer.replaceChildren(fragment);
+    }
+
+    function queueBuild() {
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(
+        buildGrid,
+        PIPELINE_GRID_CONFIG.resizeDebounce
+      );
+    }
+
+    buildGrid();
+
+    window.addEventListener("resize", queueBuild);
+    window.addEventListener("orientationchange", queueBuild);
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", queueBuild);
+    }
+
+    if (typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(queueBuild);
+      resizeObserver.observe(stage);
+      contentItems.forEach(function (item) {
+        resizeObserver.observe(item);
+      });
+    }
+
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(queueBuild);
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener(
+      "DOMContentLoaded",
+      initPipelineTileGrid,
+      { once: true }
+    );
+  } else {
+    initPipelineTileGrid();
+  }
+})();
+
 function initTwostepScalingNavigation() {
   const navElement = document.querySelector("[data-twostep-nav]")
   const navStatusEl = document.querySelector("[data-nav-status]");
