@@ -2109,7 +2109,8 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
       radius: 9,
       exclusionPadding: 18,
       decorativeRevealRate: 0.075,
-      reshuffleOutRate: 0.09
+      reshuffleOutRate: 0.09,
+      protrudingTilePositions: [0.62]
     },
 
     tablet: {
@@ -2120,7 +2121,8 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
       radius: 8,
       exclusionPadding: 15,
       decorativeRevealRate: 0.07,
-      reshuffleOutRate: 0.085
+      reshuffleOutRate: 0.085,
+      protrudingTilePositions: [0.62]
     },
 
     mobile: {
@@ -2131,7 +2133,8 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
       radius: 7,
       exclusionPadding: 11,
       decorativeRevealRate: 0.06,
-      reshuffleOutRate: 0.075
+      reshuffleOutRate: 0.075,
+      protrudingTilePositions: [0.62]
     },
 
     reveal: {
@@ -2376,12 +2379,18 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
         )
       );
       const step = tileSize + settings.gap;
-      const columns = Math.ceil((width + tileSize) / step) + 1;
-      const rows = Math.ceil((height + tileSize) / step) + 1;
+      const columns = Math.max(
+        1,
+        Math.floor((width + settings.gap) / step)
+      );
+      const rows = Math.max(
+        1,
+        Math.floor((height + settings.gap) / step)
+      );
       const gridWidth = (columns - 1) * step + tileSize;
       const gridHeight = (rows - 1) * step + tileSize;
-      const originX = (width - gridWidth) / 2;
-      const originY = (height - gridHeight) / 2;
+      const originX = Math.max(0, (width - gridWidth) / 2);
+      const originY = Math.max(0, (height - gridHeight) / 2);
       const exclusions = getExclusionRectangles(
         stageRectangle,
         settings.exclusionPadding
@@ -2457,6 +2466,25 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
           fragment.appendChild(tile);
         }
       }
+
+      settings.protrudingTilePositions.forEach(function (
+        position,
+        index
+      ) {
+        const column = Math.round(
+          Math.min(1, Math.max(0, position)) * (columns - 1)
+        );
+        const tile = document.createElement("span");
+        tile.className = "pipeline__tile is--protruding";
+        tile.style.left = originX + column * step + "px";
+        tile.style.top = originY - step + "px";
+        tile.style.width = tileSize + "px";
+        tile.style.height = tileSize + "px";
+        tile.style.borderRadius = settings.radius + "px";
+        tile.dataset.pipelineRow = "-1";
+        tile.dataset.pipelineColumn = String(column + index);
+        fragment.appendChild(tile);
+      });
 
       tileLayer.replaceChildren(fragment);
       createRevealAnimations();
