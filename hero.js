@@ -3189,6 +3189,24 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
           SECOND_CONFIG.text.lineStagger +
         SECOND_CONFIG.text.lineDuration;
 
+      const videoVisibilityWindows = [
+        [
+          videoOne,
+          timing.videoOneIn,
+          timing.videoOneOut + timing.videoOneOutDuration
+        ],
+        [
+          videoTwo,
+          timing.videoTwoIn,
+          timing.videoTwoOut + timing.videoBackOutDuration
+        ],
+        [
+          videoThree,
+          timing.videoThreeIn,
+          timing.videoThreeOut + timing.videoBackOutDuration
+        ]
+      ];
+
       /*
       Les deux paragraphes sont aussi touchés par la transition d’entrée
       de la section. Ce verrou de visibilité empêche qu’un ancien état
@@ -3206,6 +3224,25 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
             : "hidden";
       }
 
+      /*
+      Une vidéo Webflow peut conserver un calque matériel visible sur iOS,
+      même avec scale:0. Chaque vidéo est donc réellement cachée en dehors de
+      sa propre fenêtre d'animation, ce qui empêche la section suivante de
+      dépasser sur le hero pendant le chargement ou un scroll arrière.
+      */
+      function syncVideoVisibility(progress) {
+        videoVisibilityWindows.forEach(function (windowSettings) {
+          const video = windowSettings[0];
+          const start = windowSettings[1];
+          const end = windowSettings[2];
+
+          video.style.visibility =
+            progress >= start - 0.001 && progress <= end + 0.001
+              ? "visible"
+              : "hidden";
+        });
+      }
+
       timeline = gsap.timeline({
         defaults: { ease: "none" },
         scrollTrigger: {
@@ -3216,14 +3253,21 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
           invalidateOnRefresh: true,
           onUpdate: function (self) {
             syncParagraphVisibility(self.progress);
+            syncVideoVisibility(self.progress);
           },
           onRefresh: function (self) {
             syncParagraphVisibility(self.progress);
+            syncVideoVisibility(self.progress);
           }
         }
       });
 
       syncParagraphVisibility(
+        timeline.scrollTrigger
+          ? timeline.scrollTrigger.progress
+          : 0
+      );
+      syncVideoVisibility(
         timeline.scrollTrigger
           ? timeline.scrollTrigger.progress
           : 0

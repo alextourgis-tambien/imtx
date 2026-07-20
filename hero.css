@@ -576,18 +576,6 @@ MOBILE
     max-width:none;
   }
 
-  /*
-  Quelques pixels de bleed absorbent les arrondis et sous-pixels de Safari
-  iOS. La grille couvre ainsi toujours les deux bords, sans modifier la taille
-  ni le transform du couple vidéo/embed.
-  */
-  .hero-tile-wrapper{
-    left:-8px;
-    right:-8px;
-    width:auto;
-    min-width:calc(100% + 16px);
-  }
-
   .hh__cells-wrapper,
   .hh__target-wrapper,
   .hh__cancer-wrapper{
@@ -647,7 +635,6 @@ La hauteur de .h-second__wrapper reste gérée dans Webflow.
 }
 
 html.second-animation-ready .hs_p,
-html.second-animation-ready .hs__video,
 html.second-animation-ready .hs__button-wrapper{
   visibility:visible;
 }
