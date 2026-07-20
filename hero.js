@@ -2108,6 +2108,7 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
       gap: 3,
       radius: 9,
       exclusionPadding: 18,
+      cardCleanupPaddingRatio: 0.42,
       decorativeRevealRate: 0.075,
       reshuffleOutRate: 0.09,
       protrudingTilePositions: [0.62]
@@ -2120,6 +2121,7 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
       gap: 3,
       radius: 8,
       exclusionPadding: 15,
+      cardCleanupPaddingRatio: 0.42,
       decorativeRevealRate: 0.07,
       reshuffleOutRate: 0.085,
       protrudingTilePositions: [0.62]
@@ -2132,6 +2134,7 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
       gap: 2.5,
       radius: 7,
       exclusionPadding: 11,
+      cardCleanupPaddingRatio: 0.42,
       decorativeRevealRate: 0.06,
       reshuffleOutRate: 0.075,
       protrudingTilePositions: [0.62]
@@ -2396,6 +2399,16 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
         stageRectangle,
         settings.exclusionPadding
       );
+      const cleanupPadding = step * settings.cardCleanupPaddingRatio;
+      const cleanupExclusions = exclusions.map(function (exclusion) {
+        return {
+          itemIndex: exclusion.itemIndex,
+          left: exclusion.left - cleanupPadding,
+          top: exclusion.top - cleanupPadding,
+          right: exclusion.right + cleanupPadding,
+          bottom: exclusion.bottom + cleanupPadding
+        };
+      });
       const orderedExclusions = exclusions.slice().sort(function (
         exclusionA,
         exclusionB
@@ -2447,6 +2460,11 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
           const contentOverlap = exclusions.find(function (exclusion) {
             return rectanglesIntersect(tileRectangle, exclusion);
           });
+          const cleanupOverlap = cleanupExclusions.find(function (
+            exclusion
+          ) {
+            return rectanglesIntersect(tileRectangle, exclusion);
+          });
           const decorativeReveal = deterministicValue(
             row,
             column
@@ -2487,6 +2505,11 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
             );
           } else if (separatorRows.has(row)) {
             tile.classList.add("is--separator");
+          } else if (cleanupOverlap) {
+            tile.classList.add("is--content-cover");
+            tile.dataset.pipelineCover = String(
+              cleanupOverlap.itemIndex
+            );
           } else if (decorativeReveal && nearestExclusion) {
             tile.classList.add("is--decorative-reveal");
             tile.dataset.pipelineDecorative = String(
