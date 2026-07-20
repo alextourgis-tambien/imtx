@@ -3169,6 +3169,30 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       }
 
       const timing = SECOND_CONFIG.timing;
+      const paragraphOneLineCount = (
+        lines.get(paragraphOne) || []
+      ).length;
+      const paragraphOneExitEnd = timing.paragraphOneOut +
+        Math.max(paragraphOneLineCount - 1, 0) *
+          SECOND_CONFIG.text.lineStagger +
+        SECOND_CONFIG.text.lineDuration;
+
+      /*
+      Les deux paragraphes sont aussi touchés par la transition d’entrée
+      de la section. Ce verrou de visibilité empêche qu’un ancien état
+      GSAP les laisse affichés ensemble après un scroll arrière ou un
+      refresh, sans modifier l’animation ligne par ligne active.
+      */
+      function syncParagraphVisibility(progress) {
+        paragraphOne.style.visibility =
+          progress <= paragraphOneExitEnd + 0.001
+            ? "visible"
+            : "hidden";
+        paragraphTwo.style.visibility =
+          progress >= timing.paragraphTwoIn - 0.001
+            ? "visible"
+            : "hidden";
+      }
 
       timeline = gsap.timeline({
         defaults: { ease: "none" },
@@ -3177,9 +3201,21 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
           start: "top top",
           end: "bottom bottom",
           scrub: 1,
-          invalidateOnRefresh: true
+          invalidateOnRefresh: true,
+          onUpdate: function (self) {
+            syncParagraphVisibility(self.progress);
+          },
+          onRefresh: function (self) {
+            syncParagraphVisibility(self.progress);
+          }
         }
       });
+
+      syncParagraphVisibility(
+        timeline.scrollTrigger
+          ? timeline.scrollTrigger.progress
+          : 0
+      );
 
       animateLinesOut(paragraphOne, timing.paragraphOneOut);
 
