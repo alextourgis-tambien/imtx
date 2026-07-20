@@ -527,10 +527,12 @@
 
     if (prefersReducedMotion) {
       animatedGrid.remove();
+      wrapper.classList.add("is--grid-ready");
       return buildPermanentGrid;
     }
 
     const shuffledTiles = createAnimatedTiles();
+    wrapper.classList.add("is--grid-ready");
 
     for (let index = shuffledTiles.length - 1; index > 0; index -= 1) {
       const randomIndex = Math.floor(Math.random() * (index + 1));
