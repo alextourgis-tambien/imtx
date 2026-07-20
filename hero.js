@@ -2089,6 +2089,7 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
 
   const PIPELINE_GRID_CONFIG = {
     selectors: {
+      wrapper: ".pipeline__wrapper",
       stage: ".pipeline__stage",
       tiles: ".pipeline__tiles",
       content: ".pipeline__content",
@@ -2130,19 +2131,30 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
       decorativeEmptyRate: 0.12
     },
 
+    reveal: {
+      itemStarts: [0.12, 0.30, 0.48, 0.66],
+      tileLatestOffset: 0.07,
+      tileDurationMin: 0.10,
+      tileDurationMax: 0.15,
+      itemFadeDelay: 0.035,
+      itemFadeDuration: 0.08,
+      end: 1
+    },
+
     resizeDebounce: 160
   };
 
   function initPipelineTileGrid() {
     const selectors = PIPELINE_GRID_CONFIG.selectors;
+    const wrapper = document.querySelector(selectors.wrapper);
     const stage = document.querySelector(selectors.stage);
     const tileLayer = document.querySelector(selectors.tiles);
     const content = document.querySelector(selectors.content);
 
-    if (!stage || !tileLayer || !content) {
+    if (!wrapper || !stage || !tileLayer || !content) {
       console.warn(
-        "Pipeline grid : .pipeline__stage, .pipeline__tiles ou " +
-        ".pipeline__content est absent."
+        "Pipeline grid : .pipeline__wrapper, .pipeline__stage, " +
+        ".pipeline__tiles ou .pipeline__content est absent."
       );
       return;
     }
@@ -2163,6 +2175,7 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
 
     let resizeTimer = null;
     let resizeObserver = null;
+    let revealTimeline = null;
 
     function getSettings() {
       if (window.innerWidth <= 767) {
@@ -2194,7 +2207,7 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
     }
 
     function getExclusionRectangles(stageRectangle, padding) {
-      return contentItems.map(function (item) {
+      return contentItems.map(function (item, itemIndex) {
         const rectangle = item.getBoundingClientRect();
 
         if (!rectangle.width || !rectangle.height) {
@@ -2202,12 +2215,108 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
         }
 
         return {
+          itemIndex: itemIndex,
           left: rectangle.left - stageRectangle.left - padding,
           top: rectangle.top - stageRectangle.top - padding,
           right: rectangle.right - stageRectangle.left + padding,
           bottom: rectangle.bottom - stageRectangle.top + padding
         };
       }).filter(Boolean);
+    }
+
+    function createRevealTimeline() {
+      if (revealTimeline) {
+        if (revealTimeline.scrollTrigger) {
+          revealTimeline.scrollTrigger.kill();
+        }
+        revealTimeline.kill();
+        revealTimeline = null;
+      }
+
+      const coverTiles = Array.from(
+        tileLayer.querySelectorAll(".pipeline__tile.is--content-cover")
+      );
+
+      if (
+        typeof window.gsap === "undefined" ||
+        typeof window.ScrollTrigger === "undefined"
+      ) {
+        coverTiles.forEach(function (tile) {
+          tile.style.display = "none";
+        });
+        contentItems.forEach(function (item) {
+          item.style.opacity = "1";
+        });
+        return;
+      }
+
+      gsap.registerPlugin(ScrollTrigger);
+
+      if (
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      ) {
+        gsap.set(coverTiles, { scale: 0 });
+        gsap.set(contentItems, { opacity: 1 });
+        return;
+      }
+
+      gsap.set(coverTiles, {
+        scale: 1,
+        transformOrigin: "50% 50%"
+      });
+      gsap.set(contentItems, { opacity: 0 });
+
+      revealTimeline = gsap.timeline({
+        defaults: { ease: "none" },
+        scrollTrigger: {
+          trigger: wrapper,
+          start: "top top",
+          end: "bottom bottom",
+          scrub: 1,
+          invalidateOnRefresh: true
+        }
+      });
+
+      const reveal = PIPELINE_GRID_CONFIG.reveal;
+
+      contentItems.forEach(function (item, itemIndex) {
+        const start = reveal.itemStarts[itemIndex] !== undefined
+          ? reveal.itemStarts[itemIndex]
+          : reveal.itemStarts[reveal.itemStarts.length - 1];
+        const itemTiles = coverTiles.filter(function (tile) {
+          return Number(tile.dataset.pipelineCover) === itemIndex;
+        });
+
+        itemTiles.forEach(function (tile) {
+          const row = Number(tile.dataset.pipelineRow) || 0;
+          const column = Number(tile.dataset.pipelineColumn) || 0;
+          const random = deterministicValue(
+            row + itemIndex * 7,
+            column + itemIndex * 11
+          );
+          const duration = gsap.utils.interpolate(
+            reveal.tileDurationMin,
+            reveal.tileDurationMax,
+            deterministicValue(row + 31, column + 47)
+          );
+
+          revealTimeline.to(tile, {
+            scale: 0,
+            duration: duration,
+            ease: "power2.inOut"
+          }, start + random * reveal.tileLatestOffset);
+        });
+
+        revealTimeline.to(item, {
+          opacity: 1,
+          duration: reveal.itemFadeDuration,
+          ease: "power2.out"
+        }, start + reveal.itemFadeDelay);
+      });
+
+      revealTimeline.to({}, {
+        duration: 0.01
+      }, reveal.end);
     }
 
     function buildGrid() {
@@ -2250,7 +2359,7 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
             right: left + tileSize,
             bottom: top + tileSize
           };
-          const overlapsContent = exclusions.some(function (exclusion) {
+          const contentOverlap = exclusions.find(function (exclusion) {
             return rectanglesIntersect(tileRectangle, exclusion);
           });
           const decorativeEmpty = deterministicValue(
@@ -2258,12 +2367,18 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
             column
           ) < settings.decorativeEmptyRate;
 
-          if (overlapsContent || decorativeEmpty) {
+          if (decorativeEmpty && !contentOverlap) {
             continue;
           }
 
           const tile = document.createElement("span");
           tile.className = "pipeline__tile";
+          if (contentOverlap) {
+            tile.classList.add("is--content-cover");
+            tile.dataset.pipelineCover = String(
+              contentOverlap.itemIndex
+            );
+          }
           tile.style.left = left + "px";
           tile.style.top = top + "px";
           tile.style.width = tileSize + "px";
@@ -2276,6 +2391,7 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
       }
 
       tileLayer.replaceChildren(fragment);
+      createRevealTimeline();
     }
 
     function queueBuild() {
