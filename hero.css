@@ -543,8 +543,21 @@ MOBILE
   }
 
   .h-hero{
-    overflow:clip !important;
+    overflow:hidden !important;
     isolation:isolate;
+    contain:paint;
+    clip-path:inset(0);
+    -webkit-mask-image:-webkit-radial-gradient(white,black);
+  }
+
+  /*
+  Safari iOS peut rendre le calque matériel d’une vidéo en dehors de son
+  parent malgré overflow:hidden. Le masque force le clip réel du calque.
+  */
+  .h-hero__bg,
+  .h-hero__embed{
+    overflow:hidden !important;
+    -webkit-mask-image:-webkit-radial-gradient(white,black);
   }
 
   .h-hero__embed,
