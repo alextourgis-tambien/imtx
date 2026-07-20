@@ -7,6 +7,163 @@ HERO — LA HAUTEUR DU WRAPPER RESTE GÉRÉE DANS WEBFLOW
   background:#050505;
 }
 
+[data-twostep-nav]{
+  --cubic-default: cubic-bezier(0.625, 0.05, 0, 1);
+  --animation-ease: 0.2s ease;
+
+  --duration-default: 0.5s;
+  --duration-default-long: 0.75s;
+  --duration-default-half: 0.25s;
+
+  --animation-default: var(--duration-default) var(--cubic-default);
+  --animation-default-long: var(--duration-default-long) var(--cubic-default);
+  --animation-default-half: var(--duration-default-half) var(--cubic-default);
+}
+
+
+/* Menu button */
+.twostep-nav__toggle-bar{
+  transition: transform var(--animation-default);
+  transform: translateY(-0.25em) rotate(0.001deg);
+}
+
+.twostep-nav__toggle:hover .twostep-nav__toggle-bar {
+  transform: translateY(0.25em) rotate(0.001deg);
+}
+
+.twostep-nav__toggle .twostep-nav__toggle-bar:nth-child(2) {
+  transform: translateY(0.15em) rotate(0.001deg);
+}
+
+.twostep-nav__toggle:hover .twostep-nav__toggle-bar:nth-child(2) {
+  transform: translateY(-0.15em) rotate(0.001deg);
+}
+
+[data-nav-status="active"] .twostep-nav__toggle .twostep-nav__toggle-bar {
+  transform: translateY(0em) rotate(45deg);
+}
+
+[data-nav-status="active"] .twostep-nav__toggle .twostep-nav__toggle-bar:nth-child(2) {
+  transform: translateY(0em) rotate(-45deg);
+}
+
+
+/* Page dark overlay */
+.twostep-nav__bg {
+  transition: opacity var(--animation-default), visibility var(--animation-default);
+}
+
+[data-nav-status="active"] .twostep-nav__bg {
+  opacity: 1;
+  visibility: visible;
+}
+
+
+/* Inner bar grow */
+.twostep-nav__bar {
+  transition: max-width var(--animation-default-long) 0.2s;
+}
+
+[data-nav-status="active"] .twostep-nav__bar {
+  transition: max-width var(--animation-default) 0s;
+  max-width: 100%;
+}
+
+
+/* Thin line in nav bar */
+.twostep-nav__top-line {
+  transition: all var(--animation-default) 0s;
+  opacity: 0;
+}
+
+[data-nav-status="active"] .twostep-nav__top-line {
+  transition: all var(--animation-default) 0.1s;
+  opacity: 1;
+}
+
+@media screen and (max-width: 767px) {
+
+  .twostep-nav__top-line {
+    inset: auto 1em -0.5em;
+  }
+
+  [data-nav-status="active"] .twostep-nav__top-line {
+    transition: all var(--animation-default) 0.2s;
+    inset: auto 0em -0.5em;
+  }
+}
+
+
+/* Nav bar background */
+.twostep-nav__bar__bg,
+[data-nav-status="active"] .twostep-nav__back-bg{
+  transition: background-color var(--animation-ease);
+}
+
+.twostep-nav__back{
+  transition: all var(--animation-default);
+  inset: 0em;
+}
+
+[data-nav-status="active"]  .twostep-nav__back {
+  inset: -0.25em;
+}
+
+@media screen and (max-width: 767px) {
+
+  [data-nav-status="active"]  .twostep-nav__back {
+    inset: -1.25em;
+  }
+
+}
+
+
+
+/* Nav bottom */
+.twostep-nav__bottom {
+  transition: grid-template-rows var(--animation-default) 0s;
+}
+
+[data-nav-status="active"] .twostep-nav__bottom {
+  transition: grid-template-rows var(--animation-default-long) 0.25s;
+  grid-template-rows: 1fr;
+}
+
+@media screen and (max-width: 767px) {
+
+  .twostep-nav__bottom {
+    transition: grid-template-rows var(--animation-default) 0s, transform var(--animation-default) 0s;
+    transform: translateY(-0.625em);
+  }
+
+  [data-nav-status="active"] .twostep-nav__bottom {
+    transition: grid-template-rows var(--animation-default-long) 0.25s, transform var(--animation-default) 0.25s;
+    transform: translateY(0em);
+  }
+}
+
+
+/* Nav columns reveal */
+.twostep-nav__bottom-row > * {
+  transition: all var(--animation-default) 0s;
+  transform: translateY(2em);
+  opacity: 0;
+}
+
+.twostep-nav__bottom-row > *:nth-child(2) {
+ transition-delay: 0.075s;
+}
+
+[data-nav-status="active"] .twostep-nav__bottom-row > * {
+  transition: all var(--animation-default-long) 0.5s;
+  transform: translateY(0em);
+  opacity: 1;
+}
+
+[data-nav-status="active"] .twostep-nav__bottom-row > *:nth-child(2) {
+  transition-delay: 0.575s;
+}
+
 .h-hero{
   position:sticky;
   top:0;
