@@ -522,6 +522,28 @@ MOBILE
 
 @media (max-width:767px){
 
+  /*
+  Les médias orbitaux peuvent dépasser de leur zone de composition,
+  mais ils ne doivent jamais devenir visibles hors du cadre du hero.
+  overflow:clip évite aussi de créer un conteneur de scroll qui
+  perturberait le sticky.
+  */
+  .h-hero__wrapper{
+    overflow-x:clip;
+  }
+
+  .h-hero{
+    overflow:clip !important;
+    isolation:isolate;
+  }
+
+  .h-hero__embed,
+  .hero-tile-wrapper,
+  .hero-grid-overlay{
+    min-width:100%;
+    max-width:none;
+  }
+
   .hh__cells-wrapper,
   .hh__target-wrapper{
     position:fixed !important;
