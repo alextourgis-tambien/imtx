@@ -2138,7 +2138,7 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       cancerScale: 1.15,
       targetLiftViewport: 0.22,
       heroContentOpacity: 0.06,
-      paragraphOneInStart: 0.08,
+      paragraphOneInStart: 0.48,
       paragraphOneInDuration: 0.24,
       paragraphOneLineStagger: 0.055,
       targetTextExitStart: 0.18,
