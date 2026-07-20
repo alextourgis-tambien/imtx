@@ -2529,6 +2529,10 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
         }
       }
 
+      const protrudingAtBottom = wrapper.classList.contains(
+        "is--dark-green"
+      );
+
       settings.protrudingTilePositions.forEach(function (
         position,
         index
@@ -2537,13 +2541,19 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
           Math.min(1, Math.max(0, position)) * (columns - 1)
         );
         const tile = document.createElement("span");
-        tile.className = "pipeline__tile is--protruding";
+        tile.className = protrudingAtBottom
+          ? "pipeline__tile is--protruding is--bottom"
+          : "pipeline__tile is--protruding is--top";
         tile.style.left = originX + column * step + "px";
-        tile.style.top = originY - step + "px";
+        tile.style.top = protrudingAtBottom
+          ? originY + gridHeight + settings.gap + "px"
+          : originY - step + "px";
         tile.style.width = tileSize + "px";
         tile.style.height = tileSize + "px";
         tile.style.borderRadius = settings.radius + "px";
-        tile.dataset.pipelineRow = "-1";
+        tile.dataset.pipelineRow = protrudingAtBottom
+          ? String(rows)
+          : "-1";
         tile.dataset.pipelineColumn = String(column + index);
         fragment.appendChild(tile);
       });
