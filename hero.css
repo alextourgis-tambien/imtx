@@ -637,6 +637,11 @@ La hauteur et les espacements restent gérés dans Webflow.
 
 .pipeline__wrapper{
   position:relative;
+  --pipeline-tile-color:#22c86b;
+}
+
+.pipeline__wrapper.is--dark-green{
+  --pipeline-tile-color:#059941;
 }
 
 .pipeline__sticky{
@@ -666,7 +671,7 @@ La hauteur et les espacements restent gérés dans Webflow.
 .pipeline__tile{
   position:absolute;
   display:block;
-  background:#22c86b;
+  background:var(--pipeline-tile-color,#22c86b);
   transform:translateZ(0);
   transform-origin:center center;
   will-change:transform;

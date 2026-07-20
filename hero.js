@@ -2149,17 +2149,17 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
     resizeDebounce: 160
   };
 
-  function initPipelineTileGrid() {
+  function initPipelineTileGrid(wrapper, wrapperIndex) {
     const selectors = PIPELINE_GRID_CONFIG.selectors;
-    const wrapper = document.querySelector(selectors.wrapper);
-    const stage = document.querySelector(selectors.stage);
-    const tileLayer = document.querySelector(selectors.tiles);
-    const content = document.querySelector(selectors.content);
+    const stage = wrapper.querySelector(selectors.stage);
+    const tileLayer = wrapper.querySelector(selectors.tiles);
+    const content = wrapper.querySelector(selectors.content);
 
-    if (!wrapper || !stage || !tileLayer || !content) {
+    if (!stage || !tileLayer || !content) {
       console.warn(
-        "Pipeline grid : .pipeline__wrapper, .pipeline__stage, " +
-        ".pipeline__tiles ou .pipeline__content est absent."
+        "Pipeline grid " + (wrapperIndex + 1) +
+        " : .pipeline__stage, .pipeline__tiles ou " +
+        ".pipeline__content est absent."
       );
       return;
     }
@@ -2169,7 +2169,8 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
 
       if (!item) {
         console.warn(
-          "Pipeline grid : élément absent — " + selector
+          "Pipeline grid " + (wrapperIndex + 1) +
+          " : élément absent — " + selector
         );
       }
 
@@ -2561,14 +2562,33 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
     }
   }
 
+  function initPipelineTileGrids() {
+    const wrappers = Array.from(
+      document.querySelectorAll(
+        PIPELINE_GRID_CONFIG.selectors.wrapper
+      )
+    );
+
+    if (!wrappers.length) {
+      console.warn(
+        "Pipeline grid : aucune .pipeline__wrapper trouvée."
+      );
+      return;
+    }
+
+    wrappers.forEach(function (wrapper, wrapperIndex) {
+      initPipelineTileGrid(wrapper, wrapperIndex);
+    });
+  }
+
   if (document.readyState === "loading") {
     document.addEventListener(
       "DOMContentLoaded",
-      initPipelineTileGrid,
+      initPipelineTileGrids,
       { once: true }
     );
   } else {
-    initPipelineTileGrid();
+    initPipelineTileGrids();
   }
 })();
 
