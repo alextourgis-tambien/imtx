@@ -387,6 +387,8 @@ PREMIER PANNEAU DE TEXTE
 .h-hero__text-card{
   grid-column:2 / 9;
   grid-row:7 / 11;
+  margin:0 !important;
+  box-sizing:border-box;
   display:flex;
   align-items:center;
   justify-content:center;

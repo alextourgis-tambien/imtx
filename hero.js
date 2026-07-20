@@ -490,12 +490,17 @@
         position: "absolute",
         gridColumn: "auto",
         gridRow: "auto",
+        margin: 0,
         left: left,
         top: top,
         right: "auto",
         bottom: "auto",
         width: alignedCardWidth,
-        height: alignedCardHeight
+        height: alignedCardHeight,
+        x: 0,
+        xPercent: 0,
+        y: 0,
+        yPercent: 0
       });
     }
 
