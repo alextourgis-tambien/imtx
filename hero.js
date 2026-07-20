@@ -202,7 +202,9 @@
       stagger: 0.011,
       random: 0.012,
       durationMin: 0.09,
-      durationMax: 0.13
+      durationMax: 0.13,
+      mobileVisibilityStart: 0.22,
+      mobileVisibilityFull: 0.58
     },
 
     text: {
@@ -598,8 +600,10 @@
     */
     window.requestAnimationFrame(function () {
       window.requestAnimationFrame(function () {
-        wrapper.classList.add("is--grid-ready");
-        document.documentElement.classList.add("hero-grid-mounted");
+        window.setTimeout(function () {
+          wrapper.classList.add("is--grid-ready");
+          document.documentElement.classList.add("hero-grid-mounted");
+        }, 60);
       });
     });
     const settings = getGridSettings();
@@ -1455,6 +1459,47 @@
         const baseScale = currentSettings.imageScales[index] || 1;
         const depth = getDepthScale(radians);
         const scale = baseScale * depth * reveal * mediaExit[index + 1].value;
+        let entranceOpacity = 1;
+
+        /*
+        Sur mobile, une vidéo orbitale qui entre depuis un bord peut laisser
+        apparaître une tranche de quelques pixels. Tant que son entrée n'est
+        pas terminée, on calcule la portion réellement présente dans le hero
+        et on ne la révèle qu'une fois suffisamment engagée dans le cadre.
+        */
+        if (window.innerWidth <= 767 && reveal < 0.999 && scale > 0) {
+          const itemWidth = item.offsetWidth * scale;
+          const itemHeight = item.offsetHeight * scale;
+          const centerX = bounds.width / 2 + x;
+          const centerY = bounds.height / 2 + y;
+          const visibleWidth = Math.max(
+            Math.min(centerX + itemWidth / 2, bounds.width) -
+              Math.max(centerX - itemWidth / 2, 0),
+            0
+          );
+          const visibleHeight = Math.max(
+            Math.min(centerY + itemHeight / 2, bounds.height) -
+              Math.max(centerY - itemHeight / 2, 0),
+            0
+          );
+          const visibleRatio = Math.min(
+            itemWidth ? visibleWidth / itemWidth : 0,
+            itemHeight ? visibleHeight / itemHeight : 0
+          );
+
+          entranceOpacity = gsap.utils.clamp(
+            0,
+            1,
+            (
+              visibleRatio -
+              CONFIG.imageEntrance.mobileVisibilityStart
+            ) /
+              (
+                CONFIG.imageEntrance.mobileVisibilityFull -
+                CONFIG.imageEntrance.mobileVisibilityStart
+              )
+          );
+        }
 
         gsap.set(item, {
           xPercent: -50,
@@ -1462,6 +1507,13 @@
           x: x,
           y: y,
           scale: scale,
+          opacity: entranceOpacity,
+          visibility:
+            reveal > 0.001 &&
+            mediaExit[index + 1].value > 0.001 &&
+            entranceOpacity > 0.001
+              ? "visible"
+              : "hidden",
           rotation: 0,
           transformOrigin: "50% 50%"
         });

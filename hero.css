@@ -223,6 +223,24 @@ HERO — LA HAUTEUR DU WRAPPER RESTE GÉRÉE DANS WEBFLOW
   will-change:top;
 }
 
+/*
+Voile de premier rendu : il empêche Safari d'afficher la vidéo avant que les
+tuiles noires aient réellement été calculées et peintes. Il est retiré par le
+script juste avant le début de l'introduction.
+*/
+.h-hero__content::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:19;
+  background:#050505;
+  pointer-events:none;
+}
+
+html.hero-grid-mounted .h-hero__content::before{
+  display:none;
+}
+
 /*==================================================
 PHOTOS + VIDÉO
 ==================================================*/
@@ -317,6 +335,17 @@ construite ET peinte une première fois. Cela évite le flash vidéo que Safari
 peut afficher entre le HTML Webflow et l'initialisation JavaScript.
 */
 html:not(.hero-grid-mounted) .h-hero__bg{
+  visibility:hidden !important;
+}
+
+/*
+Les six médias de l'orbite sont également masqués avant l'état initial GSAP.
+Sans cette garde, Safari peut peindre une tranche de l'un d'eux sur un bord
+pendant les quelques millisecondes qui précèdent positionOrbitItems().
+*/
+html:not(.hero-animation-ready) .h-hero__img-wrapper,
+html:not(.hero-animation-ready) .h-hero__img-wrapper img,
+html:not(.hero-animation-ready) .h-hero__img-wrapper video{
   visibility:hidden !important;
 }
 
