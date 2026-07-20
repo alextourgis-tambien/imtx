@@ -2242,9 +2242,6 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
       const coverTiles = Array.from(
         tileLayer.querySelectorAll(".pipeline__tile.is--content-cover")
       );
-      const initialEmptyTiles = Array.from(
-        tileLayer.querySelectorAll(".pipeline__tile.is--initial-empty")
-      );
       const reshuffleOutTiles = Array.from(
         tileLayer.querySelectorAll(".pipeline__tile.is--reshuffle-out")
       );
@@ -2255,9 +2252,6 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
       ) {
         coverTiles.forEach(function (tile) {
           tile.style.display = "none";
-        });
-        initialEmptyTiles.forEach(function (tile) {
-          tile.style.display = "block";
         });
         reshuffleOutTiles.forEach(function (tile) {
           tile.style.display = "none";
@@ -2274,7 +2268,6 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
         window.matchMedia("(prefers-reduced-motion: reduce)").matches
       ) {
         gsap.set(coverTiles, { scale: 0 });
-        gsap.set(initialEmptyTiles, { scale: 1 });
         gsap.set(reshuffleOutTiles, { scale: 0 });
         gsap.set(contentItems, { opacity: 1 });
         return;
@@ -2284,7 +2277,6 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
         scale: 1,
         transformOrigin: "50% 50%"
       });
-      gsap.set(initialEmptyTiles, { scale: 0 });
       gsap.set(contentItems, { opacity: 0 });
 
       const reveal = PIPELINE_GRID_CONFIG.reveal;
@@ -2297,16 +2289,6 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
           invalidateOnRefresh: true
         }
       });
-
-      reshuffleTimeline.to(initialEmptyTiles, {
-        scale: 1,
-        duration: 0.72,
-        stagger: {
-          each: 0.025,
-          from: "random"
-        },
-        ease: "power2.inOut"
-      }, 0);
 
       reshuffleTimeline.to(reshuffleOutTiles, {
         scale: 0,
@@ -2417,6 +2399,10 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
             column + 109
           ) < settings.reshuffleOutRate;
 
+          if (initialEmpty && !contentOverlap) {
+            continue;
+          }
+
           const tile = document.createElement("span");
           tile.className = "pipeline__tile";
           if (contentOverlap) {
@@ -2424,8 +2410,6 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
             tile.dataset.pipelineCover = String(
               contentOverlap.itemIndex
             );
-          } else if (initialEmpty) {
-            tile.classList.add("is--initial-empty");
           } else if (reshuffleOut) {
             tile.classList.add("is--reshuffle-out");
           }
