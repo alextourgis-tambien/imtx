@@ -311,6 +311,15 @@ MASQUE VIDÉO PERMANENT + TUILES D’INTRODUCTION
   background:transparent;
 }
 
+/*
+La vidéo reste masquée jusqu'à ce que la grille d'introduction ait été
+construite ET peinte une première fois. Cela évite le flash vidéo que Safari
+peut afficher entre le HTML Webflow et l'initialisation JavaScript.
+*/
+html:not(.hero-grid-mounted) .h-hero__bg{
+  visibility:hidden !important;
+}
+
 .hero-grid-overlay{
   position:absolute;
   inset:0;
@@ -565,6 +574,18 @@ MOBILE
   .hero-grid-overlay{
     min-width:100%;
     max-width:none;
+  }
+
+  /*
+  Quelques pixels de bleed absorbent les arrondis et sous-pixels de Safari
+  iOS. La grille couvre ainsi toujours les deux bords, sans modifier la taille
+  ni le transform du couple vidéo/embed.
+  */
+  .hero-tile-wrapper{
+    left:-8px;
+    right:-8px;
+    width:auto;
+    min-width:calc(100% + 16px);
   }
 
   .hh__cells-wrapper,

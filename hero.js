@@ -580,11 +580,23 @@
     if (prefersReducedMotion) {
       animatedGrid.remove();
       wrapper.classList.add("is--grid-ready");
+      document.documentElement.classList.add("hero-grid-mounted");
       return buildPermanentGrid;
     }
 
     const animatedTiles = createAnimatedTiles();
-    wrapper.classList.add("is--grid-ready");
+
+    /*
+    On attend deux frames avant de retirer le fond noir de sécurité. La
+    première laisse le navigateur calculer la grille, la seconde garantit que
+    les faces noires ont été peintes avant que la vidéo redevienne visible.
+    */
+    window.requestAnimationFrame(function () {
+      window.requestAnimationFrame(function () {
+        wrapper.classList.add("is--grid-ready");
+        document.documentElement.classList.add("hero-grid-mounted");
+      });
+    });
     const settings = getGridSettings();
     const waveTiles = animatedTiles.map(function (tile, index) {
       const row = Math.floor(index / settings.columns);
