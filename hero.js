@@ -2137,13 +2137,17 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
     previousSection: {
       cancerScale: 1.15,
       targetLiftViewport: 0.22,
+      heroContentOpacity: 0.18,
+      paragraphOneInStart: 0.04,
+      paragraphOneInDuration: 0.18,
+      paragraphOneLineStagger: 0.025,
       targetTextExitStart: 0.18,
       targetTextExitDuration: 0.15,
       targetTextLineStagger: 0.025
     },
 
     buttonDuration: 0.07,
-    resizeDebounce: 180
+    resizeDebounce: 260
   };
 
   window.addEventListener("load", function () {
@@ -2181,6 +2185,9 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
     );
     const previousTargetParagraphTwo = document.querySelector(
       ".hh__target-p.is--two"
+    );
+    const previousHeroContent = document.querySelector(
+      ".h-hero__content"
     );
     const previousCancerTargets = previousCancerWrapper
       ? Array.from(
@@ -2235,6 +2242,7 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
 
     let lines = new Map();
     let timeline = null;
+    let previousTransitionAnimations = [];
     let resizeTimer = null;
     let viewportWidth = window.innerWidth;
 
@@ -2510,7 +2518,6 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
         }
       });
 
-      animateLinesIn(paragraphOne, timing.paragraphOneIn);
       animateLinesOut(paragraphOne, timing.paragraphOneOut);
 
       [
@@ -2556,15 +2563,29 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
     }
 
     function createPreviousSectionTransition() {
+      previousTransitionAnimations.forEach(function (animation) {
+        if (animation.scrollTrigger) {
+          animation.scrollTrigger.kill();
+        }
+        animation.kill();
+      });
+      previousTransitionAnimations = [];
+
       if (
-        (!previousCancerTargets.length && !previousTargetWrapper) ||
+        (
+          !previousCancerTargets.length &&
+          !previousTargetWrapper &&
+          !previousHeroContent
+        ) ||
         window.matchMedia("(prefers-reduced-motion: reduce)").matches
       ) {
         return;
       }
 
       if (previousCancerTargets.length) {
-        gsap.to(previousCancerTargets, {
+        const cancerTransition = gsap.fromTo(previousCancerTargets, {
+          scale: 1
+        }, {
           scale: SECOND_CONFIG.previousSection.cancerScale,
           transformOrigin: "50% 50%",
           ease: "none",
@@ -2580,6 +2601,7 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
             invalidateOnRefresh: true
           }
         });
+        previousTransitionAnimations.push(cancerTransition);
       }
 
       const parallaxWrappers = [
@@ -2587,8 +2609,12 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
         previousCancerWrapper
       ].filter(Boolean);
 
-      if (parallaxWrappers.length) {
-        const targetTransition = gsap.timeline({
+      if (
+        parallaxWrappers.length ||
+        previousHeroContent ||
+        (lines.get(paragraphOne) || []).length
+      ) {
+        const entryTransition = gsap.timeline({
           scrollTrigger: {
             trigger: wrapper,
             start: "top bottom",
@@ -2597,19 +2623,49 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
             invalidateOnRefresh: true
           }
         });
+        previousTransitionAnimations.push(entryTransition);
 
-        targetTransition.to(parallaxWrappers, {
-          y: function () {
-            const viewportHeight = window.visualViewport
-              ? window.visualViewport.height
-              : window.innerHeight;
+        if (parallaxWrappers.length) {
+          entryTransition.fromTo(parallaxWrappers, {
+            y: 0
+          }, {
+            y: function () {
+              const viewportHeight = window.visualViewport
+                ? window.visualViewport.height
+                : window.innerHeight;
 
-            return -viewportHeight *
-              SECOND_CONFIG.previousSection.targetLiftViewport;
-          },
-          ease: "none",
-          duration: 1
-        }, 0);
+              return -viewportHeight *
+                SECOND_CONFIG.previousSection.targetLiftViewport;
+            },
+            ease: "none",
+            duration: 1
+          }, 0);
+        }
+
+        if (previousHeroContent) {
+          entryTransition.fromTo(previousHeroContent, {
+            opacity: 1
+          }, {
+            opacity:
+              SECOND_CONFIG.previousSection.heroContentOpacity,
+            ease: "none",
+            duration: 1
+          }, 0);
+        }
+
+        (lines.get(paragraphOne) || []).forEach(
+          function (line, index) {
+            entryTransition.to(line, {
+              opacity: 1,
+              yPercent: 0,
+              duration:
+                SECOND_CONFIG.previousSection.paragraphOneInDuration
+            },
+            SECOND_CONFIG.previousSection.paragraphOneInStart +
+              index *
+              SECOND_CONFIG.previousSection.paragraphOneLineStagger);
+          }
+        );
 
         if (previousTargetParagraphTwo) {
           const words = Array.from(
@@ -2638,7 +2694,7 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
           });
 
           visualLines.forEach(function (line, index) {
-            targetTransition.to(line.words, {
+            entryTransition.to(line.words, {
               opacity: 0,
               yPercent: -75,
               duration:
@@ -2667,6 +2723,7 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
 
       resizeTimer = window.setTimeout(function () {
         createTimeline();
+        createPreviousSectionTransition();
         ScrollTrigger.refresh();
       }, SECOND_CONFIG.resizeDebounce);
     }
