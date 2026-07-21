@@ -93,9 +93,9 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
     orbitTurns: 0.4,
     startAngle: -90,
     circleRadius: {
-      desktop: 0.58,
-      tablet: 0.60,
-      mobile: 0.68
+      desktop: 0.65,
+      tablet: 0.66,
+      mobile: 0.73
     },
     entranceScale: 0.72,
     outsideMarginDesktop: 80,
