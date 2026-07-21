@@ -704,12 +704,12 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       mediaInDurationMax: 0.22,
       orbitStart: 0.18,
       orbitEnd: 1,
-      titleOneOut: 0.29,
-      titleTwoIn: 0.32,
-      titleTwoMoveStart: 0.4,
-      titleTwoMoveDuration: 0.25,
-      titleThreeRevealDuration: 0.12,
-      orbitLiftDuration: 0.25
+      titleOneOut: 0.32,
+      titleTwoIn: 0.35,
+      titleTwoMoveStart: 0.44,
+      titleTwoMoveDuration: 0.44,
+      titleThreeRevealDuration: 0.07,
+      orbitLiftDuration: 0.44
     },
 
     orbitTurns: 0.4,
