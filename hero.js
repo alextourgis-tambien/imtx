@@ -95,6 +95,7 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
       hiddenYPercent: 75
     },
 
+    backgroundStartSquareRatio: 0.55,
     cardStagger: 0.018,
     resizeDebounce: 220,
     lottieLookupAttempts: 120,
@@ -406,6 +407,27 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
       const finalBackgroundRadius = window.getComputedStyle(
         flipBackground
       ).borderRadius;
+      const backgroundBounds = flipBackground.getBoundingClientRect();
+      const fallbackBounds = sticky.getBoundingClientRect();
+      const backgroundWidth = backgroundBounds.width ||
+        fallbackBounds.width;
+      const backgroundHeight = backgroundBounds.height ||
+        fallbackBounds.height;
+      const backgroundSquareSize = Math.min(
+        backgroundWidth,
+        backgroundHeight
+      ) * DECODE_CONFIG.backgroundStartSquareRatio;
+      const backgroundClipX = Math.max(
+        (backgroundWidth - backgroundSquareSize) / 2,
+        0
+      );
+      const backgroundClipY = Math.max(
+        (backgroundHeight - backgroundSquareSize) / 2,
+        0
+      );
+      const backgroundClipPath =
+        "inset(var(--decode-bg-clip-y) var(--decode-bg-clip-x) " +
+        "round var(--decode-bg-clip-radius))";
       const firstPair = [cards[0], cards[1]];
       const secondPair = [cards[2], cards[3]];
 
@@ -416,8 +438,13 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
       gsap.set(flipWrapper, { opacity: 0 });
       gsap.set(flipBackground, {
         opacity: 1,
-        scale: 0,
+        scale: 1,
         borderRadius: "0px",
+        "--decode-bg-clip-x": backgroundClipX + "px",
+        "--decode-bg-clip-y": backgroundClipY + "px",
+        "--decode-bg-clip-radius": "0px",
+        clipPath: backgroundClipPath,
+        webkitClipPath: backgroundClipPath,
         transformOrigin: "50% 50%"
       });
       gsap.set(cards, {
@@ -443,7 +470,13 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
         renderLottieFrame();
         gsap.set(allTitleWords(), { opacity: 0, yPercent: 0 });
         gsap.set(flipWrapper, { opacity: 1 });
-        gsap.set(flipBackground, { opacity: 0, scale: 1 });
+        gsap.set(flipBackground, {
+          opacity: 0,
+          scale: 1,
+          "--decode-bg-clip-x": "0px",
+          "--decode-bg-clip-y": "0px",
+          "--decode-bg-clip-radius": finalBackgroundRadius
+        });
         gsap.set(firstPair, {
           opacity: 0,
           rotationY: -90,
@@ -486,12 +519,13 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
       }, timing.wrapperIn);
 
       timeline.to(flipBackground, {
-        scale: 1,
+        "--decode-bg-clip-x": "0px",
+        "--decode-bg-clip-y": "0px",
         duration: timing.backgroundInDuration
       }, timing.backgroundIn);
 
       timeline.to(flipBackground, {
-        borderRadius: finalBackgroundRadius,
+        "--decode-bg-clip-radius": finalBackgroundRadius,
         duration:
           timing.backgroundIn + timing.backgroundInDuration -
           timing.backgroundRadiusStart
