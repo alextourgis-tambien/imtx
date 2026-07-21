@@ -3354,7 +3354,6 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
 
       if (oldTextGrid) {
         timeline.to(oldTextGrid, {
-          y: CONFIG.text.oldPanelY,
           opacity: 0,
           duration: scroll.oldTextEnd - scroll.oldTextStart
         }, scroll.oldTextStart);
@@ -3362,6 +3361,7 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
 
       if (oldTextCard) {
         timeline.to(oldTextCard, {
+          y: CONFIG.text.oldPanelY,
           opacity: 0,
           duration: scroll.oldTextEnd - scroll.oldTextStart
         }, scroll.oldTextStart);

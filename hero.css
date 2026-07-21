@@ -420,8 +420,6 @@ PREMIER PANNEAU DE TEXTE
   box-sizing:border-box;
   display:flex;
   align-items:center;
-  justify-content:center;
-  text-align:center;
   overflow:hidden;
   border-radius:var(--tile-radius);
   background:#050505;
@@ -430,9 +428,7 @@ PREMIER PANNEAU DE TEXTE
 }
 
 .h-hero__title{
-  margin:0 auto;
   color:#fff;
-  text-align:center;
 }
 
 /* Les mots restent dans leurs spans Webflow, dont .blue_span. */
