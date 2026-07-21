@@ -47,6 +47,117 @@
 })();
 
 /*==================================================
+PRESS — CARTES EN ESCALIER VERS LA GRILLE FINALE
+==================================================*/
+
+(function initPressCollectionsAnimation() {
+  "use strict";
+
+  const PRESS_CONFIG = {
+    start: "top 88%",
+    end: "center 52%",
+    scrub: 1,
+    initialYPercent: [18, 66, 103],
+    cardDelay: 0.1,
+    cardDuration: 0.8,
+    resizeDebounce: 180
+  };
+
+  window.addEventListener("load", function () {
+    const wrapper = document.querySelector(".press__wrapper");
+    const cards = [
+      document.querySelector(".press__collection.is--one"),
+      document.querySelector(".press__collection.is--two"),
+      document.querySelector(".press__collection.is--three")
+    ];
+
+    if (!wrapper) {
+      console.warn(
+        "Press animation : .press__wrapper est introuvable."
+      );
+      return;
+    }
+
+    if (cards.some(function (card) { return !card; })) {
+      console.warn(
+        "Press animation : une ou plusieurs .press__collection sont absentes."
+      );
+      return;
+    }
+
+    if (
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      gsap.set(cards, { clearProps: "transform" });
+      return;
+    }
+
+    let timeline = null;
+    let resizeTimer = null;
+    let viewportWidth = window.innerWidth;
+
+    function createTimeline() {
+      if (timeline) {
+        if (timeline.scrollTrigger) {
+          timeline.scrollTrigger.kill();
+        }
+        timeline.kill();
+      }
+
+      gsap.set(cards, {
+        clearProps: "transform",
+        willChange: "transform"
+      });
+
+      timeline = gsap.timeline({
+        defaults: { ease: "none" },
+        scrollTrigger: {
+          trigger: wrapper,
+          start: PRESS_CONFIG.start,
+          end: PRESS_CONFIG.end,
+          scrub: PRESS_CONFIG.scrub,
+          invalidateOnRefresh: true
+        }
+      });
+
+      cards.forEach(function (card, index) {
+        timeline.fromTo(card, {
+          yPercent: PRESS_CONFIG.initialYPercent[index]
+        }, {
+          yPercent: 0,
+          duration: PRESS_CONFIG.cardDuration
+        }, index * PRESS_CONFIG.cardDelay);
+      });
+    }
+
+    function handleResize() {
+      const nextWidth = window.innerWidth;
+
+      if (
+        nextWidth <= 991 &&
+        Math.abs(nextWidth - viewportWidth) < 2
+      ) {
+        return;
+      }
+
+      viewportWidth = nextWidth;
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(function () {
+        createTimeline();
+        ScrollTrigger.refresh();
+      }, PRESS_CONFIG.resizeDebounce);
+    }
+
+    createTimeline();
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("orientationchange", function () {
+      window.setTimeout(handleResize, 120);
+    });
+    ScrollTrigger.refresh();
+  });
+})();
+
+/*==================================================
 DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
 ==================================================*/
 
