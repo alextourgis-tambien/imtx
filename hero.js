@@ -78,9 +78,9 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
       wrapperInDuration: 0.055,
       backgroundIn: 0.47,
       backgroundInDuration: 0.18,
-      backgroundRadiusStart: 0.525,
-      backgroundOut: 0.65,
-      backgroundOutDuration: 0.065,
+      backgroundRadiusStart: 0.56,
+      backgroundOut: 0.805,
+      backgroundOutDuration: 0.035,
       firstPairIn: 0.70,
       firstPairInDuration: 0.085,
       firstPairOut: 0.84,
@@ -97,6 +97,7 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
 
     backgroundStartSquareRatio: 0.55,
     cardStagger: 0.018,
+    cardTextFadeRatio: 0.65,
     resizeDebounce: 220,
     lottieLookupAttempts: 120,
     lottieLookupInterval: 50
@@ -158,10 +159,16 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
       return;
     }
 
+    const cardTitles = cards.map(function (card) {
+      return Array.from(card.querySelectorAll(".decode__title"));
+    });
+    const allCardTitles = cardTitles.reduce(function (all, titles) {
+      return all.concat(titles);
+    }, []);
     const originalTitleMarkup = title.innerHTML;
     const originalInlineStyles = new Map();
 
-    [flipWrapper, flipBackground].concat(cards).forEach(
+    [flipWrapper, flipBackground].concat(cards, allCardTitles).forEach(
       function (element) {
         originalInlineStyles.set(
           element,
@@ -385,7 +392,7 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
     }
 
     function restoreWebflowState() {
-      [flipWrapper, flipBackground].concat(cards).forEach(
+      [flipWrapper, flipBackground].concat(cards, allCardTitles).forEach(
         restoreInlineStyle
       );
       splitTitleIntoLines();
@@ -454,6 +461,7 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
         transformPerspective: 1200,
         transformOrigin: "50% 50%"
       });
+      gsap.set(allCardTitles, { opacity: 0 });
 
       lottieState.progress = 0;
       renderLottieFrame();
@@ -487,6 +495,10 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
           rotationY: 0,
           visibility: "visible"
         });
+        gsap.set(
+          cardTitles[2].concat(cardTitles[3]),
+          { opacity: 1 }
+        );
         return;
       }
 
@@ -520,10 +532,16 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
 
       timeline.to(flipBackground, {
         scale: 1,
-        "--decode-bg-clip-x": "0px",
-        "--decode-bg-clip-y": "0px",
         duration: timing.backgroundInDuration
       }, timing.backgroundIn);
+
+      timeline.to(flipBackground, {
+        "--decode-bg-clip-x": "0px",
+        "--decode-bg-clip-y": "0px",
+        duration:
+          timing.backgroundIn + timing.backgroundInDuration -
+          timing.backgroundRadiusStart
+      }, timing.backgroundRadiusStart);
 
       timeline.to(flipBackground, {
         "--decode-bg-clip-radius": finalBackgroundRadius,
@@ -538,44 +556,77 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
       }, timing.backgroundOut);
 
       firstPair.forEach(function (card, index) {
+        const cardStart = timing.firstPairIn +
+          index * DECODE_CONFIG.cardStagger;
+
         timeline.set(card, {
           opacity: 1,
           visibility: "visible"
-        }, timing.firstPairIn + index * DECODE_CONFIG.cardStagger);
+        }, cardStart);
 
         timeline.to(card, {
           rotationY: 0,
           duration: timing.firstPairInDuration,
           ease: "power2.out"
-        }, timing.firstPairIn + index * DECODE_CONFIG.cardStagger);
+        }, cardStart);
+
+        timeline.to(cardTitles[index], {
+          opacity: 1,
+          duration:
+            timing.firstPairInDuration *
+            DECODE_CONFIG.cardTextFadeRatio,
+          ease: "power1.out"
+        }, cardStart + timing.firstPairInDuration *
+          (1 - DECODE_CONFIG.cardTextFadeRatio));
       });
 
       firstPair.forEach(function (card, index) {
+        const cardStart = timing.firstPairOut +
+          index * DECODE_CONFIG.cardStagger;
+
+        timeline.to(cardTitles[index], {
+          opacity: 0,
+          duration:
+            timing.firstPairOutDuration *
+            DECODE_CONFIG.cardTextFadeRatio,
+          ease: "power1.in"
+        }, cardStart);
+
         timeline.to(card, {
           opacity: 0,
           rotationY: -90,
           duration: timing.firstPairOutDuration,
           ease: "power2.in"
-        }, timing.firstPairOut + index * DECODE_CONFIG.cardStagger);
+        }, cardStart);
 
         timeline.set(card, {
           visibility: "hidden"
-        }, timing.firstPairOut +
-          index * DECODE_CONFIG.cardStagger +
-          timing.firstPairOutDuration);
+        }, cardStart + timing.firstPairOutDuration);
       });
 
       secondPair.forEach(function (card, index) {
+        const cardStart = timing.secondPairIn +
+          index * DECODE_CONFIG.cardStagger;
+
         timeline.set(card, {
           visibility: "visible"
-        }, timing.secondPairIn + index * DECODE_CONFIG.cardStagger);
+        }, cardStart);
 
         timeline.to(card, {
           opacity: 1,
           rotationY: 0,
           duration: timing.secondPairInDuration,
           ease: "power2.out"
-        }, timing.secondPairIn + index * DECODE_CONFIG.cardStagger);
+        }, cardStart);
+
+        timeline.to(cardTitles[index + 2], {
+          opacity: 1,
+          duration:
+            timing.secondPairInDuration *
+            DECODE_CONFIG.cardTextFadeRatio,
+          ease: "power1.out"
+        }, cardStart + timing.secondPairInDuration *
+          (1 - DECODE_CONFIG.cardTextFadeRatio));
       });
 
       timeline.to({}, { duration: 0.97 }, 0);
