@@ -708,7 +708,7 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       titleTwoIn: 0.32,
       titleTwoMoveStart: 0.48,
       titleTwoMoveDuration: 0.14,
-      titleThreeIn: 0.65,
+      titleThreeEnd: 0.98,
       orbitLiftDuration: 0.14
     },
 
@@ -723,9 +723,9 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
     outsideMarginDesktop: 80,
     outsideMarginMobile: 36,
     orbitLift: {
-      desktop: 0.13,
-      tablet: 0.11,
-      mobile: 0.09
+      desktop: 0.22,
+      tablet: 0.19,
+      mobile: 0.16
     },
 
     text: {
@@ -1141,18 +1141,26 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
         titles[1],
         timing.titleTwoIn
       );
+      const titleThreeLineCount = (
+        titleLines.get(titles[2]) || []
+      ).length;
+      const titleThreeRevealDuration =
+        Math.max(titleThreeLineCount - 1, 0) *
+          FINAL_CONFIG.text.lineStagger +
+        FINAL_CONFIG.text.lineDuration;
+      const scheduledTitleThreeStart =
+        timing.titleThreeEnd - titleThreeRevealDuration;
       const titleTwoMoveStart = Math.max(
         timing.titleTwoMoveStart,
-        titleTwoRevealEnd + 0.01
+        titleTwoRevealEnd + 0.01,
+        scheduledTitleThreeStart - timing.titleTwoMoveDuration - 0.01
       );
       const titleTwoMoveEnd =
         titleTwoMoveStart + timing.titleTwoMoveDuration;
       const titleThreeStart = Math.max(
-        timing.titleThreeIn,
+        scheduledTitleThreeStart,
         titleTwoMoveEnd + 0.01
       );
-      const titleThreeEnd = getTitleEnd(titles[2], titleThreeStart);
-
       function syncTitleVisibility(progress) {
         titles[0].style.visibility = progress <= titleOneEnd
           ? "visible"
@@ -1232,7 +1240,7 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
         duration: timing.orbitLiftDuration,
         ease: "power2.inOut",
         onUpdate: positionVideos
-      }, titleThreeEnd);
+      }, titleTwoMoveStart);
 
       timeline.to({}, {
         duration: Math.max(timing.orbitEnd - titleThreeStart, 0.01)
