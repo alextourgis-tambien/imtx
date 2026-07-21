@@ -92,10 +92,10 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
 
     orbitTurns: 0.4,
     startAngle: -90,
-    orbit: {
-      desktop: { radiusX: 0.43, radiusY: 0.40 },
-      tablet: { radiusX: 0.42, radiusY: 0.39 },
-      mobile: { radiusX: 0.40, radiusY: 0.41 }
+    circleRadius: {
+      desktop: 0.58,
+      tablet: 0.60,
+      mobile: 0.68
     },
     entranceScale: 0.72,
     outsideMarginDesktop: 80,
@@ -308,11 +308,15 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       const contentRectangle = content.getBoundingClientRect();
       const halfWidth = contentRectangle.width / 2;
       const halfHeight = contentRectangle.height / 2;
-      const orbitSettings = window.innerWidth <= 767
-        ? FINAL_CONFIG.orbit.mobile
+      const radiusFactor = window.innerWidth <= 767
+        ? FINAL_CONFIG.circleRadius.mobile
         : window.innerWidth <= 991
-          ? FINAL_CONFIG.orbit.tablet
-          : FINAL_CONFIG.orbit.desktop;
+          ? FINAL_CONFIG.circleRadius.tablet
+          : FINAL_CONFIG.circleRadius.desktop;
+      const circleRadius = Math.min(
+        contentRectangle.width,
+        contentRectangle.height
+      ) * radiusFactor;
       const outsideMargin = window.innerWidth <= 767
         ? FINAL_CONFIG.outsideMarginMobile
         : FINAL_CONFIG.outsideMarginDesktop;
@@ -322,10 +326,8 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
         const angle = (
           FINAL_CONFIG.startAngle + index * 360 / videos.length
         ) * Math.PI / 180;
-        const finalX = Math.cos(angle) *
-          contentRectangle.width * orbitSettings.radiusX;
-        const finalY = Math.sin(angle) *
-          contentRectangle.height * orbitSettings.radiusY;
+        const finalX = Math.cos(angle) * circleRadius;
+        const finalY = Math.sin(angle) * circleRadius;
         const length = Math.hypot(finalX, finalY);
         const directionX = length > 1
           ? finalX / length
