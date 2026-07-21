@@ -4233,12 +4233,12 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
 
       videoOneOut: 0.55,
       videoTwoOut: 0.57,
-      videoThreeOut: 0.73,
+      videoThreeOut: 0.72,
       videoBackOutDuration: 0.08,
-      videoThreeOutDuration: 0.10,
+      videoThreeOutDuration: 0.16,
 
-      paragraphTwoIn: 0.83,
-      buttonIn: 0.92,
+      paragraphTwoIn: 0.89,
+      buttonIn: 0.95,
       end: 1
     },
 
@@ -4808,14 +4808,14 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       }, timing.videoThreeFullscreen);
 
       [
-        [videoOne, timing.videoOneOut, timing.videoBackOutDuration],
-        [videoTwo, timing.videoTwoOut, timing.videoBackOutDuration],
-        [videoThree, timing.videoThreeOut, timing.videoThreeOutDuration]
+        [videoOne, timing.videoOneOut, timing.videoBackOutDuration, "power2.in"],
+        [videoTwo, timing.videoTwoOut, timing.videoBackOutDuration, "power2.in"],
+        [videoThree, timing.videoThreeOut, timing.videoThreeOutDuration, "power1.inOut"]
       ].forEach(function (item) {
         timeline.to(item[0], {
           scale: 0,
           duration: item[2],
-          ease: "power2.in"
+          ease: item[3]
         }, item[1]);
       });
 
