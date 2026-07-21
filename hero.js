@@ -1387,6 +1387,11 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       lottieOutStart: 1.70,
       lottieOutEnd: 1.80,
 
+      lottieFrameStart: 1.22,
+      lottieFrameEnd: 1.70,
+      lottieLookupAttempts: 120,
+      lottieLookupInterval: 50,
+
       end: 2.62,
       exitViewportDistance: 0.35,
 
@@ -2024,6 +2029,121 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
     let originalEmbedRadius = "0px";
     let targetMainOneDirection = -1;
     let targetMainTwoDirection = 1;
+    const targetLottieState = { progress: 0 };
+    let targetLottieAnimation = null;
+    let targetLottieLookupCount = 0;
+
+    function getTargetLottieRuntimes() {
+      const runtimes = [];
+
+      if (window.lottie) {
+        runtimes.push(window.lottie);
+      }
+
+      if (window.Webflow && typeof window.Webflow.require === "function") {
+        try {
+          const module = window.Webflow.require("lottie");
+
+          if (module && module.lottie) {
+            runtimes.push(module.lottie);
+          }
+        } catch (error) {
+          /* Le module Webflow Lottie n'est pas encore initialisé. */
+        }
+      }
+
+      return runtimes;
+    }
+
+    function findTargetLottieAnimation() {
+      if (!targetLottie) {
+        return null;
+      }
+
+      const runtimes = getTargetLottieRuntimes();
+
+      for (let runtimeIndex = 0;
+        runtimeIndex < runtimes.length;
+        runtimeIndex += 1) {
+        const runtime = runtimes[runtimeIndex];
+        const animations = typeof runtime.getRegisteredAnimations ===
+          "function"
+          ? runtime.getRegisteredAnimations()
+          : [];
+        const match = animations.find(function (animation) {
+          const animationWrapper = animation.wrapper || animation.container;
+
+          return animationWrapper && (
+            animationWrapper === targetLottie ||
+            targetLottie.contains(animationWrapper) ||
+            animationWrapper.contains(targetLottie)
+          );
+        });
+
+        if (match) {
+          return match;
+        }
+      }
+
+      return null;
+    }
+
+    function renderTargetLottieFrame() {
+      if (!targetLottieAnimation) {
+        targetLottieAnimation = findTargetLottieAnimation();
+      }
+
+      if (!targetLottieAnimation) {
+        return;
+      }
+
+      const frameCount = Math.max(
+        Number(targetLottieAnimation.totalFrames) || 1,
+        1
+      );
+      const frame = gsap.utils.clamp(
+        0,
+        frameCount - 1,
+        targetLottieState.progress * (frameCount - 1)
+      );
+
+      if (typeof targetLottieAnimation.pause === "function") {
+        targetLottieAnimation.pause();
+      }
+
+      if (typeof targetLottieAnimation.goToAndStop === "function") {
+        targetLottieAnimation.goToAndStop(frame, true);
+      }
+    }
+
+    function lockTargetLottieToScroll() {
+      if (!targetLottie) {
+        return;
+      }
+
+      targetLottieAnimation = findTargetLottieAnimation();
+
+      if (targetLottieAnimation) {
+        renderTargetLottieFrame();
+        return;
+      }
+
+      targetLottieLookupCount += 1;
+
+      if (
+        targetLottieLookupCount <
+        CONFIG.targetSequence.lottieLookupAttempts
+      ) {
+        window.setTimeout(
+          lockTargetLottieToScroll,
+          CONFIG.targetSequence.lottieLookupInterval
+        );
+      } else {
+        console.warn(
+          "Hero target : impossible de récupérer l'instance du Lottie Webflow."
+        );
+      }
+    }
 
     const itemCount = imageItems.length + 1;
     const baseAngles = Array.from({ length: itemCount }, function (_, index) {
@@ -2845,6 +2965,8 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       cancerProgress.forEach(function (state) {
         state.value = 0;
       });
+      targetLottieState.progress = 0;
+      renderTargetLottieFrame();
 
       const backgroundStyle = heroBackground.getAttribute("style");
       const embedStyle = heroEmbed.getAttribute("style");
@@ -2980,6 +3102,8 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
         if (targetLottieWrapper) {
           gsap.set(targetLottieWrapper, { opacity: 1 });
         }
+        targetLottieState.progress = 1;
+        renderTargetLottieFrame();
         return;
       }
 
@@ -3198,6 +3322,16 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
 
       const targetTiming = CONFIG.targetSequence;
 
+      if (targetLottie) {
+        timeline.to(targetLottieState, {
+          progress: 1,
+          duration:
+            targetTiming.lottieFrameEnd -
+            targetTiming.lottieFrameStart,
+          onUpdate: renderTargetLottieFrame
+        }, targetTiming.lottieFrameStart);
+      }
+
       if (targetMainOne) {
         animateLinesIn(targetMainOne, targetTiming.mainOneIn);
       }
@@ -3344,6 +3478,7 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
     }
 
     createTimeline();
+    lockTargetLottieToScroll();
     window.addEventListener("resize", function () {
       handleResize(false);
     });
