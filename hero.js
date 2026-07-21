@@ -81,7 +81,7 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
       backgroundRadiusStart: 0.56,
       backgroundOut: 0.805,
       backgroundOutDuration: 0.035,
-      firstPairIn: 0.70,
+      firstPairIn: 0.65,
       firstPairInDuration: 0.085,
       firstPairOut: 0.84,
       firstPairOutDuration: 0.07,
