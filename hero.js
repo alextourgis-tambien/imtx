@@ -708,7 +708,7 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       titleTwoIn: 0.32,
       titleTwoMoveStart: 0.4,
       titleTwoMoveDuration: 0.25,
-      titleThreeEnd: 0.9,
+      titleThreeEnd: 1,
       orbitLiftDuration: 0.25
     },
 
@@ -920,6 +920,28 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
           yPercent: 0,
           duration: FINAL_CONFIG.text.lineDuration
         }, start + index * FINAL_CONFIG.text.lineStagger);
+      });
+    }
+
+    function animateLinesInOverRange(title, start, end) {
+      const lines = titleLines.get(title) || [];
+
+      if (!lines.length) {
+        return;
+      }
+
+      const range = Math.max(end - start, 0.01);
+      const overlapRatio = 0.65;
+      const lineDuration = range /
+        (1 + Math.max(lines.length - 1, 0) * overlapRatio);
+      const lineStagger = lineDuration * overlapRatio;
+
+      lines.forEach(function (line, index) {
+        timeline.to(line, {
+          opacity: 1,
+          yPercent: 0,
+          duration: lineDuration
+        }, start + index * lineStagger);
       });
     }
 
@@ -1141,24 +1163,15 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
         titles[1],
         timing.titleTwoIn
       );
-      const titleThreeLineCount = (
-        titleLines.get(titles[2]) || []
-      ).length;
-      const titleThreeRevealDuration =
-        Math.max(titleThreeLineCount - 1, 0) *
-          FINAL_CONFIG.text.lineStagger +
-        FINAL_CONFIG.text.lineDuration;
-      const scheduledTitleThreeStart =
-        timing.titleThreeEnd - titleThreeRevealDuration;
       const titleTwoMoveStart = Math.max(
         timing.titleTwoMoveStart,
         titleTwoRevealEnd + 0.01
       );
       const titleTwoMoveEnd =
         titleTwoMoveStart + timing.titleTwoMoveDuration;
-      const titleThreeStart = Math.max(
-        scheduledTitleThreeStart,
-        titleTwoMoveEnd + 0.01
+      const titleThreeStart = Math.min(
+        titleTwoMoveEnd + 0.01,
+        timing.titleThreeEnd - 0.01
       );
       function syncTitleVisibility(progress) {
         titles[0].style.visibility = progress <= titleOneEnd
@@ -1232,7 +1245,11 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
         ease: "power2.inOut"
       }, titleTwoMoveStart);
 
-      animateLinesIn(titles[2], titleThreeStart);
+      animateLinesInOverRange(
+        titles[2],
+        titleThreeStart,
+        timing.titleThreeEnd
+      );
 
       timeline.to(orbitState, {
         offsetY: finalOrbitLift,
