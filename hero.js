@@ -4112,7 +4112,7 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       videoThreeIn: 0.36,
       videoInDuration: 0.18,
 
-      videoThreeFullscreen: 0.53,
+      videoThreeFullscreen: 0.54,
       videoThreeFullscreenDuration: 0.16,
 
       videoOneOut: 0.55,
