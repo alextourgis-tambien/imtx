@@ -71,21 +71,22 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
 
     timing: {
       lottieStart: 0,
-      lottieEnd: 0.43,
+      lottieEnd: 0.46,
       titleIn: 0.08,
-      titleOut: 0.34,
-      wrapperIn: 0.34,
+      titleOut: 0.47,
+      wrapperIn: 0.47,
       wrapperInDuration: 0.055,
-      backgroundIn: 0.34,
+      backgroundIn: 0.47,
       backgroundInDuration: 0.18,
-      backgroundOut: 0.51,
-      backgroundOutDuration: 0.075,
-      firstPairIn: 0.56,
-      firstPairInDuration: 0.105,
-      firstPairOut: 0.72,
-      firstPairOutDuration: 0.09,
-      secondPairIn: 0.79,
-      secondPairInDuration: 0.105
+      backgroundRadiusStart: 0.525,
+      backgroundOut: 0.65,
+      backgroundOutDuration: 0.065,
+      firstPairIn: 0.70,
+      firstPairInDuration: 0.085,
+      firstPairOut: 0.84,
+      firstPairOutDuration: 0.07,
+      secondPairIn: 0.90,
+      secondPairInDuration: 0.085
     },
 
     text: {
@@ -420,9 +421,17 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
         transformOrigin: "50% 50%"
       });
       gsap.set(cards, {
+        opacity: 0,
         rotationY: 90,
         transformPerspective: 1200,
         transformOrigin: "50% 50%"
+      });
+      gsap.set(firstPair, {
+        opacity: 1,
+        visibility: "visible"
+      });
+      gsap.set(secondPair, {
+        visibility: "hidden"
       });
 
       lottieState.progress = 0;
@@ -441,8 +450,16 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
         gsap.set(allTitleWords(), { opacity: 0, yPercent: 0 });
         gsap.set(flipWrapper, { opacity: 1 });
         gsap.set(flipBackground, { opacity: 0, scale: 1 });
-        gsap.set(firstPair, { rotationY: -90 });
-        gsap.set(secondPair, { rotationY: 0 });
+        gsap.set(firstPair, {
+          opacity: 0,
+          rotationY: -90,
+          visibility: "hidden"
+        });
+        gsap.set(secondPair, {
+          opacity: 1,
+          rotationY: 0,
+          visibility: "visible"
+        });
         return;
       }
 
@@ -452,7 +469,7 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
         defaults: { ease: "none" },
         scrollTrigger: {
           trigger: wrapper,
-          start: "top top",
+          start: "top bottom",
           end: "bottom bottom",
           scrub: 1,
           invalidateOnRefresh: true,
@@ -476,9 +493,15 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
 
       timeline.to(flipBackground, {
         scale: 1,
-        borderRadius: finalBackgroundRadius,
         duration: timing.backgroundInDuration
       }, timing.backgroundIn);
+
+      timeline.to(flipBackground, {
+        borderRadius: finalBackgroundRadius,
+        duration:
+          timing.backgroundIn + timing.backgroundInDuration -
+          timing.backgroundRadiusStart
+      }, timing.backgroundRadiusStart);
 
       timeline.to(flipBackground, {
         opacity: 0,
@@ -486,6 +509,11 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
       }, timing.backgroundOut);
 
       firstPair.forEach(function (card, index) {
+        timeline.set(card, {
+          opacity: 1,
+          visibility: "visible"
+        }, timing.firstPairIn + index * DECODE_CONFIG.cardStagger);
+
         timeline.to(card, {
           rotationY: 0,
           duration: timing.firstPairInDuration,
@@ -495,14 +523,26 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
 
       firstPair.forEach(function (card, index) {
         timeline.to(card, {
+          opacity: 0,
           rotationY: -90,
           duration: timing.firstPairOutDuration,
           ease: "power2.in"
         }, timing.firstPairOut + index * DECODE_CONFIG.cardStagger);
+
+        timeline.set(card, {
+          visibility: "hidden"
+        }, timing.firstPairOut +
+          index * DECODE_CONFIG.cardStagger +
+          timing.firstPairOutDuration);
       });
 
       secondPair.forEach(function (card, index) {
+        timeline.set(card, {
+          visibility: "visible"
+        }, timing.secondPairIn + index * DECODE_CONFIG.cardStagger);
+
         timeline.to(card, {
+          opacity: 1,
           rotationY: 0,
           duration: timing.secondPairInDuration,
           ease: "power2.out"
