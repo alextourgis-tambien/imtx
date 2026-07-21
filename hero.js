@@ -706,10 +706,10 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       orbitEnd: 1,
       titleOneOut: 0.29,
       titleTwoIn: 0.32,
-      titleTwoMoveStart: 0.48,
-      titleTwoMoveDuration: 0.14,
+      titleTwoMoveStart: 0.4,
+      titleTwoMoveDuration: 0.25,
       titleThreeEnd: 0.9,
-      orbitLiftDuration: 0.14
+      orbitLiftDuration: 0.25
     },
 
     orbitTurns: 0.4,
@@ -1152,8 +1152,7 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
         timing.titleThreeEnd - titleThreeRevealDuration;
       const titleTwoMoveStart = Math.max(
         timing.titleTwoMoveStart,
-        titleTwoRevealEnd + 0.01,
-        scheduledTitleThreeStart - timing.titleTwoMoveDuration - 0.01
+        titleTwoRevealEnd + 0.01
       );
       const titleTwoMoveEnd =
         titleTwoMoveStart + timing.titleTwoMoveDuration;
