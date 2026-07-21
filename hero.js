@@ -725,7 +725,7 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
     orbitLift: {
       desktop: 0.38,
       tablet: 0.34,
-      mobile: 0.3
+      mobile: 0.18
     },
 
     text: {
