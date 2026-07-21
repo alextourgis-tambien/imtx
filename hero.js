@@ -46,6 +46,512 @@
   }
 })();
 
+/*==================================================
+FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
+==================================================*/
+
+(function () {
+  "use strict";
+
+  const FINAL_CONFIG = {
+    selectors: {
+      wrapper: ".final__wrapper",
+      sticky: ".final__sticky",
+      content: ".final__content",
+      images: ".final__images",
+      titles: [
+        ".final__title.is--one",
+        ".final__title.is--two",
+        ".final__title.is--three"
+      ],
+      videos: [
+        ".final__bg-video.is--one",
+        ".final__bg-video.is--two",
+        ".final__bg-video.is--three",
+        ".final__bg-video.is--four",
+        ".final__bg-video.is--five",
+        ".final__bg-video.is--six",
+        ".final__bg-video.is--seven",
+        ".final__bg-video.is--eight"
+      ]
+    },
+
+    timing: {
+      titleOneIn: 0.015,
+      mediaInStart: 0.02,
+      mediaInLatestStart: 0.12,
+      mediaInDurationMin: 0.15,
+      mediaInDurationMax: 0.22,
+      orbitStart: 0.18,
+      orbitEnd: 1,
+      titleOneOut: 0.29,
+      titleTwoIn: 0.32,
+      titleTwoOut: 0.58,
+      titleThreeIn: 0.61
+    },
+
+    orbitTurns: 0.4,
+    entranceScale: 0.72,
+    outsideMarginDesktop: 80,
+    outsideMarginMobile: 36,
+
+    text: {
+      lineDuration: 0.05,
+      lineStagger: 0.014,
+      hiddenYPercent: 70
+    },
+
+    resizeDebounce: 240
+  };
+
+  window.addEventListener("load", function () {
+    if (
+      typeof window.gsap === "undefined" ||
+      typeof window.ScrollTrigger === "undefined"
+    ) {
+      console.warn("Final : GSAP ou ScrollTrigger est absent.");
+      return;
+    }
+
+    gsap.registerPlugin(ScrollTrigger);
+
+    const selectors = FINAL_CONFIG.selectors;
+    const wrapper = document.querySelector(selectors.wrapper);
+
+    if (!wrapper) {
+      return;
+    }
+
+    const sticky = wrapper.querySelector(selectors.sticky);
+    const content = wrapper.querySelector(selectors.content);
+    const images = wrapper.querySelector(selectors.images);
+    const titles = selectors.titles.map(function (selector) {
+      return wrapper.querySelector(selector);
+    });
+    const videos = selectors.videos.map(function (selector) {
+      return wrapper.querySelector(selector);
+    });
+
+    [
+      [sticky, selectors.sticky],
+      [content, selectors.content],
+      [images, selectors.images]
+    ].concat(
+      titles.map(function (element, index) {
+        return [element, selectors.titles[index]];
+      }),
+      videos.map(function (element, index) {
+        return [element, selectors.videos[index]];
+      })
+    ).forEach(function (entry) {
+      if (!entry[0]) {
+        console.warn("Final : élément absent — " + entry[1]);
+      }
+    });
+
+    if (
+      !sticky ||
+      !content ||
+      !images ||
+      titles.some(function (title) { return !title; }) ||
+      videos.some(function (video) { return !video; })
+    ) {
+      return;
+    }
+
+    const originalTitleMarkup = new Map();
+    const originalVideoStyles = new Map();
+
+    titles.forEach(function (title) {
+      originalTitleMarkup.set(title, title.innerHTML);
+    });
+
+    videos.forEach(function (video) {
+      originalVideoStyles.set(video, video.getAttribute("style"));
+    });
+
+    const arrivalStates = videos.map(function () {
+      return { value: 0 };
+    });
+    const orbitState = { angle: 0 };
+
+    let titleLines = new Map();
+    let videoMeasurements = [];
+    let timeline = null;
+    let resizeTimer = null;
+    let viewportWidth = window.innerWidth;
+
+    function deterministic(index, minimum, maximum, salt) {
+      const value = Math.sin((index + 1) * 12.9898 + salt * 78.233) *
+        43758.5453;
+      const normalized = value - Math.floor(value);
+      return minimum + (maximum - minimum) * normalized;
+    }
+
+    function restoreInlineStyle(element, originalStyle) {
+      if (originalStyle === null) {
+        element.removeAttribute("style");
+      } else {
+        element.setAttribute("style", originalStyle);
+      }
+    }
+
+    function splitTitleIntoLines(title) {
+      title.innerHTML = originalTitleMarkup.get(title);
+
+      const walker = document.createTreeWalker(
+        title,
+        NodeFilter.SHOW_TEXT,
+        {
+          acceptNode: function (node) {
+            return node.nodeValue && node.nodeValue.trim()
+              ? NodeFilter.FILTER_ACCEPT
+              : NodeFilter.FILTER_REJECT;
+          }
+        }
+      );
+      const textNodes = [];
+      let currentNode = walker.nextNode();
+
+      while (currentNode) {
+        textNodes.push(currentNode);
+        currentNode = walker.nextNode();
+      }
+
+      textNodes.forEach(function (node) {
+        const fragment = document.createDocumentFragment();
+        const pieces = node.nodeValue.match(/\s+|[^\s]+/g) || [];
+
+        pieces.forEach(function (piece) {
+          if (/^\s+$/.test(piece)) {
+            fragment.appendChild(document.createTextNode("\u200B"));
+            return;
+          }
+
+          const word = document.createElement("span");
+          word.className = "final-split-word";
+          word.textContent = piece;
+          fragment.appendChild(word);
+        });
+
+        node.parentNode.replaceChild(fragment, node);
+      });
+
+      const groups = [];
+      Array.from(title.querySelectorAll(".final-split-word"))
+        .forEach(function (word) {
+          const top = Math.round(word.getBoundingClientRect().top);
+          let group = groups.find(function (candidate) {
+            return Math.abs(candidate.top - top) <= 2;
+          });
+
+          if (!group) {
+            group = { top: top, words: [] };
+            groups.push(group);
+          }
+
+          group.words.push(word);
+        });
+
+      groups.sort(function (a, b) {
+        return a.top - b.top;
+      });
+
+      return groups.map(function (group) {
+        return group.words;
+      });
+    }
+
+    function rebuildTitleLines() {
+      titleLines = new Map();
+      titles.forEach(function (title) {
+        titleLines.set(title, splitTitleIntoLines(title));
+      });
+    }
+
+    function flattenLines(title) {
+      return (titleLines.get(title) || []).reduce(
+        function (words, line) {
+          return words.concat(line);
+        },
+        []
+      );
+    }
+
+    function animateLinesIn(title, start) {
+      (titleLines.get(title) || []).forEach(function (line, index) {
+        timeline.to(line, {
+          opacity: 1,
+          yPercent: 0,
+          duration: FINAL_CONFIG.text.lineDuration
+        }, start + index * FINAL_CONFIG.text.lineStagger);
+      });
+    }
+
+    function animateLinesOut(title, start) {
+      (titleLines.get(title) || []).forEach(function (line, index) {
+        timeline.to(line, {
+          opacity: 0,
+          yPercent: -FINAL_CONFIG.text.hiddenYPercent,
+          duration: FINAL_CONFIG.text.lineDuration
+        }, start + index * FINAL_CONFIG.text.lineStagger);
+      });
+    }
+
+    function measureVideos() {
+      const contentRectangle = content.getBoundingClientRect();
+      const centerX = contentRectangle.left + contentRectangle.width / 2;
+      const centerY = contentRectangle.top + contentRectangle.height / 2;
+      const halfWidth = contentRectangle.width / 2;
+      const halfHeight = contentRectangle.height / 2;
+      const outsideMargin = window.innerWidth <= 767
+        ? FINAL_CONFIG.outsideMarginMobile
+        : FINAL_CONFIG.outsideMarginDesktop;
+
+      videoMeasurements = videos.map(function (video, index) {
+        const rectangle = video.getBoundingClientRect();
+        const finalX = rectangle.left + rectangle.width / 2 - centerX;
+        const finalY = rectangle.top + rectangle.height / 2 - centerY;
+        const fallbackAngle = -Math.PI / 2 +
+          index * Math.PI * 2 / videos.length;
+        const length = Math.hypot(finalX, finalY);
+        const directionX = length > 1
+          ? finalX / length
+          : Math.cos(fallbackAngle);
+        const directionY = length > 1
+          ? finalY / length
+          : Math.sin(fallbackAngle);
+        const horizontalBoundary = Math.abs(directionX) > 0.001
+          ? (halfWidth + rectangle.width / 2 + outsideMargin) /
+            Math.abs(directionX)
+          : Number.POSITIVE_INFINITY;
+        const verticalBoundary = Math.abs(directionY) > 0.001
+          ? (halfHeight + rectangle.height / 2 + outsideMargin) /
+            Math.abs(directionY)
+          : Number.POSITIVE_INFINITY;
+        const outsideRadius = Math.min(
+          horizontalBoundary,
+          verticalBoundary
+        );
+        const entranceDistance = Math.max(outsideRadius - length, 0);
+
+        return {
+          finalX: finalX,
+          finalY: finalY,
+          entranceX: directionX * entranceDistance,
+          entranceY: directionY * entranceDistance,
+          baseX: Number(gsap.getProperty(video, "x")) || 0,
+          baseY: Number(gsap.getProperty(video, "y")) || 0,
+          baseXPercent: Number(gsap.getProperty(video, "xPercent")) || 0,
+          baseYPercent: Number(gsap.getProperty(video, "yPercent")) || 0,
+          baseRotation: Number(gsap.getProperty(video, "rotation")) || 0,
+          finalScale: Number(gsap.getProperty(video, "scaleX")) || 1
+        };
+      });
+    }
+
+    function positionVideos() {
+      const radians = orbitState.angle * Math.PI / 180;
+      const cosine = Math.cos(radians);
+      const sine = Math.sin(radians);
+
+      videos.forEach(function (video, index) {
+        const measurement = videoMeasurements[index];
+        const reveal = arrivalStates[index].value;
+
+        if (!measurement) {
+          return;
+        }
+
+        const rotatedX =
+          measurement.finalX * cosine - measurement.finalY * sine;
+        const rotatedY =
+          measurement.finalX * sine + measurement.finalY * cosine;
+        const orbitX = rotatedX - measurement.finalX;
+        const orbitY = rotatedY - measurement.finalY;
+
+        gsap.set(video, {
+          xPercent: measurement.baseXPercent,
+          yPercent: measurement.baseYPercent,
+          x: measurement.baseX +
+            orbitX + measurement.entranceX * (1 - reveal),
+          y: measurement.baseY +
+            orbitY + measurement.entranceY * (1 - reveal),
+          scale: measurement.finalScale * gsap.utils.interpolate(
+            FINAL_CONFIG.entranceScale,
+            1,
+            reveal
+          ),
+          rotation: measurement.baseRotation,
+          visibility: reveal > 0.001 ? "visible" : "hidden",
+          transformOrigin: "50% 50%"
+        });
+      });
+    }
+
+    function getTitleEnd(title, start) {
+      const lineCount = (titleLines.get(title) || []).length;
+      return start + Math.max(lineCount - 1, 0) *
+        FINAL_CONFIG.text.lineStagger +
+        FINAL_CONFIG.text.lineDuration;
+    }
+
+    function createTimeline() {
+      document.documentElement.classList.remove("final-animation-ready");
+
+      if (timeline) {
+        if (timeline.scrollTrigger) {
+          timeline.scrollTrigger.kill();
+        }
+        timeline.kill();
+      }
+
+      videos.forEach(function (video) {
+        restoreInlineStyle(video, originalVideoStyles.get(video));
+      });
+      rebuildTitleLines();
+      measureVideos();
+
+      arrivalStates.forEach(function (state) {
+        state.value = 0;
+      });
+      orbitState.angle = 0;
+
+      titles.forEach(function (title) {
+        gsap.set(flattenLines(title), {
+          opacity: 0,
+          yPercent: FINAL_CONFIG.text.hiddenYPercent
+        });
+      });
+      positionVideos();
+
+      document.documentElement.classList.add("final-animation-ready");
+
+      const prefersReducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)"
+      ).matches;
+
+      if (prefersReducedMotion) {
+        arrivalStates.forEach(function (state) {
+          state.value = 1;
+        });
+        positionVideos();
+        gsap.set(flattenLines(titles[2]), {
+          opacity: 1,
+          yPercent: 0
+        });
+        return;
+      }
+
+      const timing = FINAL_CONFIG.timing;
+      const titleOneEnd = getTitleEnd(titles[0], timing.titleOneOut);
+      const titleTwoStart = timing.titleTwoIn;
+      const titleTwoEnd = getTitleEnd(titles[1], timing.titleTwoOut);
+      const titleThreeStart = timing.titleThreeIn;
+
+      function syncTitleVisibility(progress) {
+        titles[0].style.visibility = progress <= titleOneEnd
+          ? "visible"
+          : "hidden";
+        titles[1].style.visibility =
+          progress >= titleTwoStart - 0.001 &&
+          progress <= titleTwoEnd + 0.001
+            ? "visible"
+            : "hidden";
+        titles[2].style.visibility = progress >= titleThreeStart - 0.001
+          ? "visible"
+          : "hidden";
+      }
+
+      timeline = gsap.timeline({
+        defaults: { ease: "none" },
+        scrollTrigger: {
+          trigger: wrapper,
+          start: "top bottom",
+          end: "bottom bottom",
+          scrub: 1,
+          invalidateOnRefresh: true,
+          onUpdate: function (self) {
+            syncTitleVisibility(self.progress);
+          },
+          onRefresh: function (self) {
+            positionVideos();
+            syncTitleVisibility(self.progress);
+          }
+        }
+      });
+
+      animateLinesIn(titles[0], timing.titleOneIn);
+
+      videos.forEach(function (video, index) {
+        const start = deterministic(
+          index,
+          timing.mediaInStart,
+          timing.mediaInLatestStart,
+          5
+        );
+        const duration = deterministic(
+          index,
+          timing.mediaInDurationMin,
+          timing.mediaInDurationMax,
+          9
+        );
+
+        timeline.to(arrivalStates[index], {
+          value: 1,
+          duration: duration,
+          ease: "power2.out",
+          onUpdate: positionVideos
+        }, start);
+      });
+
+      timeline.to(orbitState, {
+        angle: 360 * FINAL_CONFIG.orbitTurns,
+        duration: timing.orbitEnd - timing.orbitStart,
+        onUpdate: positionVideos
+      }, timing.orbitStart);
+
+      animateLinesOut(titles[0], timing.titleOneOut);
+      animateLinesIn(titles[1], timing.titleTwoIn);
+      animateLinesOut(titles[1], timing.titleTwoOut);
+      animateLinesIn(titles[2], timing.titleThreeIn);
+
+      timeline.to({}, {
+        duration: Math.max(timing.orbitEnd - timing.titleThreeIn, 0.01)
+      }, timing.titleThreeIn);
+
+      syncTitleVisibility(
+        timeline.scrollTrigger ? timeline.scrollTrigger.progress : 0
+      );
+    }
+
+    function handleResize() {
+      const nextWidth = window.innerWidth;
+
+      if (
+        nextWidth <= 991 &&
+        Math.abs(nextWidth - viewportWidth) < 2
+      ) {
+        return;
+      }
+
+      viewportWidth = nextWidth;
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(function () {
+        createTimeline();
+        ScrollTrigger.refresh();
+      }, FINAL_CONFIG.resizeDebounce);
+    }
+
+    createTimeline();
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("orientationchange", function () {
+      window.setTimeout(handleResize, 120);
+    });
+    ScrollTrigger.refresh();
+  });
+})();
+
 (function () {
   "use strict";
 

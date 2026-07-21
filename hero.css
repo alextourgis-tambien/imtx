@@ -793,3 +793,63 @@ La hauteur et les espacements restent gérés dans Webflow.
   margin-right:auto !important;
   text-align:center !important;
 }
+
+/*==================================================
+FINAL — TITRES + ORBITE DES 8 VIDÉOS
+La hauteur de .final__wrapper reste gérée dans Webflow.
+==================================================*/
+
+.final__sticky{
+  position:sticky;
+  top:0;
+  width:100%;
+  height:var(--imtx-viewport-height);
+  overflow:hidden;
+}
+
+.final__content{
+  position:relative;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+}
+
+.final__title,
+.final__bg-video{
+  visibility:hidden;
+}
+
+html.final-animation-ready .final__title,
+html.final-animation-ready .final__bg-video{
+  visibility:visible;
+}
+
+.final__title{
+  will-change:transform,opacity;
+}
+
+.final__bg-video{
+  transform-origin:center center;
+  will-change:transform;
+  pointer-events:none;
+}
+
+.final-split-word{
+  display:inline-block;
+  margin-right:.25em;
+  will-change:transform,opacity;
+}
+
+@media (prefers-reduced-motion:reduce){
+  .final__sticky{
+    position:relative;
+    height:auto;
+    min-height:var(--imtx-viewport-height);
+  }
+
+  .final__title,
+  .final__bg-video{
+    visibility:visible;
+    transform:none !important;
+  }
+}
