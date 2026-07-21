@@ -4107,16 +4107,19 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       paragraphOneIn: 0,
       paragraphOneOut: 0.23,
 
-      videoOneIn: 0.30,
-      videoTwoIn: 0.303,
-      videoThreeIn: 0.306,
-      videoInDuration: 0.18,
+      videoOneIn: 0.28,
+      videoTwoIn: 0.36,
+      videoThreeIn: 0.44,
+      videoInDuration: 0.12,
 
-      videoThreeOut: 0.60,
-      videoTwoOut: 0.62,
-      videoOneOut: 0.64,
+      videoThreeFullscreen: 0.53,
+      videoThreeFullscreenDuration: 0.16,
+
+      videoOneOut: 0.55,
+      videoTwoOut: 0.57,
+      videoThreeOut: 0.73,
       videoBackOutDuration: 0.08,
-      videoOneOutDuration: 0.18,
+      videoThreeOutDuration: 0.10,
 
       paragraphTwoIn: 0.83,
       buttonIn: 0.92,
@@ -4130,11 +4133,12 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
     },
 
     videoStack: {
-      startStep: 64,
-      finalBlend: 0.36,
-      gapDesktop: 30,
-      gapTablet: 24,
-      gapMobile: 16
+      gapDesktop: 48,
+      gapTablet: 38,
+      gapMobile: 26,
+      entryOffsetDesktop: 110,
+      entryOffsetTablet: 88,
+      entryOffsetMobile: 64
     },
 
     previousSection: {
@@ -4229,7 +4233,7 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
     }
 
     const paragraphs = [paragraphOne, paragraphTwo];
-    const videos = [videoThree, videoTwo, videoOne];
+    const videos = [videoOne, videoTwo, videoThree];
 
     const originalParagraphMarkup = new Map();
     paragraphs.forEach(function (paragraph) {
@@ -4387,6 +4391,18 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       return SECOND_CONFIG.videoStack.gapDesktop;
     }
 
+    function getVideoEntryOffset() {
+      if (window.innerWidth <= 767) {
+        return SECOND_CONFIG.videoStack.entryOffsetMobile;
+      }
+
+      if (window.innerWidth <= 991) {
+        return SECOND_CONFIG.videoStack.entryOffsetTablet;
+      }
+
+      return SECOND_CONFIG.videoStack.entryOffsetDesktop;
+    }
+
     function createTimeline() {
       if (timeline) {
         if (timeline.scrollTrigger) {
@@ -4402,7 +4418,9 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       restoreWebflowState();
 
       const finalVideoScales = new Map();
+      const finalVideoX = new Map();
       const finalVideoY = new Map();
+      const finalVideoXPercent = new Map();
       const finalVideoYPercent = new Map();
       const videoRectangles = new Map();
       videos.forEach(function (video) {
@@ -4414,6 +4432,14 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
           video,
           Number(gsap.getProperty(video, "y")) || 0
         );
+        finalVideoX.set(
+          video,
+          Number(gsap.getProperty(video, "x")) || 0
+        );
+        finalVideoXPercent.set(
+          video,
+          Number(gsap.getProperty(video, "xPercent")) || 0
+        );
         finalVideoYPercent.set(
           video,
           Number(gsap.getProperty(video, "yPercent")) || 0
@@ -4424,44 +4450,57 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       const anchorRectangle = videoRectangles.get(videoOne);
       const anchorCenterY =
         anchorRectangle.top + anchorRectangle.height / 2;
+      const anchorCenterX =
+        anchorRectangle.left + anchorRectangle.width / 2;
+      const parentRectangle = parent.getBoundingClientRect();
+      const parentCenterX =
+        parentRectangle.left + parentRectangle.width / 2;
+      const parentCenterY =
+        parentRectangle.top + parentRectangle.height / 2;
       const stackGap = getVideoStackGap();
-      const startSteps = new Map([
-        [videoOne, 0],
-        [videoTwo, -SECOND_CONFIG.videoStack.startStep],
-        [videoThree, -SECOND_CONFIG.videoStack.startStep * 2]
-      ]);
-      const finalTopSteps = new Map([
-        [videoOne, 0],
-        [videoTwo, -stackGap],
-        [videoThree, -stackGap * 2]
-      ]);
+      const entryOffset = getVideoEntryOffset();
       const videoDepth = new Map([
-        [videoOne, 3],
+        [videoOne, 1],
         [videoTwo, 2],
-        [videoThree, 1]
+        [videoThree, 3]
       ]);
+      const centeredVideoX = new Map();
+      const centeredVideoY = new Map();
       const startVideoY = new Map();
-      const stackedVideoY = new Map();
 
       videos.forEach(function (video) {
         const rectangle = videoRectangles.get(video);
+        const centerX = rectangle.left + rectangle.width / 2;
         const centerY = rectangle.top + rectangle.height / 2;
 
+        centeredVideoX.set(
+          video,
+          finalVideoX.get(video) + anchorCenterX - centerX
+        );
+        centeredVideoY.set(
+          video,
+          finalVideoY.get(video) + anchorCenterY - centerY
+        );
         startVideoY.set(
           video,
-          finalVideoY.get(video) +
-            anchorCenterY + startSteps.get(video) - centerY
-        );
-        stackedVideoY.set(
-          video,
-          finalVideoY.get(video) +
-            (
-              anchorRectangle.top +
-              finalTopSteps.get(video) -
-              rectangle.top
-            ) * SECOND_CONFIG.videoStack.finalBlend
+          centeredVideoY.get(video) + entryOffset
         );
       });
+
+      const videoThreeRectangle = videoRectangles.get(videoThree);
+      const videoThreeCenterX =
+        videoThreeRectangle.left + videoThreeRectangle.width / 2;
+      const videoThreeCenterY =
+        videoThreeRectangle.top + videoThreeRectangle.height / 2;
+      const videoThreeFullscreenScale =
+        finalVideoScales.get(videoThree) * Math.max(
+          parentRectangle.width / videoThreeRectangle.width,
+          parentRectangle.height / videoThreeRectangle.height
+        );
+      const videoThreeFullscreenX =
+        finalVideoX.get(videoThree) + parentCenterX - videoThreeCenterX;
+      const videoThreeFullscreenY =
+        finalVideoY.get(videoThree) + parentCenterY - videoThreeCenterY;
 
       gsap.set(allWords(paragraphOne), {
         opacity: 0,
@@ -4475,7 +4514,9 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
 
       videos.forEach(function (video) {
         gsap.set(video, {
+          x: centeredVideoX.get(video),
           y: startVideoY.get(video),
+          xPercent: finalVideoXPercent.get(video),
           yPercent: finalVideoYPercent.get(video),
           zIndex: videoDepth.get(video),
           scale: 0,
@@ -4521,7 +4562,7 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
         [
           videoOne,
           timing.videoOneIn,
-          timing.videoOneOut + timing.videoOneOutDuration
+          timing.videoOneOut + timing.videoBackOutDuration
         ],
         [
           videoTwo,
@@ -4531,7 +4572,7 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
         [
           videoThree,
           timing.videoThreeIn,
-          timing.videoThreeOut + timing.videoBackOutDuration
+          timing.videoThreeOut + timing.videoThreeOutDuration
         ]
       ];
 
@@ -4603,26 +4644,57 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
 
       animateLinesOut(paragraphOne, timing.paragraphOneOut);
 
-      [
-        [videoOne, timing.videoOneIn],
-        [videoTwo, timing.videoTwoIn],
-        [videoThree, timing.videoThreeIn]
-      ].forEach(function (item) {
-        const video = item[0];
-        const start = item[1];
+      timeline.to(videoOne, {
+        y: centeredVideoY.get(videoOne),
+        scale: finalVideoScales.get(videoOne),
+        duration: timing.videoInDuration,
+        ease: "power2.out"
+      }, timing.videoOneIn);
 
-        timeline.to(video, {
-          y: stackedVideoY.get(video),
-          scale: finalVideoScales.get(video),
-          duration: timing.videoInDuration,
-          ease: "power2.out"
-        }, start);
-      });
+      timeline.to(videoOne, {
+        y: centeredVideoY.get(videoOne) - stackGap,
+        duration: timing.videoInDuration,
+        ease: "power2.inOut"
+      }, timing.videoTwoIn);
+
+      timeline.to(videoTwo, {
+        y: centeredVideoY.get(videoTwo),
+        scale: finalVideoScales.get(videoTwo),
+        duration: timing.videoInDuration,
+        ease: "power2.out"
+      }, timing.videoTwoIn);
+
+      timeline.to(videoOne, {
+        y: centeredVideoY.get(videoOne) - stackGap * 2,
+        duration: timing.videoInDuration,
+        ease: "power2.inOut"
+      }, timing.videoThreeIn);
+
+      timeline.to(videoTwo, {
+        y: centeredVideoY.get(videoTwo) - stackGap,
+        duration: timing.videoInDuration,
+        ease: "power2.inOut"
+      }, timing.videoThreeIn);
+
+      timeline.to(videoThree, {
+        y: centeredVideoY.get(videoThree),
+        scale: finalVideoScales.get(videoThree),
+        duration: timing.videoInDuration,
+        ease: "power2.out"
+      }, timing.videoThreeIn);
+
+      timeline.to(videoThree, {
+        x: videoThreeFullscreenX,
+        y: videoThreeFullscreenY,
+        scale: videoThreeFullscreenScale,
+        duration: timing.videoThreeFullscreenDuration,
+        ease: "power2.inOut"
+      }, timing.videoThreeFullscreen);
 
       [
-        [videoThree, timing.videoThreeOut, timing.videoBackOutDuration],
+        [videoOne, timing.videoOneOut, timing.videoBackOutDuration],
         [videoTwo, timing.videoTwoOut, timing.videoBackOutDuration],
-        [videoOne, timing.videoOneOut, timing.videoOneOutDuration]
+        [videoThree, timing.videoThreeOut, timing.videoThreeOutDuration]
       ].forEach(function (item) {
         timeline.to(item[0], {
           scale: 0,
