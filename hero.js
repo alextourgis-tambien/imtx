@@ -1616,7 +1616,9 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
     },
 
     text: {
-      oldPanelY: -48,
+      oldPanelY: -56,
+      oldPanelFadeDelayRatio: 0.32,
+      oldPanelFadeDurationRatio: 0.68,
       lineY: 30,
       lineStagger: 0.01,
       lineDuration: 0.045
@@ -3464,11 +3466,24 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       });
 
       if (oldTextCard) {
+        const oldTextDuration =
+          scroll.oldTextEnd - scroll.oldTextStart;
+
         timeline.to(oldTextCard, {
           y: CONFIG.text.oldPanelY,
-          opacity: 0,
-          duration: scroll.oldTextEnd - scroll.oldTextStart
+          duration: oldTextDuration,
+          force3D: true
         }, scroll.oldTextStart);
+
+        timeline.to(oldTextCard, {
+          opacity: 0,
+          duration:
+            oldTextDuration *
+            CONFIG.text.oldPanelFadeDurationRatio
+        },
+        scroll.oldTextStart +
+          oldTextDuration *
+          CONFIG.text.oldPanelFadeDelayRatio);
       }
 
       if (oldTitle) {
