@@ -422,16 +422,10 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
       });
       gsap.set(cards, {
         opacity: 0,
+        visibility: "hidden",
         rotationY: 90,
         transformPerspective: 1200,
         transformOrigin: "50% 50%"
-      });
-      gsap.set(firstPair, {
-        opacity: 1,
-        visibility: "visible"
-      });
-      gsap.set(secondPair, {
-        visibility: "hidden"
       });
 
       lottieState.progress = 0;
