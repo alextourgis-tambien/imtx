@@ -813,6 +813,7 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
     let titleLines = new Map();
     let videoMeasurements = [];
     let timeline = null;
+    let exitOrbitTrigger = null;
     let resizeTimer = null;
     let viewportWidth = window.innerWidth;
 
@@ -1068,6 +1069,11 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
         timeline.kill();
       }
 
+      if (exitOrbitTrigger) {
+        exitOrbitTrigger.kill();
+        exitOrbitTrigger = null;
+      }
+
       videos.forEach(function (video) {
         restoreInlineStyle(video, originalVideoStyles.get(video));
       });
@@ -1265,6 +1271,45 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       timeline.to({}, {
         duration: Math.max(timing.orbitEnd - titleThreeStart, 0.01)
       }, titleThreeStart);
+
+      const orbitEndAngle = 360 * FINAL_CONFIG.orbitTurns;
+      const mainOrbitScrollDistance = Math.max(
+        wrapper.getBoundingClientRect().height *
+          (timing.orbitEnd - timing.orbitStart),
+        window.innerHeight
+      );
+      const exitOrbitAngle = orbitEndAngle *
+        window.innerHeight / mainOrbitScrollDistance;
+
+      /*
+      La timeline principale se termine quand le bas du wrapper atteint le
+      bas du viewport. Cette seconde plage prolonge uniquement la révolution
+      jusqu'à la sortie complète du wrapper, sans étirer les titres.
+      */
+      exitOrbitTrigger = ScrollTrigger.create({
+        trigger: wrapper,
+        start: "bottom bottom",
+        end: "bottom top",
+        invalidateOnRefresh: true,
+        onUpdate: function (self) {
+          if (self.progress <= 0) {
+            return;
+          }
+
+          orbitState.angle = orbitEndAngle +
+            exitOrbitAngle * self.progress;
+          positionVideos();
+        },
+        onRefresh: function (self) {
+          if (self.progress <= 0) {
+            return;
+          }
+
+          orbitState.angle = orbitEndAngle +
+            exitOrbitAngle * self.progress;
+          positionVideos();
+        }
+      });
 
       syncTitleVisibility(
         timeline.scrollTrigger ? timeline.scrollTrigger.progress : 0
