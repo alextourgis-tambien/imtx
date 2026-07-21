@@ -73,7 +73,7 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
       lottieStart: 0,
       lottieEnd: 0.46,
       titleIn: 0.08,
-      titleOut: 0.47,
+      titleOut: 0.52,
       wrapperIn: 0.47,
       wrapperInDuration: 0.055,
       backgroundIn: 0.47,
