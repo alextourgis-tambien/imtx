@@ -1505,7 +1505,7 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
     },
 
     text: {
-      oldPanelY: -34,
+      oldPanelY: -48,
       lineY: 30,
       lineStagger: 0.01,
       lineDuration: 0.045
@@ -3351,13 +3351,6 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
           randomStart
         );
       });
-
-      if (oldTextGrid) {
-        timeline.to(oldTextGrid, {
-          opacity: 0,
-          duration: scroll.oldTextEnd - scroll.oldTextStart
-        }, scroll.oldTextStart);
-      }
 
       if (oldTextCard) {
         timeline.to(oldTextCard, {
