@@ -438,7 +438,7 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
       gsap.set(flipWrapper, { opacity: 0 });
       gsap.set(flipBackground, {
         opacity: 1,
-        scale: 1,
+        scale: 0,
         borderRadius: "0px",
         "--decode-bg-clip-x": backgroundClipX + "px",
         "--decode-bg-clip-y": backgroundClipY + "px",
@@ -519,6 +519,7 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
       }, timing.wrapperIn);
 
       timeline.to(flipBackground, {
+        scale: 1,
         "--decode-bg-clip-x": "0px",
         "--decode-bg-clip-y": "0px",
         duration: timing.backgroundInDuration
