@@ -168,7 +168,8 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
     const originalTitleMarkup = title.innerHTML;
     const originalInlineStyles = new Map();
 
-    [flipWrapper, flipBackground].concat(cards, allCardTitles).forEach(
+    [lottieElement, flipWrapper, flipBackground]
+      .concat(cards, allCardTitles).forEach(
       function (element) {
         originalInlineStyles.set(
           element,
@@ -392,7 +393,8 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
     }
 
     function restoreWebflowState() {
-      [flipWrapper, flipBackground].concat(cards, allCardTitles).forEach(
+      [lottieElement, flipWrapper, flipBackground]
+        .concat(cards, allCardTitles).forEach(
         restoreInlineStyle
       );
       splitTitleIntoLines();
@@ -444,6 +446,7 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
         opacity: 0,
         yPercent: DECODE_CONFIG.text.hiddenYPercent
       });
+      gsap.set(lottieElement, { opacity: 1 });
       gsap.set(flipWrapper, { opacity: 0 });
       gsap.set(flipBackground, {
         opacity: 1,
@@ -482,6 +485,7 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
       if (prefersReducedMotion) {
         lottieState.progress = 1;
         renderLottieFrame();
+        gsap.set(lottieElement, { opacity: 0 });
         gsap.set(allTitleWords(), { opacity: 0, yPercent: 0 });
         gsap.set(flipWrapper, { opacity: 1 });
         gsap.set(flipBackground, {
@@ -549,6 +553,11 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
       }, timing.backgroundRadiusStart);
 
       timeline.to(flipBackground, {
+        opacity: 0,
+        duration: timing.backgroundOutDuration
+      }, timing.backgroundOut);
+
+      timeline.to(lottieElement, {
         opacity: 0,
         duration: timing.backgroundOutDuration
       }, timing.backgroundOut);
