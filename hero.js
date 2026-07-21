@@ -47,18 +47,15 @@
 })();
 
 /*==================================================
-PRESS — ALIGNEMENT BAS DES CARTES SUR DESKTOP
+PRESS — PARENT STICKY, ALIGNEMENT GÉRÉ DANS WEBFLOW
 ==================================================*/
 
-(function initPressCollectionsAnimation() {
+(function initPressStickyParent() {
   "use strict";
 
   const PRESS_CONFIG = {
     desktopQuery: "(min-width: 992px)",
-    start: "top 82%",
-    end: "bottom 68%",
-    scrub: 1,
-    resizeDebounce: 180
+    stickyTop: "0px"
   };
 
   window.addEventListener("load", function () {
@@ -71,112 +68,49 @@ PRESS — ALIGNEMENT BAS DES CARTES SUR DESKTOP
 
     if (!parent) {
       console.warn(
-        "Press animation : .press__parent est introuvable."
+        "Press sticky : .press__parent est introuvable."
       );
       return;
     }
 
     if (cards.some(function (card) { return !card; })) {
       console.warn(
-        "Press animation : une ou plusieurs .press__collection sont absentes."
+        "Press sticky : une ou plusieurs .press__collection sont absentes."
       );
       return;
     }
 
-    if (
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ) {
-      gsap.set(cards, { clearProps: "transform" });
-      return;
-    }
+    const desktopMedia = window.matchMedia(
+      PRESS_CONFIG.desktopQuery
+    );
 
-    let timeline = null;
-    let resizeTimer = null;
-    let viewportWidth = window.innerWidth;
-
-    function clearTimeline() {
-      if (timeline) {
-        if (timeline.scrollTrigger) {
-          timeline.scrollTrigger.kill();
-        }
-        timeline.kill();
-        timeline = null;
-      }
-
+    function applyPressLayout() {
+      /*
+      Webflow est l'unique source de vérité pour la position
+      des trois cartes. Aucun translate GSAP n'est conservé.
+      */
       gsap.set(cards, {
         clearProps: "transform,willChange"
       });
-    }
 
-    function createTimeline() {
-      clearTimeline();
-
-      if (!window.matchMedia(PRESS_CONFIG.desktopQuery).matches) {
-        return;
+      if (desktopMedia.matches) {
+        parent.style.position = "sticky";
+        parent.style.top = PRESS_CONFIG.stickyTop;
+      } else {
+        parent.style.removeProperty("position");
+        parent.style.removeProperty("top");
       }
 
-      const cardBounds = cards.map(function (card) {
-        return card.getBoundingClientRect();
-      });
-      const targetBottom = cardBounds[2].bottom;
-      const targetY = cardBounds.map(function (bounds) {
-        return targetBottom - bounds.bottom;
-      });
-
-      if (cardBounds.some(function (bounds) {
-        return !bounds.width || !bounds.height;
-      })) {
-        console.warn(
-          "Press animation : impossible de mesurer une ou plusieurs cartes."
-        );
-        return;
-      }
-
-      gsap.set(cards, { willChange: "transform" });
-
-      timeline = gsap.timeline({
-        defaults: { ease: "none" },
-        scrollTrigger: {
-          trigger: parent,
-          start: PRESS_CONFIG.start,
-          end: PRESS_CONFIG.end,
-          scrub: PRESS_CONFIG.scrub,
-          invalidateOnRefresh: true
-        }
-      });
-
-      cards.forEach(function (card, index) {
-        timeline.to(card, {
-          y: targetY[index],
-          duration: 1
-        }, 0);
-      });
+      ScrollTrigger.refresh();
     }
 
-    function handleResize() {
-      const nextWidth = window.innerWidth;
+    applyPressLayout();
 
-      if (
-        nextWidth <= 991 &&
-        Math.abs(nextWidth - viewportWidth) < 2
-      ) {
-        return;
-      }
-
-      viewportWidth = nextWidth;
-      window.clearTimeout(resizeTimer);
-      resizeTimer = window.setTimeout(function () {
-        createTimeline();
-        ScrollTrigger.refresh();
-      }, PRESS_CONFIG.resizeDebounce);
+    if (typeof desktopMedia.addEventListener === "function") {
+      desktopMedia.addEventListener("change", applyPressLayout);
+    } else {
+      desktopMedia.addListener(applyPressLayout);
     }
-
-    createTimeline();
-    window.addEventListener("resize", handleResize);
-    window.addEventListener("orientationchange", function () {
-      window.setTimeout(handleResize, 120);
-    });
-    ScrollTrigger.refresh();
   });
 })();
 
