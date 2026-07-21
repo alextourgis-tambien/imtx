@@ -838,6 +838,11 @@ html.final-animation-ready .final__bg-video{
   will-change:transform,opacity;
 }
 
+.final__title-parent,
+.final__title-wrapper{
+  overflow:visible !important;
+}
+
 .final__bg-video{
   position:absolute !important;
   top:50% !important;
