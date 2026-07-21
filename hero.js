@@ -708,7 +708,7 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       titleTwoIn: 0.32,
       titleTwoMoveStart: 0.4,
       titleTwoMoveDuration: 0.25,
-      titleThreeEnd: 1,
+      titleThreeRevealDuration: 0.12,
       orbitLiftDuration: 0.25
     },
 
@@ -1171,7 +1171,11 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
         titleTwoMoveStart + timing.titleTwoMoveDuration;
       const titleThreeStart = Math.min(
         titleTwoMoveEnd + 0.01,
-        timing.titleThreeEnd - 0.01
+        timing.orbitEnd - timing.titleThreeRevealDuration
+      );
+      const titleThreeEnd = Math.min(
+        titleThreeStart + timing.titleThreeRevealDuration,
+        timing.orbitEnd
       );
       function syncTitleVisibility(progress) {
         titles[0].style.visibility = progress <= titleOneEnd
@@ -1248,7 +1252,7 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       animateLinesInOverRange(
         titles[2],
         titleThreeStart,
-        timing.titleThreeEnd
+        titleThreeEnd
       );
 
       timeline.to(orbitState, {
