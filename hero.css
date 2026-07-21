@@ -866,3 +866,82 @@ html.final-animation-ready .final__bg-video{
     transform:none !important;
   }
 }
+
+/*==================================================
+DECODE — LOTTIE SCRUB + TRANSITION FLIP
+La hauteur de .decode__wrapper reste gérée dans Webflow.
+==================================================*/
+
+.decode__sticky{
+  position:sticky;
+  top:0;
+  width:100%;
+  height:var(--imtx-viewport-height);
+  overflow:hidden;
+  isolation:isolate;
+}
+
+.decode__lottie,
+.decode__p,
+.flip__wrapper{
+  will-change:transform,opacity;
+}
+
+.decode__title,
+.flip__wrapper{
+  visibility:hidden;
+}
+
+html.decode-animation-ready .decode__title,
+html.decode-animation-ready .flip__wrapper{
+  visibility:visible;
+}
+
+.decode-split-word{
+  display:inline-block;
+  margin-right:.25em;
+  will-change:transform,opacity;
+}
+
+.flip__wrapper{
+  transform-style:preserve-3d;
+  perspective:1200px;
+}
+
+.flip__parent,
+.flip{
+  transform-style:preserve-3d;
+}
+
+.flip{
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
+  transform-origin:center center;
+  will-change:transform;
+}
+
+.flip__bg{
+  transform-origin:center center;
+  will-change:transform,opacity,border-radius;
+}
+
+@media (prefers-reduced-motion:reduce){
+  .decode__sticky{
+    position:relative;
+    height:auto;
+    min-height:var(--imtx-viewport-height);
+  }
+
+  .decode__title,
+  .flip__wrapper{
+    visibility:visible;
+  }
+
+  .decode__lottie,
+  .decode__title,
+  .flip__wrapper,
+  .flip,
+  .flip__bg{
+    transform:none !important;
+  }
+}

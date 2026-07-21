@@ -47,6 +47,500 @@
 })();
 
 /*==================================================
+DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
+==================================================*/
+
+(function () {
+  "use strict";
+
+  const DECODE_CONFIG = {
+    selectors: {
+      wrapper: ".decode__wrapper",
+      sticky: ".decode__sticky",
+      lottie: ".decode__lottie",
+      title: ".decode__p .decode__title",
+      flipWrapper: ".flip__wrapper",
+      flipBackground: ".flip__bg",
+      cards: [
+        ".flip.is--one",
+        ".flip.is--two",
+        ".flip.is--three",
+        ".flip.is--four"
+      ]
+    },
+
+    timing: {
+      lottieStart: 0,
+      lottieEnd: 0.43,
+      titleIn: 0.08,
+      titleOut: 0.34,
+      wrapperIn: 0.34,
+      wrapperInDuration: 0.055,
+      backgroundIn: 0.34,
+      backgroundInDuration: 0.18,
+      backgroundOut: 0.51,
+      backgroundOutDuration: 0.075,
+      firstPairIn: 0.56,
+      firstPairInDuration: 0.105,
+      firstPairOut: 0.72,
+      firstPairOutDuration: 0.09,
+      secondPairIn: 0.79,
+      secondPairInDuration: 0.105
+    },
+
+    text: {
+      lineDuration: 0.055,
+      lineStagger: 0.016,
+      hiddenYPercent: 75
+    },
+
+    cardStagger: 0.018,
+    resizeDebounce: 220,
+    lottieLookupAttempts: 120,
+    lottieLookupInterval: 50
+  };
+
+  window.addEventListener("load", function () {
+    if (
+      typeof window.gsap === "undefined" ||
+      typeof window.ScrollTrigger === "undefined"
+    ) {
+      console.warn("Decode : GSAP ou ScrollTrigger est absent.");
+      return;
+    }
+
+    gsap.registerPlugin(ScrollTrigger);
+
+    const selectors = DECODE_CONFIG.selectors;
+    const wrapper = document.querySelector(selectors.wrapper);
+
+    if (!wrapper) {
+      return;
+    }
+
+    const sticky = wrapper.querySelector(selectors.sticky);
+    const lottieElement = wrapper.querySelector(selectors.lottie);
+    const title = wrapper.querySelector(selectors.title);
+    const flipWrapper = wrapper.querySelector(selectors.flipWrapper);
+    const flipBackground = wrapper.querySelector(
+      selectors.flipBackground
+    );
+    const cards = selectors.cards.map(function (selector) {
+      return wrapper.querySelector(selector);
+    });
+
+    [
+      [sticky, selectors.sticky],
+      [lottieElement, selectors.lottie],
+      [title, selectors.title],
+      [flipWrapper, selectors.flipWrapper],
+      [flipBackground, selectors.flipBackground]
+    ].concat(
+      cards.map(function (card, index) {
+        return [card, selectors.cards[index]];
+      })
+    ).forEach(function (entry) {
+      if (!entry[0]) {
+        console.warn("Decode : élément absent — " + entry[1]);
+      }
+    });
+
+    if (
+      !sticky ||
+      !lottieElement ||
+      !title ||
+      !flipWrapper ||
+      !flipBackground ||
+      cards.some(function (card) { return !card; })
+    ) {
+      return;
+    }
+
+    const originalTitleMarkup = title.innerHTML;
+    const originalInlineStyles = new Map();
+
+    [flipWrapper, flipBackground].concat(cards).forEach(
+      function (element) {
+        originalInlineStyles.set(
+          element,
+          element.getAttribute("style")
+        );
+      }
+    );
+
+    const lottieState = { progress: 0 };
+    let lottieAnimation = null;
+    let titleLines = [];
+    let timeline = null;
+    let resizeTimer = null;
+    let viewportWidth = window.innerWidth;
+    let lottieLookupCount = 0;
+
+    function restoreInlineStyle(element) {
+      const style = originalInlineStyles.get(element);
+
+      if (style === null) {
+        element.removeAttribute("style");
+      } else {
+        element.setAttribute("style", style);
+      }
+    }
+
+    function getLottieRuntimes() {
+      const runtimes = [];
+
+      if (window.lottie) {
+        runtimes.push(window.lottie);
+      }
+
+      if (window.Webflow && typeof window.Webflow.require === "function") {
+        try {
+          const module = window.Webflow.require("lottie");
+
+          if (module && module.lottie) {
+            runtimes.push(module.lottie);
+          }
+        } catch (error) {
+          /* Le module Webflow n'est pas encore initialisé. */
+        }
+      }
+
+      return runtimes;
+    }
+
+    function findLottieAnimation() {
+      const runtimes = getLottieRuntimes();
+
+      for (let runtimeIndex = 0;
+        runtimeIndex < runtimes.length;
+        runtimeIndex++) {
+        const runtime = runtimes[runtimeIndex];
+        const animations = typeof runtime.getRegisteredAnimations ===
+          "function"
+          ? runtime.getRegisteredAnimations()
+          : [];
+
+        const match = animations.find(function (animation) {
+          const animationWrapper = animation.wrapper ||
+            animation.container;
+
+          return animationWrapper && (
+            animationWrapper === lottieElement ||
+            lottieElement.contains(animationWrapper) ||
+            animationWrapper.contains(lottieElement)
+          );
+        });
+
+        if (match) {
+          return match;
+        }
+      }
+
+      return null;
+    }
+
+    function renderLottieFrame() {
+      if (!lottieAnimation) {
+        lottieAnimation = findLottieAnimation();
+      }
+
+      if (!lottieAnimation) {
+        return;
+      }
+
+      const frameCount = Math.max(
+        Number(lottieAnimation.totalFrames) || 1,
+        1
+      );
+      const frame = gsap.utils.clamp(
+        0,
+        frameCount - 1,
+        lottieState.progress * (frameCount - 1)
+      );
+
+      if (typeof lottieAnimation.pause === "function") {
+        lottieAnimation.pause();
+      }
+
+      if (typeof lottieAnimation.goToAndStop === "function") {
+        lottieAnimation.goToAndStop(frame, true);
+      }
+    }
+
+    function lockLottieToScroll() {
+      lottieAnimation = findLottieAnimation();
+
+      if (lottieAnimation) {
+        renderLottieFrame();
+        return;
+      }
+
+      lottieLookupCount += 1;
+
+      if (lottieLookupCount < DECODE_CONFIG.lottieLookupAttempts) {
+        window.setTimeout(
+          lockLottieToScroll,
+          DECODE_CONFIG.lottieLookupInterval
+        );
+      } else {
+        console.warn(
+          "Decode : impossible de récupérer l'instance du Lottie Webflow."
+        );
+      }
+    }
+
+    function splitTitleIntoLines() {
+      title.innerHTML = originalTitleMarkup;
+
+      const walker = document.createTreeWalker(
+        title,
+        NodeFilter.SHOW_TEXT,
+        {
+          acceptNode: function (node) {
+            return node.nodeValue && node.nodeValue.trim()
+              ? NodeFilter.FILTER_ACCEPT
+              : NodeFilter.FILTER_REJECT;
+          }
+        }
+      );
+      const textNodes = [];
+      let node = walker.nextNode();
+
+      while (node) {
+        textNodes.push(node);
+        node = walker.nextNode();
+      }
+
+      textNodes.forEach(function (textNode) {
+        const fragment = document.createDocumentFragment();
+        const pieces = textNode.nodeValue.match(/\s+|[^\s]+/g) || [];
+
+        pieces.forEach(function (piece) {
+          if (/^\s+$/.test(piece)) {
+            fragment.appendChild(document.createTextNode("\u200B"));
+            return;
+          }
+
+          const word = document.createElement("span");
+          word.className = "decode-split-word";
+          word.textContent = piece;
+          fragment.appendChild(word);
+        });
+
+        textNode.parentNode.replaceChild(fragment, textNode);
+      });
+
+      const groups = [];
+
+      Array.from(title.querySelectorAll(".decode-split-word"))
+        .forEach(function (word) {
+          const top = Math.round(word.getBoundingClientRect().top);
+          let group = groups.find(function (candidate) {
+            return Math.abs(candidate.top - top) <= 2;
+          });
+
+          if (!group) {
+            group = { top: top, words: [] };
+            groups.push(group);
+          }
+
+          group.words.push(word);
+        });
+
+      groups.sort(function (a, b) {
+        return a.top - b.top;
+      });
+
+      titleLines = groups.map(function (group) {
+        return group.words;
+      });
+    }
+
+    function allTitleWords() {
+      return titleLines.reduce(function (words, line) {
+        return words.concat(line);
+      }, []);
+    }
+
+    function animateTitleIn(start) {
+      titleLines.forEach(function (line, index) {
+        timeline.to(line, {
+          opacity: 1,
+          yPercent: 0,
+          duration: DECODE_CONFIG.text.lineDuration
+        }, start + index * DECODE_CONFIG.text.lineStagger);
+      });
+    }
+
+    function animateTitleOut(start) {
+      titleLines.forEach(function (line, index) {
+        timeline.to(line, {
+          opacity: 0,
+          yPercent: -DECODE_CONFIG.text.hiddenYPercent,
+          duration: DECODE_CONFIG.text.lineDuration
+        }, start + index * DECODE_CONFIG.text.lineStagger);
+      });
+    }
+
+    function restoreWebflowState() {
+      [flipWrapper, flipBackground].concat(cards).forEach(
+        restoreInlineStyle
+      );
+      splitTitleIntoLines();
+    }
+
+    function createTimeline() {
+      if (timeline) {
+        if (timeline.scrollTrigger) {
+          timeline.scrollTrigger.kill();
+        }
+        timeline.kill();
+      }
+
+      document.documentElement.classList.remove(
+        "decode-animation-ready"
+      );
+      restoreWebflowState();
+
+      const finalBackgroundRadius = window.getComputedStyle(
+        flipBackground
+      ).borderRadius;
+      const firstPair = [cards[0], cards[1]];
+      const secondPair = [cards[2], cards[3]];
+
+      gsap.set(allTitleWords(), {
+        opacity: 0,
+        yPercent: DECODE_CONFIG.text.hiddenYPercent
+      });
+      gsap.set(flipWrapper, { opacity: 0 });
+      gsap.set(flipBackground, {
+        opacity: 1,
+        scale: 0,
+        borderRadius: "0px",
+        transformOrigin: "50% 50%"
+      });
+      gsap.set(cards, {
+        rotationY: 90,
+        transformPerspective: 1200,
+        transformOrigin: "50% 50%"
+      });
+
+      lottieState.progress = 0;
+      renderLottieFrame();
+      document.documentElement.classList.add(
+        "decode-animation-ready"
+      );
+
+      const prefersReducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)"
+      ).matches;
+
+      if (prefersReducedMotion) {
+        lottieState.progress = 1;
+        renderLottieFrame();
+        gsap.set(allTitleWords(), { opacity: 0, yPercent: 0 });
+        gsap.set(flipWrapper, { opacity: 1 });
+        gsap.set(flipBackground, { opacity: 0, scale: 1 });
+        gsap.set(firstPair, { rotationY: -90 });
+        gsap.set(secondPair, { rotationY: 0 });
+        return;
+      }
+
+      const timing = DECODE_CONFIG.timing;
+
+      timeline = gsap.timeline({
+        defaults: { ease: "none" },
+        scrollTrigger: {
+          trigger: wrapper,
+          start: "top top",
+          end: "bottom bottom",
+          scrub: 1,
+          invalidateOnRefresh: true,
+          onRefresh: renderLottieFrame
+        }
+      });
+
+      timeline.to(lottieState, {
+        progress: 1,
+        duration: timing.lottieEnd - timing.lottieStart,
+        onUpdate: renderLottieFrame
+      }, timing.lottieStart);
+
+      animateTitleIn(timing.titleIn);
+      animateTitleOut(timing.titleOut);
+
+      timeline.to(flipWrapper, {
+        opacity: 1,
+        duration: timing.wrapperInDuration
+      }, timing.wrapperIn);
+
+      timeline.to(flipBackground, {
+        scale: 1,
+        borderRadius: finalBackgroundRadius,
+        duration: timing.backgroundInDuration
+      }, timing.backgroundIn);
+
+      timeline.to(flipBackground, {
+        opacity: 0,
+        duration: timing.backgroundOutDuration
+      }, timing.backgroundOut);
+
+      firstPair.forEach(function (card, index) {
+        timeline.to(card, {
+          rotationY: 0,
+          duration: timing.firstPairInDuration,
+          ease: "power2.out"
+        }, timing.firstPairIn + index * DECODE_CONFIG.cardStagger);
+      });
+
+      firstPair.forEach(function (card, index) {
+        timeline.to(card, {
+          rotationY: -90,
+          duration: timing.firstPairOutDuration,
+          ease: "power2.in"
+        }, timing.firstPairOut + index * DECODE_CONFIG.cardStagger);
+      });
+
+      secondPair.forEach(function (card, index) {
+        timeline.to(card, {
+          rotationY: 0,
+          duration: timing.secondPairInDuration,
+          ease: "power2.out"
+        }, timing.secondPairIn + index * DECODE_CONFIG.cardStagger);
+      });
+
+      timeline.to({}, { duration: 0.97 }, 0);
+    }
+
+    function handleResize() {
+      const nextWidth = window.innerWidth;
+
+      if (
+        nextWidth <= 991 &&
+        Math.abs(nextWidth - viewportWidth) < 2
+      ) {
+        return;
+      }
+
+      viewportWidth = nextWidth;
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(function () {
+        createTimeline();
+        ScrollTrigger.refresh();
+      }, DECODE_CONFIG.resizeDebounce);
+    }
+
+    createTimeline();
+    lockLottieToScroll();
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("orientationchange", function () {
+      window.setTimeout(handleResize, 120);
+    });
+    ScrollTrigger.refresh();
+  });
+})();
+
+/*==================================================
 FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
 ==================================================*/
 
