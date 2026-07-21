@@ -47,33 +47,31 @@
 })();
 
 /*==================================================
-PRESS — CARTES EN ESCALIER VERS LA GRILLE FINALE
+PRESS — ALIGNEMENT BAS DES CARTES SUR DESKTOP
 ==================================================*/
 
 (function initPressCollectionsAnimation() {
   "use strict";
 
   const PRESS_CONFIG = {
-    start: "top 88%",
-    end: "center 52%",
+    desktopQuery: "(min-width: 992px)",
+    start: "top 82%",
+    end: "bottom 68%",
     scrub: 1,
-    initialYPercent: [18, 66, 103],
-    cardDelay: 0.1,
-    cardDuration: 0.8,
     resizeDebounce: 180
   };
 
   window.addEventListener("load", function () {
-    const wrapper = document.querySelector(".press__wrapper");
+    const parent = document.querySelector(".press__parent");
     const cards = [
       document.querySelector(".press__collection.is--one"),
       document.querySelector(".press__collection.is--two"),
       document.querySelector(".press__collection.is--three")
     ];
 
-    if (!wrapper) {
+    if (!parent) {
       console.warn(
-        "Press animation : .press__wrapper est introuvable."
+        "Press animation : .press__parent est introuvable."
       );
       return;
     }
@@ -96,23 +94,50 @@ PRESS — CARTES EN ESCALIER VERS LA GRILLE FINALE
     let resizeTimer = null;
     let viewportWidth = window.innerWidth;
 
-    function createTimeline() {
+    function clearTimeline() {
       if (timeline) {
         if (timeline.scrollTrigger) {
           timeline.scrollTrigger.kill();
         }
         timeline.kill();
+        timeline = null;
       }
 
       gsap.set(cards, {
-        clearProps: "transform",
-        willChange: "transform"
+        clearProps: "transform,willChange"
       });
+    }
+
+    function createTimeline() {
+      clearTimeline();
+
+      if (!window.matchMedia(PRESS_CONFIG.desktopQuery).matches) {
+        return;
+      }
+
+      const cardBounds = cards.map(function (card) {
+        return card.getBoundingClientRect();
+      });
+      const targetBottom = cardBounds[2].bottom;
+      const targetY = cardBounds.map(function (bounds) {
+        return targetBottom - bounds.bottom;
+      });
+
+      if (cardBounds.some(function (bounds) {
+        return !bounds.width || !bounds.height;
+      })) {
+        console.warn(
+          "Press animation : impossible de mesurer une ou plusieurs cartes."
+        );
+        return;
+      }
+
+      gsap.set(cards, { willChange: "transform" });
 
       timeline = gsap.timeline({
         defaults: { ease: "none" },
         scrollTrigger: {
-          trigger: wrapper,
+          trigger: parent,
           start: PRESS_CONFIG.start,
           end: PRESS_CONFIG.end,
           scrub: PRESS_CONFIG.scrub,
@@ -121,12 +146,10 @@ PRESS — CARTES EN ESCALIER VERS LA GRILLE FINALE
       });
 
       cards.forEach(function (card, index) {
-        timeline.fromTo(card, {
-          yPercent: PRESS_CONFIG.initialYPercent[index]
-        }, {
-          yPercent: 0,
-          duration: PRESS_CONFIG.cardDuration
-        }, index * PRESS_CONFIG.cardDelay);
+        timeline.to(card, {
+          y: targetY[index],
+          duration: 1
+        }, 0);
       });
     }
 
