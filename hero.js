@@ -91,6 +91,12 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
     },
 
     orbitTurns: 0.4,
+    startAngle: -90,
+    orbit: {
+      desktop: { radiusX: 0.43, radiusY: 0.40 },
+      tablet: { radiusX: 0.42, radiusY: 0.39 },
+      mobile: { radiusX: 0.40, radiusY: 0.41 }
+    },
     entranceScale: 0.72,
     outsideMarginDesktop: 80,
     outsideMarginMobile: 36,
@@ -300,27 +306,33 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
 
     function measureVideos() {
       const contentRectangle = content.getBoundingClientRect();
-      const centerX = contentRectangle.left + contentRectangle.width / 2;
-      const centerY = contentRectangle.top + contentRectangle.height / 2;
       const halfWidth = contentRectangle.width / 2;
       const halfHeight = contentRectangle.height / 2;
+      const orbitSettings = window.innerWidth <= 767
+        ? FINAL_CONFIG.orbit.mobile
+        : window.innerWidth <= 991
+          ? FINAL_CONFIG.orbit.tablet
+          : FINAL_CONFIG.orbit.desktop;
       const outsideMargin = window.innerWidth <= 767
         ? FINAL_CONFIG.outsideMarginMobile
         : FINAL_CONFIG.outsideMarginDesktop;
 
       videoMeasurements = videos.map(function (video, index) {
         const rectangle = video.getBoundingClientRect();
-        const finalX = rectangle.left + rectangle.width / 2 - centerX;
-        const finalY = rectangle.top + rectangle.height / 2 - centerY;
-        const fallbackAngle = -Math.PI / 2 +
-          index * Math.PI * 2 / videos.length;
+        const angle = (
+          FINAL_CONFIG.startAngle + index * 360 / videos.length
+        ) * Math.PI / 180;
+        const finalX = Math.cos(angle) *
+          contentRectangle.width * orbitSettings.radiusX;
+        const finalY = Math.sin(angle) *
+          contentRectangle.height * orbitSettings.radiusY;
         const length = Math.hypot(finalX, finalY);
         const directionX = length > 1
           ? finalX / length
-          : Math.cos(fallbackAngle);
+          : Math.cos(angle);
         const directionY = length > 1
           ? finalY / length
-          : Math.sin(fallbackAngle);
+          : Math.sin(angle);
         const horizontalBoundary = Math.abs(directionX) > 0.001
           ? (halfWidth + rectangle.width / 2 + outsideMargin) /
             Math.abs(directionX)
@@ -340,10 +352,6 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
           finalY: finalY,
           entranceX: directionX * entranceDistance,
           entranceY: directionY * entranceDistance,
-          baseX: Number(gsap.getProperty(video, "x")) || 0,
-          baseY: Number(gsap.getProperty(video, "y")) || 0,
-          baseXPercent: Number(gsap.getProperty(video, "xPercent")) || 0,
-          baseYPercent: Number(gsap.getProperty(video, "yPercent")) || 0,
           baseRotation: Number(gsap.getProperty(video, "rotation")) || 0,
           finalScale: Number(gsap.getProperty(video, "scaleX")) || 1
         };
@@ -371,11 +379,11 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
         const orbitY = rotatedY - measurement.finalY;
 
         gsap.set(video, {
-          xPercent: measurement.baseXPercent,
-          yPercent: measurement.baseYPercent,
-          x: measurement.baseX +
+          xPercent: -50,
+          yPercent: -50,
+          x: measurement.finalX +
             orbitX + measurement.entranceX * (1 - reveal),
-          y: measurement.baseY +
+          y: measurement.finalY +
             orbitY + measurement.entranceY * (1 - reveal),
           scale: measurement.finalScale * gsap.utils.interpolate(
             FINAL_CONFIG.entranceScale,
