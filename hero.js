@@ -5610,3 +5610,96 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
     });
   }
 })();
+/*==================================================
+HS VIDEO 3 — RADIUS SYNCHRONISÉ AU SCALE
+==================================================*/
+(function initHsVideoThreeRadiusSync() {
+  function setupHsVideoThreeRadiusSync() {
+    if (!window.gsap) {
+      window.setTimeout(setupHsVideoThreeRadiusSync, 50);
+      return;
+    }
+
+    const section = document.querySelector(".h-second__wrapper");
+    const video = document.querySelector(
+      ".hs__video.is--3, .hs__video.is--three"
+    );
+
+    if (!section || !video || video.dataset.radiusSyncReady === "true") {
+      return;
+    }
+
+    video.dataset.radiusSyncReady = "true";
+
+    const computedStyle = window.getComputedStyle(video);
+    const originalRadius =
+      parseFloat(computedStyle.borderTopLeftRadius) ||
+      parseFloat(computedStyle.borderRadius) ||
+      0;
+
+    let compactWidth = video.offsetWidth;
+    let compactHeight = video.offsetHeight;
+    let viewportWidth = window.innerWidth;
+
+    function refreshCompactSize() {
+      compactWidth = video.offsetWidth;
+      compactHeight = video.offsetHeight;
+    }
+
+    function syncRadiusWithScale() {
+      if (!compactWidth || !compactHeight) {
+        refreshCompactSize();
+        return;
+      }
+
+      const rect = video.getBoundingClientRect();
+      const currentViewportHeight =
+        window.visualViewport?.height || window.innerHeight;
+
+      const widthProgress = gsap.utils.clamp(
+        0,
+        1,
+        (rect.width - compactWidth) /
+          Math.max(window.innerWidth - compactWidth, 1)
+      );
+
+      const heightProgress = gsap.utils.clamp(
+        0,
+        1,
+        (rect.height - compactHeight) /
+          Math.max(currentViewportHeight - compactHeight, 1)
+      );
+
+      const fullscreenProgress = Math.max(
+        widthProgress,
+        heightProgress
+      );
+
+      gsap.set(video, {
+        borderRadius:
+          originalRadius * (1 - fullscreenProgress)
+      });
+    }
+
+    gsap.ticker.add(syncRadiusWithScale);
+
+    window.addEventListener("resize", function () {
+      if (window.innerWidth === viewportWidth) {
+        return;
+      }
+
+      viewportWidth = window.innerWidth;
+      window.requestAnimationFrame(refreshCompactSize);
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener(
+      "DOMContentLoaded",
+      setupHsVideoThreeRadiusSync,
+      { once: true }
+    );
+  } else {
+    setupHsVideoThreeRadiusSync();
+  }
+})();
