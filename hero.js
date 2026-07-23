@@ -2713,18 +2713,33 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
         oldTitleIntroTimeline.kill();
       }
 
+      /*
+      ScrollTrigger peut avoir déjà rendu son état à progress 0 avant
+      l'introduction. On rétablit donc explicitement le départ caché ici,
+      juste avant de jouer l'animation de chargement.
+      */
+      gsap.set(words, {
+        opacity: 0,
+        yPercent: CONFIG.text.loadYOffset
+      });
+
       oldTitleIntroTimeline = gsap.timeline({
         delay: CONFIG.text.loadDelay
       });
 
       lines.forEach(function (line, index) {
-        oldTitleIntroTimeline.to(
+        oldTitleIntroTimeline.fromTo(
           line,
+          {
+            opacity: 0,
+            yPercent: CONFIG.text.loadYOffset
+          },
           {
             opacity: 1,
             yPercent: 0,
             duration: CONFIG.text.loadLineDuration,
             ease: "power3.out",
+            immediateRender: false,
             overwrite: "auto"
           },
           index * CONFIG.text.loadLineStagger
@@ -5378,18 +5393,22 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
         [videoTwo, timing.videoTwoOut, timing.videoBackOutDuration, "power2.in"],
         [videoThree, timing.videoThreeOut, timing.videoThreeOutDuration, "power1.inOut"]
       ].forEach(function (item) {
-        timeline.to(item[0], {
+        const exitAnimation = {
           scale: 0,
           duration: item[2],
           ease: item[3]
-        }, item[1]);
-      });
+        };
 
-      timeline.to(videoThree, {
-        borderRadius: videoThreeWebflowBorderRadius,
-        duration: timing.videoThreeOutDuration,
-        ease: "power1.inOut"
-      }, timing.videoThreeOut);
+        /*
+        Le radius de la troisième vidéo revient pendant son scale-down,
+        et non après celui-ci.
+        */
+        if (item[0] === videoThree) {
+          exitAnimation.borderRadius = videoThreeWebflowBorderRadius;
+        }
+
+        timeline.to(item[0], exitAnimation, item[1]);
+      });
 
       animateLinesIn(paragraphTwo, timing.paragraphTwoIn);
 
