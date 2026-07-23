@@ -6,9 +6,9 @@ HERO — LA HAUTEUR DU WRAPPER RESTE GÉRÉE DANS WEBFLOW
   --imtx-viewport-height:100vh;
 }
 
-@supports (height:100dvh){
+@supports (height:100svh){
   :root{
-    --imtx-viewport-height:100dvh;
+    --imtx-viewport-height:100svh;
   }
 }
 

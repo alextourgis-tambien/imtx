@@ -1,18 +1,43 @@
-(function syncDynamicMobileViewport() {
+(function syncStableMobileViewport() {
   "use strict";
 
   const propertyName = "--imtx-viewport-height";
+  const mobileMaxWidth = 991;
+  const widthTolerance = 2;
   let viewportTimer = null;
+  let viewportWidth = window.innerWidth;
 
-  function updateViewportHeight() {
-    if (window.innerWidth > 991) {
+  function readViewportHeight() {
+    return window.visualViewport
+      ? window.visualViewport.height
+      : window.innerHeight;
+  }
+
+  function updateViewportHeight(forceUpdate) {
+    const nextWidth = window.innerWidth;
+
+    if (nextWidth > mobileMaxWidth) {
+      viewportWidth = nextWidth;
       document.documentElement.style.removeProperty(propertyName);
       return;
     }
 
-    const viewportHeight = window.visualViewport
-      ? window.visualViewport.height
-      : window.innerHeight;
+    const widthChanged =
+      Math.abs(nextWidth - viewportWidth) >= widthTolerance;
+
+    /*
+    Sur Safari mobile, l'ouverture et la fermeture de la barre
+    du navigateur déclenchent des resize de hauteur pendant le scroll.
+    On les ignore pour que la vidéo et la grille gardent une géométrie
+    stable pendant leur animation GSAP de scale.
+    */
+    if (!forceUpdate && !widthChanged) {
+      return;
+    }
+
+    viewportWidth = nextWidth;
+
+    const viewportHeight = readViewportHeight();
 
     if (!viewportHeight) {
       return;
@@ -24,23 +49,31 @@
     );
   }
 
-  function queueViewportUpdate() {
+  function queueViewportUpdate(forceUpdate) {
     window.clearTimeout(viewportTimer);
-    viewportTimer = window.setTimeout(updateViewportHeight, 30);
+    viewportTimer = window.setTimeout(function () {
+      updateViewportHeight(forceUpdate);
+    }, forceUpdate ? 260 : 80);
   }
 
-  updateViewportHeight();
-  window.addEventListener("resize", queueViewportUpdate, {
+  updateViewportHeight(true);
+
+  window.addEventListener("resize", function () {
+    queueViewportUpdate(false);
+  }, {
     passive: true
   });
+
   window.addEventListener("orientationchange", function () {
-    window.setTimeout(updateViewportHeight, 120);
+    queueViewportUpdate(true);
   });
 
   if (window.visualViewport) {
     window.visualViewport.addEventListener(
       "resize",
-      queueViewportUpdate,
+      function () {
+        queueViewportUpdate(false);
+      },
       { passive: true }
     );
   }
