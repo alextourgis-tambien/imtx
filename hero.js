@@ -3805,9 +3805,9 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
 
     reveal: {
       reshuffleStart: "top 92%",
-      reshuffleEnd: "top 58%",
+      reshuffleEnd: "top 52%",
       itemStart: "top 78%",
-      itemEnd: "top 48%",
+      itemEnd: "top 42%",
       tileStagger: 0.42,
       originX: 0.5,
       originY: 0,
@@ -4477,12 +4477,33 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
     }
 
     const parent = wrapper.querySelector(selectors.parent);
-    const paragraphOne = wrapper.querySelector(selectors.paragraphOne);
-    const paragraphTwo = wrapper.querySelector(selectors.paragraphTwo);
+    const paragraphCandidates = Array.from(
+      wrapper.querySelectorAll(".hs_p")
+    );
+    const videoCandidates = Array.from(
+      wrapper.querySelectorAll(".hs__video")
+    );
+    const paragraphOne =
+      wrapper.querySelector(selectors.paragraphOne) ||
+      paragraphCandidates[0] ||
+      null;
+    const paragraphTwo =
+      wrapper.querySelector(selectors.paragraphTwo) ||
+      paragraphCandidates[1] ||
+      null;
     const button = wrapper.querySelector(selectors.button);
-    const videoOne = wrapper.querySelector(selectors.videoOne);
-    const videoTwo = wrapper.querySelector(selectors.videoTwo);
-    const videoThree = wrapper.querySelector(selectors.videoThree);
+    const videoOne =
+      wrapper.querySelector(selectors.videoOne) ||
+      videoCandidates[0] ||
+      null;
+    const videoTwo =
+      wrapper.querySelector(selectors.videoTwo) ||
+      videoCandidates[1] ||
+      null;
+    const videoThree =
+      wrapper.querySelector(selectors.videoThree) ||
+      videoCandidates[2] ||
+      null;
     const previousCancerWrapper = document.querySelector(
       ".hh__cancer-wrapper"
     );
@@ -4507,7 +4528,6 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       [parent, selectors.parent],
       [paragraphOne, selectors.paragraphOne],
       [paragraphTwo, selectors.paragraphTwo],
-      [button, selectors.button],
       [videoOne, selectors.videoOne],
       [videoTwo, selectors.videoTwo],
       [videoThree, selectors.videoThree]
@@ -4523,7 +4543,6 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       !parent ||
       !paragraphOne ||
       !paragraphTwo ||
-      !button ||
       !videoOne ||
       !videoTwo ||
       !videoThree
@@ -4551,7 +4570,9 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       originalVideoStyles.set(video, video.getAttribute("style"));
     });
 
-    const originalButtonStyle = button.getAttribute("style");
+    const originalButtonStyle = button
+      ? button.getAttribute("style")
+      : null;
 
     let lines = new Map();
     let timeline = null;
@@ -4681,7 +4702,9 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       videos.forEach(function (video) {
         restoreInlineStyle(video, originalVideoStyles.get(video));
       });
-      restoreInlineStyle(button, originalButtonStyle);
+      if (button) {
+        restoreInlineStyle(button, originalButtonStyle);
+      }
       rebuildLines();
     }
 
@@ -4830,10 +4853,12 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
         });
       });
 
-      gsap.set(button, {
-        opacity: 0,
-        y: 20
-      });
+      if (button) {
+        gsap.set(button, {
+          opacity: 0,
+          y: 20
+        });
+      }
 
       document.documentElement.classList.add(
         "second-animation-ready"
@@ -4848,10 +4873,12 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
           opacity: 1,
           yPercent: 0
         });
-        gsap.set(button, {
-          opacity: 1,
-          y: 0
-        });
+        if (button) {
+          gsap.set(button, {
+            opacity: 1,
+            y: 0
+          });
+        }
         return;
       }
 
@@ -5011,12 +5038,14 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
 
       animateLinesIn(paragraphTwo, timing.paragraphTwoIn);
 
-      timeline.to(button, {
-        opacity: 1,
-        y: 0,
-        duration: SECOND_CONFIG.buttonDuration,
-        ease: "power2.out"
-      }, timing.buttonIn);
+      if (button) {
+        timeline.to(button, {
+          opacity: 1,
+          y: 0,
+          duration: SECOND_CONFIG.buttonDuration,
+          ease: "power2.out"
+        }, timing.buttonIn);
+      }
 
       timeline.to({}, {
         duration: Math.max(timing.end - timing.buttonIn, 0.01)
