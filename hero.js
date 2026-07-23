@@ -1678,7 +1678,11 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       oldPanelFadeDurationRatio: 0.68,
       lineY: 30,
       lineStagger: 0.01,
-      lineDuration: 0.045
+      lineDuration: 0.045,
+      loadDelay: 0.18,
+      loadLineDuration: 0.6,
+      loadLineStagger: 0.12,
+      loadYOffset: 70
     },
 
     cellFloating: {
@@ -2368,6 +2372,8 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
     let cellMeasurements = [];
     let cancerCellMeasurements = [];
     let titleLines = new Map();
+    let oldTitleIntroPlayed = false;
+    let oldTitleIntroTimeline = null;
     let floatingTweens = [];
     let floatingTargets = [];
     let floatingActive = false;
@@ -2674,6 +2680,56 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       return lines.reduce(function (all, line) {
         return all.concat(line);
       }, []);
+    }
+
+    function playOldTitleIntro() {
+      if (!oldTitle) {
+        return;
+      }
+
+      const lines = titleLines.get(oldTitle) || [];
+      const words = flattenLines(oldTitle);
+
+      if (!words.length) {
+        return;
+      }
+
+      if (
+        prefersReducedMotion ||
+        oldTitleIntroPlayed ||
+        window.scrollY > 4
+      ) {
+        gsap.set(words, {
+          opacity: 1,
+          yPercent: 0
+        });
+        oldTitleIntroPlayed = true;
+        return;
+      }
+
+      oldTitleIntroPlayed = true;
+
+      if (oldTitleIntroTimeline) {
+        oldTitleIntroTimeline.kill();
+      }
+
+      oldTitleIntroTimeline = gsap.timeline({
+        delay: CONFIG.text.loadDelay
+      });
+
+      lines.forEach(function (line, index) {
+        oldTitleIntroTimeline.to(
+          line,
+          {
+            opacity: 1,
+            yPercent: 0,
+            duration: CONFIG.text.loadLineDuration,
+            ease: "power3.out",
+            overwrite: "auto"
+          },
+          index * CONFIG.text.loadLineStagger
+        );
+      });
     }
 
     function animateLinesIn(element, start) {
@@ -3378,9 +3434,25 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       }
 
       [oldTitle, titleOne, titleTwo].filter(Boolean).forEach(function (title) {
+        const hideOldTitleForLoad =
+          title === oldTitle &&
+          !oldTitleIntroPlayed &&
+          !prefersReducedMotion &&
+          window.scrollY <= 4;
+
         gsap.set(flattenLines(title), {
-          opacity: title === oldTitle ? 1 : 0,
-          yPercent: title === oldTitle ? 0 : 75
+          opacity:
+            title === oldTitle
+              ? hideOldTitleForLoad
+                ? 0
+                : 1
+              : 0,
+          yPercent:
+            title === oldTitle
+              ? hideOldTitleForLoad
+                ? CONFIG.text.loadYOffset
+                : 0
+              : 75
         });
       });
 
@@ -3830,6 +3902,7 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
     }
 
     createTimeline();
+    playOldTitleIntro();
     lockTargetLottieToScroll();
     window.addEventListener("resize", function () {
       handleResize(false);
