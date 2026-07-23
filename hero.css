@@ -3,12 +3,12 @@ HERO — LA HAUTEUR DU WRAPPER RESTE GÉRÉE DANS WEBFLOW
 ==================================================*/
 
 :root{
-  --imtx-viewport-height:100vh;
+  --imtx-hero-viewport-height:100vh;
 }
 
 @supports (height:100svh){
   :root{
-    --imtx-viewport-height:100svh;
+    --imtx-hero-viewport-height:100svh;
   }
 }
 
@@ -221,7 +221,7 @@ HOVERS GSAP — BOUTONS ET LIENS DE NAVIGATION
   display:flex;
   flex-direction:column;
   width:100%;
-  height:var(--imtx-viewport-height);
+  height:var(--imtx-hero-viewport-height);
   overflow:hidden;
   background:#050505;
 }
@@ -629,9 +629,9 @@ MOBILE
     position:fixed !important;
     inset:0 0 auto 0 !important;
     width:100% !important;
-    height:var(--imtx-viewport-height) !important;
-    min-height:var(--imtx-viewport-height) !important;
-    max-height:var(--imtx-viewport-height) !important;
+    height:var(--imtx-hero-viewport-height) !important;
+    min-height:var(--imtx-hero-viewport-height) !important;
+    max-height:var(--imtx-hero-viewport-height) !important;
   }
 
   .hero-tile-wrapper,
@@ -671,7 +671,8 @@ La hauteur de .h-second__wrapper reste gérée dans Webflow.
   position:sticky;
   top:0;
   width:100%;
-  height:var(--imtx-viewport-height);
+  height:100vh;
+  height:100svh;
   overflow:hidden;
 }
 
@@ -716,7 +717,7 @@ REDUCED MOTION
 
 @media (prefers-reduced-motion:reduce){
   .h-hero__wrapper{
-    height:var(--imtx-viewport-height);
+    height:var(--imtx-hero-viewport-height);
   }
 
   .h-hero{
@@ -825,7 +826,8 @@ La hauteur de .final__wrapper reste gérée dans Webflow.
   position:sticky;
   top:0;
   width:100%;
-  height:var(--imtx-viewport-height);
+  height:100vh;
+  height:100svh;
   overflow:hidden;
 }
 
@@ -884,7 +886,8 @@ html.final-animation-ready .final__bg-video{
   .final__sticky{
     position:relative;
     height:auto;
-    min-height:var(--imtx-viewport-height);
+    min-height:100vh;
+    min-height:100svh;
   }
 
   .final__title,
@@ -903,7 +906,8 @@ La hauteur de .decode__wrapper reste gérée dans Webflow.
   position:sticky;
   top:0;
   width:100%;
-  height:var(--imtx-viewport-height);
+  height:100vh;
+  height:100svh;
   overflow:hidden;
   isolation:isolate;
 }
@@ -956,7 +960,8 @@ html.decode-animation-ready .flip__wrapper{
   .decode__sticky{
     position:relative;
     height:auto;
-    min-height:var(--imtx-viewport-height);
+    min-height:100vh;
+    min-height:100svh;
   }
 
   .decode__title,

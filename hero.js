@@ -1,7 +1,7 @@
 (function syncStableMobileViewport() {
   "use strict";
 
-  const propertyName = "--imtx-viewport-height";
+  const propertyName = "--imtx-hero-viewport-height";
   const mobileMaxWidth = 991;
   const widthTolerance = 2;
   let viewportTimer = null;
