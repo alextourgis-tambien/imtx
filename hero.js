@@ -1942,8 +1942,6 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
 
       const cardHeight = rowSpan * metrics.tileSize +
         Math.max(rowSpan - 1, 0) * settings.gap;
-      const gridLineHalf = settings.gap / 2;
-      const alignedCardHeight = cardHeight + settings.gap;
 
       /*
       Si le crop vertical rapproche le panneau du bas, on le remonte
@@ -1951,18 +1949,17 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       */
       while (
         adjustedRowStart > 1 &&
-        getTop(adjustedRowStart) - gridLineHalf + alignedCardHeight >
+        getTop(adjustedRowStart) + cardHeight >
           height - minimumBottomGap
       ) {
         adjustedRowStart -= 1;
       }
 
       const left = metrics.gridLeft + settings.padding +
-        (card.columnStart - 1) * pitch - gridLineHalf;
-      const top = getTop(adjustedRowStart) - gridLineHalf;
+        (card.columnStart - 1) * pitch;
+      const top = getTop(adjustedRowStart);
       const cardWidth = columnSpan * metrics.tileSize +
         Math.max(columnSpan - 1, 0) * settings.gap;
-      const alignedCardWidth = cardWidth + settings.gap;
 
       gsap.set(textCard, {
         position: "absolute",
@@ -1973,8 +1970,8 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
         top: top,
         right: "auto",
         bottom: "auto",
-        width: alignedCardWidth,
-        height: alignedCardHeight,
+        width: cardWidth,
+        height: cardHeight,
         x: 0,
         xPercent: 0,
         y: 0,
