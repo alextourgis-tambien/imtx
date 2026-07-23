@@ -755,6 +755,8 @@ La hauteur et les espacements restent gérés dans Webflow.
   inset:0;
   z-index:3;
   overflow:visible;
+  perspective:1200px;
+  transform-style:preserve-3d;
   pointer-events:none;
 }
 
@@ -764,6 +766,9 @@ La hauteur et les espacements restent gérés dans Webflow.
   background:var(--pipeline-tile-color,#059941);
   transform:translateZ(0);
   transform-origin:center center;
+  transform-style:preserve-3d;
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
   will-change:transform;
 }
 

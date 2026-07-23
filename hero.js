@@ -3996,6 +3996,7 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
 
       gsap.set(tileLayer.querySelectorAll(".pipeline__tile"), {
         scale: 1,
+        rotationY: 0,
         transformOrigin: "50% 50%"
       });
       gsap.set(contentItems, { opacity: 0 });
@@ -4019,7 +4020,7 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
       });
 
       reshuffleTimeline.to(orderedReshuffleTiles, {
-        scale: 0,
+        rotationY: 180,
         duration: 0.72,
         stagger: orderedReshuffleTiles.length
           ? reveal.tileStagger / orderedReshuffleTiles.length
@@ -4058,7 +4059,7 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
         });
 
         itemTimeline.to(orderedTiles, {
-          scale: 0,
+          rotationY: 180,
           duration: 0.68,
           stagger: orderedTiles.length
             ? reveal.tileStagger / orderedTiles.length
