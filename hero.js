@@ -4161,6 +4161,7 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
 
       for (let row = 0; row < rows; row++) {
         for (let column = 0; column < columns; column++) {
+          const isLastGridRow = row === rows - 1;
           const left = originX + column * step;
           const top = originY + row * step;
           const tileRectangle = {
@@ -4217,17 +4218,21 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
             );
           } else if (separatorRows.has(row)) {
             tile.classList.add("is--separator");
-          } else if (cleanupOverlap) {
+          } else if (cleanupOverlap && !isLastGridRow) {
             tile.classList.add("is--content-cover");
             tile.dataset.pipelineCover = String(
               cleanupOverlap.itemIndex
             );
-          } else if (decorativeReveal && nearestExclusion) {
+          } else if (
+            decorativeReveal &&
+            nearestExclusion &&
+            !isLastGridRow
+          ) {
             tile.classList.add("is--decorative-reveal");
             tile.dataset.pipelineDecorative = String(
               nearestExclusion.itemIndex
             );
-          } else if (reshuffleOut) {
+          } else if (reshuffleOut && !isLastGridRow) {
             tile.classList.add("is--reshuffle-out");
           }
           tile.style.left = left + "px";
