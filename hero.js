@@ -4382,8 +4382,6 @@ function initTwostepScalingNavigation() {
 document.addEventListener("DOMContentLoaded", () => {
   initTwostepScalingNavigation();
 });
-+
-
 /*==================================================
 SECONDE SECTION — TIMELINE INDÉPENDANTE
 ==================================================*/
@@ -4457,7 +4455,7 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
     resizeDebounce: 260
   };
 
-  window.addEventListener("load", function () {
+  function mountSecondSection() {
     if (
       typeof window.gsap === "undefined" ||
       typeof window.ScrollTrigger === "undefined"
@@ -4529,6 +4527,13 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       !videoTwo ||
       !videoThree
     ) {
+      /*
+      État de secours : si une classe Webflow manque, le contenu reste visible
+      au lieu de laisser toute la section blanche.
+      */
+      document.documentElement.classList.add(
+        "second-animation-ready"
+      );
       return;
     }
 
@@ -5190,5 +5195,17 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       window.setTimeout(handleResize, 120);
     });
     ScrollTrigger.refresh();
-  });
+  }
+
+  /*
+  hero.js est hébergé sur GitHub Pages et peut finir de charger après
+  l'événement window.load. Dans ce cas, on initialise immédiatement.
+  */
+  if (document.readyState === "complete") {
+    mountSecondSection();
+  } else {
+    window.addEventListener("load", mountSecondSection, {
+      once: true
+    });
+  }
 })();

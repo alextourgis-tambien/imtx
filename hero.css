@@ -662,7 +662,8 @@ La hauteur de .h-second__wrapper reste gérée dans Webflow.
 }
 
 html.second-animation-ready .hs_p,
-html.second-animation-ready .hs__button-wrapper{
+html.second-animation-ready .hs__button-wrapper,
+html.second-animation-ready .hs__video{
   visibility:visible;
 }
 
