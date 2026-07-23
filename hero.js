@@ -893,6 +893,73 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       return;
     }
 
+    /*
+    iOS Safari peut laisser certaines vidéos de l’orbite sur une frame noire
+    lorsqu’il doit initialiser plusieurs médias simultanément. On prépare
+    explicitement chaque vidéo, puis on retente après le premier geste si
+    Safari avait différé le décodage.
+    */
+
+    const finalMediaElements = videos.map(function (item) {
+      if (item instanceof HTMLVideoElement) {
+        return item;
+      }
+
+      return item.querySelector("video");
+    }).filter(Boolean);
+
+    function startFinalMedia(media) {
+      media.muted = true;
+      media.defaultMuted = true;
+      media.autoplay = true;
+      media.loop = true;
+      media.playsInline = true;
+
+      media.setAttribute("muted", "");
+      media.setAttribute("autoplay", "");
+      media.setAttribute("loop", "");
+      media.setAttribute("playsinline", "");
+      media.setAttribute("webkit-playsinline", "");
+      media.setAttribute("preload", "auto");
+
+      if (media.readyState === 0) {
+        media.load();
+      }
+
+      const playAttempt = media.play();
+
+      if (playAttempt && typeof playAttempt.catch === "function") {
+        playAttempt.catch(function () {
+          /*
+          Safari autorisera une nouvelle tentative après le premier geste.
+          Le bloc reste volontairement silencieux.
+          */
+        });
+      }
+    }
+
+    function prepareFinalMedia() {
+      finalMediaElements.forEach(startFinalMedia);
+    }
+
+    prepareFinalMedia();
+    window.requestAnimationFrame(prepareFinalMedia);
+
+    window.addEventListener("pageshow", prepareFinalMedia);
+
+    document.addEventListener("visibilitychange", function () {
+      if (!document.hidden) {
+        prepareFinalMedia();
+      }
+    });
+
+    ["touchstart", "pointerdown"].forEach(function (eventName) {
+      document.addEventListener(eventName, prepareFinalMedia, {
+        once: true,
+        passive: true
+      });
+    });
+
     const originalTitleMarkup = new Map();
     const originalTitleStyles = new Map();
     const originalVideoStyles = new Map();
