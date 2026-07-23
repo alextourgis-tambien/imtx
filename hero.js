@@ -4866,6 +4866,8 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
 
     const paragraphs = [paragraphOne, paragraphTwo];
     const videos = [videoOne, videoTwo, videoThree];
+    const videoThreeWebflowBorderRadius =
+      window.getComputedStyle(videoThree).borderRadius;
 
     const originalParagraphMarkup = new Map();
     paragraphs.forEach(function (paragraph) {
@@ -5160,6 +5162,10 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
         });
       });
 
+      gsap.set(videoThree, {
+        borderRadius: videoThreeWebflowBorderRadius
+      });
+
       /*
       L'entrée et le décalage vertical de la pile se chevauchent.
       On anime donc deux progressions indépendantes, puis on compose
@@ -5362,6 +5368,7 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
         x: videoThreeFullscreenX,
         y: videoThreeFullscreenY,
         scale: videoThreeFullscreenScale,
+        borderRadius: "0px",
         duration: timing.videoThreeFullscreenDuration,
         ease: "power2.inOut"
       }, timing.videoThreeFullscreen);
@@ -5377,6 +5384,12 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
           ease: item[3]
         }, item[1]);
       });
+
+      timeline.to(videoThree, {
+        borderRadius: videoThreeWebflowBorderRadius,
+        duration: timing.videoThreeOutDuration,
+        ease: "power1.inOut"
+      }, timing.videoThreeOut);
 
       animateLinesIn(paragraphTwo, timing.paragraphTwoIn);
 
