@@ -4411,10 +4411,10 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       paragraphOneIn: 0,
       paragraphOneOut: 0.23,
 
-      videoOneIn: 0.28,
-      videoTwoIn: 0.32,
-      videoThreeIn: 0.36,
-      videoInDuration: 0.18,
+      videoOneIn: 0.2,
+      videoTwoIn: 0.25,
+      videoThreeIn: 0.3,
+      videoInDuration: 0.2,
 
       videoThreeFullscreen: 0.54,
       videoThreeFullscreenDuration: 0.16,
@@ -4858,6 +4858,35 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
         });
       });
 
+      /*
+      L'entrée et le décalage vertical de la pile se chevauchent.
+      On anime donc deux progressions indépendantes, puis on compose
+      leur résultat ici. Cela évite que deux tweens concurrents écrivent
+      simultanément la propriété `y`, ce qui provoquait un saut visible.
+      */
+      const videoEntranceStates = new Map();
+
+      videos.forEach(function (video) {
+        videoEntranceStates.set(video, {
+          entry: 0,
+          stack: 0
+        });
+      });
+
+      function renderVideoEntrance(video, stackDistance) {
+        const state = videoEntranceStates.get(video);
+        const startY = startVideoY.get(video);
+        const centeredY = centeredVideoY.get(video);
+
+        gsap.set(video, {
+          y:
+            startY +
+            (centeredY - startY) * state.entry -
+            stackDistance * state.stack,
+          scale: finalVideoScales.get(video) * state.entry
+        });
+      }
+
       if (button) {
         gsap.set(button, {
           opacity: 0,
@@ -4982,43 +5011,49 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
 
       animateLinesOut(paragraphOne, timing.paragraphOneOut);
 
-      timeline.to(videoOne, {
-        y: centeredVideoY.get(videoOne),
-        scale: finalVideoScales.get(videoOne),
+      timeline.to(videoEntranceStates.get(videoOne), {
+        entry: 1,
         duration: timing.videoInDuration,
-        ease: "power2.out"
+        ease: "power2.out",
+        onUpdate: function () {
+          renderVideoEntrance(videoOne, stackGap * 2);
+        }
       }, timing.videoOneIn);
 
-      timeline.to(videoOne, {
-        y: centeredVideoY.get(videoOne) - stackGap,
+      timeline.to(videoEntranceStates.get(videoOne), {
+        stack: 1,
         duration: timing.videoInDuration,
-        ease: "power2.inOut"
+        ease: "power2.inOut",
+        onUpdate: function () {
+          renderVideoEntrance(videoOne, stackGap * 2);
+        }
       }, timing.videoTwoIn);
 
-      timeline.to(videoTwo, {
-        y: centeredVideoY.get(videoTwo),
-        scale: finalVideoScales.get(videoTwo),
+      timeline.to(videoEntranceStates.get(videoTwo), {
+        entry: 1,
         duration: timing.videoInDuration,
-        ease: "power2.out"
+        ease: "power2.out",
+        onUpdate: function () {
+          renderVideoEntrance(videoTwo, stackGap);
+        }
       }, timing.videoTwoIn);
 
-      timeline.to(videoOne, {
-        y: centeredVideoY.get(videoOne) - stackGap * 2,
+      timeline.to(videoEntranceStates.get(videoTwo), {
+        stack: 1,
         duration: timing.videoInDuration,
-        ease: "power2.inOut"
+        ease: "power2.inOut",
+        onUpdate: function () {
+          renderVideoEntrance(videoTwo, stackGap);
+        }
       }, timing.videoThreeIn);
 
-      timeline.to(videoTwo, {
-        y: centeredVideoY.get(videoTwo) - stackGap,
+      timeline.to(videoEntranceStates.get(videoThree), {
+        entry: 1,
         duration: timing.videoInDuration,
-        ease: "power2.inOut"
-      }, timing.videoThreeIn);
-
-      timeline.to(videoThree, {
-        y: centeredVideoY.get(videoThree),
-        scale: finalVideoScales.get(videoThree),
-        duration: timing.videoInDuration,
-        ease: "power2.out"
+        ease: "power2.out",
+        onUpdate: function () {
+          renderVideoEntrance(videoThree, 0);
+        }
       }, timing.videoThreeIn);
 
       timeline.to(videoThree, {
