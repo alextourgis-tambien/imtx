@@ -3808,7 +3808,12 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
       reshuffleEnd: "top 58%",
       itemStart: "top 78%",
       itemEnd: "top 48%",
-      tileStagger: 0.32,
+      tileStagger: 0.42,
+      originX: 0.5,
+      originY: 0,
+      horizontalWeight: 1,
+      verticalWeight: 1,
+      organicVariation: 0.055,
       itemFadeAt: 0.42
     },
 
@@ -3906,6 +3911,45 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
       revealAnimations = [];
     }
 
+    function orderTilesFromWaveOrigin(
+      tiles,
+      originX,
+      originY,
+      seed
+    ) {
+      const stageRectangle = stage.getBoundingClientRect();
+      const stageWidth = Math.max(stageRectangle.width, 1);
+      const stageHeight = Math.max(stageRectangle.height, 1);
+      const reveal = PIPELINE_GRID_CONFIG.reveal;
+
+      function getWaveDistance(tile) {
+        const left = parseFloat(tile.style.left) || 0;
+        const top = parseFloat(tile.style.top) || 0;
+        const width = parseFloat(tile.style.width) || 0;
+        const height = parseFloat(tile.style.height) || 0;
+        const row = Number(tile.dataset.pipelineRow) || 0;
+        const column = Number(tile.dataset.pipelineColumn) || 0;
+        const normalizedX =
+          (left + width / 2 - originX) / stageWidth *
+          reveal.horizontalWeight;
+        const normalizedY =
+          (top + height / 2 - originY) / stageHeight *
+          reveal.verticalWeight;
+        const organicOffset = (
+          deterministicValue(
+            row + seed * 7,
+            column + seed * 11
+          ) - 0.5
+        ) * reveal.organicVariation;
+
+        return Math.hypot(normalizedX, normalizedY) + organicOffset;
+      }
+
+      return tiles.slice().sort(function (tileA, tileB) {
+        return getWaveDistance(tileA) - getWaveDistance(tileB);
+      });
+    }
+
     function createRevealAnimations() {
       killRevealAnimations();
 
@@ -3957,6 +4001,13 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
       gsap.set(contentItems, { opacity: 0 });
 
       const reveal = PIPELINE_GRID_CONFIG.reveal;
+      const stageRectangle = stage.getBoundingClientRect();
+      const orderedReshuffleTiles = orderTilesFromWaveOrigin(
+        reshuffleOutTiles,
+        stageRectangle.width * reveal.originX,
+        stageRectangle.height * reveal.originY,
+        wrapperIndex + 1
+      );
       const reshuffleTimeline = gsap.timeline({
         scrollTrigger: {
           trigger: stage,
@@ -3967,13 +4018,12 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
         }
       });
 
-      reshuffleTimeline.to(reshuffleOutTiles, {
+      reshuffleTimeline.to(orderedReshuffleTiles, {
         scale: 0,
         duration: 0.72,
-        stagger: {
-          each: 0.025,
-          from: "random"
-        },
+        stagger: orderedReshuffleTiles.length
+          ? reveal.tileStagger / orderedReshuffleTiles.length
+          : 0,
         ease: "power2.inOut"
       }, 0.12);
 
@@ -3987,17 +4037,15 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
             return Number(tile.dataset.pipelineDecorative) === itemIndex;
           })
         );
-        const orderedTiles = itemTiles.slice().sort(function (tileA, tileB) {
-          const valueA = deterministicValue(
-            Number(tileA.dataset.pipelineRow) + itemIndex * 7,
-            Number(tileA.dataset.pipelineColumn) + itemIndex * 11
-          );
-          const valueB = deterministicValue(
-            Number(tileB.dataset.pipelineRow) + itemIndex * 7,
-            Number(tileB.dataset.pipelineColumn) + itemIndex * 11
-          );
-          return valueA - valueB;
-        });
+        const itemRectangle = item.getBoundingClientRect();
+        const orderedTiles = orderTilesFromWaveOrigin(
+          itemTiles,
+          itemRectangle.left - stageRectangle.left +
+            itemRectangle.width / 2,
+          itemRectangle.top - stageRectangle.top +
+            itemRectangle.height / 2,
+          wrapperIndex * 17 + itemIndex + 1
+        );
 
         const itemTimeline = gsap.timeline({
           scrollTrigger: {
