@@ -2037,7 +2037,7 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
     return buildPermanentGrid;
   }
 
-  document.addEventListener("DOMContentLoaded", function () {
+  function mountHeroTileGrid() {
     const rebuildGrid = initialiseTileGrid();
 
     if (!rebuildGrid) {
@@ -2068,7 +2068,22 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
         CONFIG.resizeDebounce
       );
     });
-  });
+  }
+
+  /*
+  Le fichier peut être chargé en async depuis Webflow.
+  Dans ce cas, DOMContentLoaded peut déjà être passé :
+  on initialise alors la grille immédiatement.
+  */
+  if (document.readyState === "loading") {
+    document.addEventListener(
+      "DOMContentLoaded",
+      mountHeroTileGrid,
+      { once: true }
+    );
+  } else {
+    mountHeroTileGrid();
+  }
 
   /*==================================================
   ANIMATION PRINCIPALE
