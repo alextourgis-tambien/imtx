@@ -195,6 +195,26 @@ HERO — LA HAUTEUR DU WRAPPER RESTE GÉRÉE DANS WEBFLOW
   transition-delay: 0.575s;
 }
 
+/*==================================================
+HOVERS GSAP — BOUTONS ET LIENS DE NAVIGATION
+==================================================*/
+
+.imtx-hover-text-mask{
+  position:relative;
+  overflow:hidden;
+}
+
+.imtx-hover-text-line{
+  display:block;
+  width:100%;
+  will-change:transform;
+}
+
+.imtx-hover-text-line--duplicate{
+  position:absolute;
+  inset:0;
+}
+
 .h-hero{
   position:sticky;
   top:0;

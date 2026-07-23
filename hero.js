@@ -4388,6 +4388,126 @@ function initTwostepScalingNavigation() {
 document.addEventListener("DOMContentLoaded", () => {
   initTwostepScalingNavigation();
 });
+
+/*==================================================
+HOVERS GSAP — BOUTONS ET LIENS DE NAVIGATION
+==================================================*/
+
+(function () {
+  "use strict";
+
+  function initGsapTextHovers() {
+    if (typeof window.gsap === "undefined") {
+      console.warn(
+        "Hover GSAP : GSAP est absent, les hovers texte ne sont pas initialisés."
+      );
+      return;
+    }
+
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+
+    if (prefersReducedMotion) {
+      return;
+    }
+
+    const controls = document.querySelectorAll(
+      ".button, .navbar__link, .button__nav"
+    );
+
+    controls.forEach(function (control) {
+      if (control.classList.contains("imtx-gsap-hover-ready")) {
+        return;
+      }
+
+      const textElement = control.matches(".navbar__link")
+        ? control.querySelector(".nav__text")
+        : control.querySelector(".button__text");
+
+      if (!textElement) {
+        return;
+      }
+
+      const originalContent = textElement.innerHTML;
+      const originalLine = document.createElement("span");
+      const duplicateLine = document.createElement("span");
+
+      originalLine.className =
+        "imtx-hover-text-line imtx-hover-text-line--original";
+      duplicateLine.className =
+        "imtx-hover-text-line imtx-hover-text-line--duplicate";
+
+      originalLine.innerHTML = originalContent;
+      duplicateLine.innerHTML = originalContent;
+      duplicateLine.setAttribute("aria-hidden", "true");
+
+      textElement.replaceChildren(originalLine, duplicateLine);
+      textElement.classList.add("imtx-hover-text-mask");
+      control.classList.add("imtx-gsap-hover-ready");
+
+      gsap.set(originalLine, {
+        yPercent: 0
+      });
+
+      gsap.set(duplicateLine, {
+        yPercent: 115
+      });
+
+      const hoverTimeline = gsap.timeline({
+        paused: true,
+        defaults: {
+          duration: 0.46,
+          ease: "power3.inOut",
+          overwrite: "auto"
+        }
+      });
+
+      hoverTimeline
+        .to(
+          originalLine,
+          {
+            yPercent: -115
+          },
+          0
+        )
+        .to(
+          duplicateLine,
+          {
+            yPercent: 0
+          },
+          0
+        );
+
+      control.addEventListener("mouseenter", function () {
+        hoverTimeline.play();
+      });
+
+      control.addEventListener("mouseleave", function () {
+        hoverTimeline.reverse();
+      });
+
+      control.addEventListener("focusin", function () {
+        hoverTimeline.play();
+      });
+
+      control.addEventListener("focusout", function () {
+        hoverTimeline.reverse();
+      });
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener(
+      "DOMContentLoaded",
+      initGsapTextHovers,
+      { once: true }
+    );
+  } else {
+    initGsapTextHovers();
+  }
+})();
+
 /*==================================================
 SECONDE SECTION — TIMELINE INDÉPENDANTE
 ==================================================*/
@@ -4411,9 +4531,9 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       paragraphOneIn: 0,
       paragraphOneOut: 0.23,
 
-      videoOneIn: 0.2,
-      videoTwoIn: 0.25,
-      videoThreeIn: 0.3,
+      videoOneIn: 0.15,
+      videoTwoIn: 0.2,
+      videoThreeIn: 0.25,
       videoInDuration: 0.2,
 
       videoThreeFullscreen: 0.54,
