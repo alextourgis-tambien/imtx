@@ -4413,7 +4413,7 @@ HOVERS GSAP — BOUTONS ET LIENS DE NAVIGATION
     }
 
     const controls = document.querySelectorAll(
-      ".button, .navbar__link, .button__nav"
+      ".button, .navbar__link, .button__nav, .footer__link"
     );
 
     controls.forEach(function (control) {
@@ -4421,9 +4421,18 @@ HOVERS GSAP — BOUTONS ET LIENS DE NAVIGATION
         return;
       }
 
-      const textElement = control.matches(".navbar__link")
-        ? control.querySelector(".nav__text")
-        : control.querySelector(".button__text");
+      let textElement = null;
+
+      if (control.matches(".navbar__link")) {
+        textElement = control.querySelector(".nav__text");
+      } else if (control.matches(".footer__link")) {
+        textElement =
+          control.querySelector(
+            ".footer__link-text, .footer__text"
+          ) || control;
+      } else {
+        textElement = control.querySelector(".button__text");
+      }
 
       if (!textElement) {
         return;
