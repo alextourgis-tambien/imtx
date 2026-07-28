@@ -4148,6 +4148,15 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
       itemFadeAt: 0.42
     },
 
+    fallingTiles: {
+      positions: [0.18, 0.52, 0.84],
+      start: "bottom 95%",
+      end: "bottom 35%",
+      distanceViewport: 0.42,
+      rotations: [-7, 6, -5],
+      stagger: 0.08
+    },
+
     resizeDebounce: 160
   };
 
@@ -4293,6 +4302,9 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
       const reshuffleOutTiles = Array.from(
         tileLayer.querySelectorAll(".pipeline__tile.is--reshuffle-out")
       );
+      const fallingTiles = Array.from(
+        tileLayer.querySelectorAll(".pipeline__tile.is--falling")
+      );
 
       if (
         typeof window.gsap === "undefined" ||
@@ -4330,9 +4342,15 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
         rotationY: 0,
         transformOrigin: "50% 50%"
       });
+      gsap.set(fallingTiles, {
+        y: 0,
+        rotation: 0,
+        opacity: 1
+      });
       gsap.set(contentItems, { opacity: 0 });
 
       const reveal = PIPELINE_GRID_CONFIG.reveal;
+      const falling = PIPELINE_GRID_CONFIG.fallingTiles;
       const stageRectangle = stage.getBoundingClientRect();
       const orderedReshuffleTiles = orderTilesFromWaveOrigin(
         reshuffleOutTiles,
@@ -4360,6 +4378,44 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
       }, 0.12);
 
       revealAnimations.push(reshuffleTimeline);
+
+      if (wrapperIndex === 0 && fallingTiles.length) {
+        const fallingTimeline = gsap.timeline({
+          scrollTrigger: {
+            trigger: stage,
+            start: falling.start,
+            end: falling.end,
+            scrub: 1,
+            invalidateOnRefresh: true
+          }
+        });
+
+        fallingTimeline.to(fallingTiles, {
+          y: function (index, tile) {
+            const row = Number(tile.dataset.pipelineRow) || 0;
+            const column = Number(tile.dataset.pipelineColumn) || 0;
+            const variation = 0.9 + deterministicValue(
+              row + 211,
+              column + 307
+            ) * 0.25;
+
+            return window.innerHeight *
+              falling.distanceViewport *
+              variation;
+          },
+          rotation: function (index) {
+            return falling.rotations[
+              index % falling.rotations.length
+            ];
+          },
+          opacity: 0,
+          duration: 1,
+          stagger: falling.stagger,
+          ease: "power1.in"
+        }, 0);
+
+        revealAnimations.push(fallingTimeline);
+      }
 
       contentItems.forEach(function (item, itemIndex) {
         const itemTiles = coverTiles.filter(function (tile) {
@@ -4467,6 +4523,17 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
         return exclusionA.top - exclusionB.top;
       });
       const separatorRows = new Set();
+      const fallingTileColumns = new Set(
+        wrapperIndex === 0
+          ? PIPELINE_GRID_CONFIG.fallingTiles.positions.map(function (
+            position
+          ) {
+            return Math.round(
+              Math.min(1, Math.max(0, position)) * (columns - 1)
+            );
+          })
+          : []
+      );
 
       for (
         let separatorIndex = 0;
@@ -4525,6 +4592,10 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
             row + 73,
             column + 109
           ) < settings.reshuffleOutRate;
+          const fallingTile = (
+            isLastGridRow &&
+            fallingTileColumns.has(column)
+          );
           const tileCenterX = left + tileSize / 2;
           const tileCenterY = top + tileSize / 2;
           const nearestExclusion = exclusions.reduce(function (
@@ -4550,7 +4621,9 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
 
           const tile = document.createElement("span");
           tile.className = "pipeline__tile";
-          if (contentOverlap) {
+          if (fallingTile) {
+            tile.classList.add("is--falling");
+          } else if (contentOverlap) {
             tile.classList.add("is--content-cover");
             tile.dataset.pipelineCover = String(
               contentOverlap.itemIndex
