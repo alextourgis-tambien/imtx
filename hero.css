@@ -817,6 +817,14 @@ La hauteur et les espacements restent gérés dans Webflow.
   text-align:center !important;
 }
 
+.pipeline__item > :first-child{
+  margin-top:0 !important;
+}
+
+.pipeline__item > :last-child{
+  margin-bottom:0 !important;
+}
+
 /*==================================================
 FINAL — TITRES + ORBITE DES 8 VIDÉOS
 La hauteur de .final__wrapper reste gérée dans Webflow.

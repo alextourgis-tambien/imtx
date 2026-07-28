@@ -4315,7 +4315,15 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
       const gridWidth = (columns - 1) * step + tileSize;
       const gridHeight = (rows - 1) * step + tileSize;
       const originX = Math.max(0, (width - gridWidth) / 2);
-      const originY = Math.max(0, (height - gridHeight) / 2);
+      const protrudingAtBottom = wrapper.classList.contains(
+        "is--dark-green"
+      );
+      const originY = Math.max(
+        0,
+        protrudingAtBottom
+          ? height - gridHeight
+          : (height - gridHeight) / 2
+      );
       const exclusions = getExclusionRectangles(
         stageRectangle,
         settings.exclusionPadding
@@ -4454,10 +4462,6 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
           fragment.appendChild(tile);
         }
       }
-
-      const protrudingAtBottom = wrapper.classList.contains(
-        "is--dark-green"
-      );
 
       settings.protrudingTilePositions.forEach(function (
         position,
