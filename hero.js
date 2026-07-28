@@ -80,22 +80,16 @@
 })();
 
 /*==================================================
-PRESS — CARTES EN ESCALIER VERS L'ALIGNEMENT BAS
+PRESS — ALIGNEMENT PROGRESSIF PAR STICKY INDIVIDUEL
 ==================================================*/
 
-(function initPressCollectionsAnimation() {
+(function initPressCardStickies() {
   "use strict";
 
   const PRESS_CONFIG = {
     animationQuery: "(min-width: 768px)",
-    stickyTop: "0px",
-    start: "top 65%",
-    end: "center 32%",
-    scrub: 1,
-    initialYPercent: [0, 48],
-    alignedYPercent: 85,
-    cardDelay: 0.1,
-    cardDuration: 0.8,
+    stickyTop: "18vh",
+    initialMarginPercent: [0, 48, 85],
     resizeDebounce: 180
   };
 
@@ -107,159 +101,107 @@ PRESS — CARTES EN ESCALIER VERS L'ALIGNEMENT BAS
       document.querySelector(".press__collection.is--two"),
       document.querySelector(".press__collection.is--three")
     ];
-    const movingCards = cards.slice(0, 2);
 
-    if (!wrapper || !parent) {
+    if (
+      !wrapper ||
+      !parent ||
+      cards.some(function (card) { return !card; })
+    ) {
       console.warn(
-        "Press animation : .press__wrapper ou .press__parent est introuvable."
+        "Press sticky : wrapper, parent ou cartes introuvables."
       );
       return;
     }
 
-    if (cards.some(function (card) { return !card; })) {
-      console.warn(
-        "Press sticky : une ou plusieurs .press__collection sont absentes."
-      );
-      return;
-    }
-
-    const parentStyleProperties = [
-      "position",
-      "top",
-      "height",
-      "min-height",
-      "padding-bottom",
-      "margin-top",
-      "box-sizing"
-    ];
-    const originalParentStyles = new Map(
-      parentStyleProperties.map(function (property) {
-        return [
-          property,
-          {
-            value: parent.style.getPropertyValue(property),
-            priority: parent.style.getPropertyPriority(property)
-          }
-        ];
-      })
-    );
     const animationMedia = window.matchMedia(
       PRESS_CONFIG.animationQuery
     );
     const prefersReducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
     ).matches;
-    let timeline = null;
+    const elementProperties = new Map([
+      [wrapper, ["overflow"]],
+      [parent, ["position", "top", "overflow"]]
+    ].concat(cards.map(function (card) {
+      return [
+        card,
+        [
+          "position",
+          "top",
+          "margin-top",
+          "align-self",
+          "transform",
+          "will-change"
+        ]
+      ];
+    })));
+    const originalStyles = new Map();
     let resizeTimer = null;
     let viewportWidth = window.innerWidth;
 
-    function restoreParentLayout() {
-      originalParentStyles.forEach(function (original, property) {
-        if (original.value) {
-          parent.style.setProperty(
+    elementProperties.forEach(function (properties, element) {
+      originalStyles.set(
+        element,
+        new Map(properties.map(function (property) {
+          return [
             property,
-            original.value,
-            original.priority
-          );
-        } else {
-          parent.style.removeProperty(property);
-        }
-      });
-    }
+            {
+              value: element.style.getPropertyValue(property),
+              priority: element.style.getPropertyPriority(property)
+            }
+          ];
+        }))
+      );
+    });
 
-    function clearTimeline() {
-      if (timeline) {
-        if (timeline.scrollTrigger) {
-          timeline.scrollTrigger.kill();
-        }
-        timeline.kill();
-        timeline = null;
-      }
-
-      gsap.set(cards, {
-        clearProps: "transform,willChange"
-      });
-      restoreParentLayout();
-    }
-
-    function reserveAlignedCardSpace() {
-      const parentBounds = parent.getBoundingClientRect();
-      const parentStyle = window.getComputedStyle(parent);
-      const referenceCardHeight =
-        cards[2].getBoundingClientRect().height;
-      const extraBottomSpace = referenceCardHeight *
-        PRESS_CONFIG.alignedYPercent / 100;
-
-      if (!parentBounds.height || !extraBottomSpace) {
-        return 0;
-      }
-
-      const paddingBottom = parseFloat(parentStyle.paddingBottom) || 0;
-      const marginTop = parseFloat(parentStyle.marginTop) || 0;
-
-      parent.style.boxSizing = "border-box";
-      parent.style.height =
-        parentBounds.height + extraBottomSpace + "px";
-      parent.style.minHeight =
-        parentBounds.height + extraBottomSpace + "px";
-      parent.style.paddingBottom =
-        paddingBottom + extraBottomSpace + "px";
-      parent.style.marginTop =
-        marginTop - extraBottomSpace + "px";
-
-      return extraBottomSpace;
-    }
-
-    function createTimeline() {
-      clearTimeline();
-
-      if (animationMedia.matches) {
-        reserveAlignedCardSpace();
-        parent.style.position = "sticky";
-        parent.style.top = PRESS_CONFIG.stickyTop;
-      } else {
-        ScrollTrigger.refresh();
-        return;
-      }
-
-      gsap.set(cards[2], {
-        yPercent: PRESS_CONFIG.alignedYPercent,
-        willChange: "transform"
-      });
-
-      if (prefersReducedMotion) {
-        gsap.set(movingCards, {
-          yPercent: PRESS_CONFIG.alignedYPercent
+    function restoreLayout() {
+      originalStyles.forEach(function (styles, element) {
+        styles.forEach(function (original, property) {
+          if (original.value) {
+            element.style.setProperty(
+              property,
+              original.value,
+              original.priority
+            );
+          } else {
+            element.style.removeProperty(property);
+          }
         });
-        ScrollTrigger.refresh();
+      });
+    }
+
+    function applyStickyLayout() {
+      restoreLayout();
+
+      if (!animationMedia.matches || prefersReducedMotion) {
+        if (typeof window.ScrollTrigger !== "undefined") {
+          ScrollTrigger.refresh();
+        }
         return;
       }
 
-      gsap.set(movingCards, {
-        willChange: "transform"
+      wrapper.style.overflow = "visible";
+      parent.style.position = "relative";
+      parent.style.top = "auto";
+      parent.style.overflow = "visible";
+
+      cards.forEach(function (card, index) {
+        const cardHeight = card.getBoundingClientRect().height;
+        const computedMarginTop =
+          parseFloat(window.getComputedStyle(card).marginTop) || 0;
+
+        card.style.position = "sticky";
+        card.style.top = PRESS_CONFIG.stickyTop;
+        card.style.alignSelf = "start";
+        card.style.marginTop =
+          computedMarginTop + cardHeight *
+          PRESS_CONFIG.initialMarginPercent[index] / 100 + "px";
+        card.style.willChange = "top";
       });
 
-      timeline = gsap.timeline({
-        defaults: { ease: "none" },
-        scrollTrigger: {
-          trigger: wrapper,
-          start: PRESS_CONFIG.start,
-          end: PRESS_CONFIG.end,
-          scrub: PRESS_CONFIG.scrub,
-          invalidateOnRefresh: true
-        }
-      });
-
-      movingCards.forEach(function (card, index) {
-        timeline.fromTo(card, {
-          yPercent: PRESS_CONFIG.initialYPercent[index]
-        }, {
-          yPercent: PRESS_CONFIG.alignedYPercent,
-          duration: PRESS_CONFIG.cardDuration
-        }, index * PRESS_CONFIG.cardDelay);
-      });
-
-      ScrollTrigger.refresh();
+      if (typeof window.ScrollTrigger !== "undefined") {
+        ScrollTrigger.refresh();
+      }
     }
 
     function handleResize() {
@@ -275,21 +217,21 @@ PRESS — CARTES EN ESCALIER VERS L'ALIGNEMENT BAS
       viewportWidth = nextWidth;
       window.clearTimeout(resizeTimer);
       resizeTimer = window.setTimeout(
-        createTimeline,
+        applyStickyLayout,
         PRESS_CONFIG.resizeDebounce
       );
     }
 
-    createTimeline();
+    applyStickyLayout();
     window.addEventListener("resize", handleResize);
     window.addEventListener("orientationchange", function () {
       window.setTimeout(handleResize, 120);
     });
 
     if (typeof animationMedia.addEventListener === "function") {
-      animationMedia.addEventListener("change", createTimeline);
+      animationMedia.addEventListener("change", applyStickyLayout);
     } else {
-      animationMedia.addListener(createTimeline);
+      animationMedia.addListener(applyStickyLayout);
     }
   });
 })();
