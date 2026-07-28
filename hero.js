@@ -3983,7 +3983,7 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
       cardCleanupPaddingRatio: 0.42,
       decorativeRevealRate: 0.075,
       reshuffleOutRate: 0.09,
-      protrudingTilePositions: [0.62]
+      protrudingTilePositions: [0.28, 0.62, 0.88]
     },
 
     tablet: {
@@ -3996,7 +3996,7 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
       cardCleanupPaddingRatio: 0.42,
       decorativeRevealRate: 0.07,
       reshuffleOutRate: 0.085,
-      protrudingTilePositions: [0.62]
+      protrudingTilePositions: [0.28, 0.62, 0.88]
     },
 
     mobile: {
@@ -4009,7 +4009,7 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
       cardCleanupPaddingRatio: 0.42,
       decorativeRevealRate: 0.06,
       reshuffleOutRate: 0.075,
-      protrudingTilePositions: [0.62]
+      protrudingTilePositions: [0.28, 0.62, 0.88]
     },
 
     reveal: {
