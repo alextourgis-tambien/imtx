@@ -92,7 +92,7 @@ PRESS — CARTES EN ESCALIER VERS L'ALIGNEMENT BAS
     start: "top 88%",
     end: "center 52%",
     scrub: 1,
-    initialYPercent: [18, 66, 103],
+    initialYPercent: [-85, -37],
     cardDelay: 0.1,
     cardDuration: 0.8,
     resizeDebounce: 180
@@ -106,6 +106,7 @@ PRESS — CARTES EN ESCALIER VERS L'ALIGNEMENT BAS
       document.querySelector(".press__collection.is--two"),
       document.querySelector(".press__collection.is--three")
     ];
+    const movingCards = cards.slice(0, 2);
 
     if (!wrapper || !parent) {
       console.warn(
@@ -163,7 +164,7 @@ PRESS — CARTES EN ESCALIER VERS L'ALIGNEMENT BAS
         return;
       }
 
-      gsap.set(cards, {
+      gsap.set(movingCards, {
         willChange: "transform"
       });
 
@@ -178,7 +179,7 @@ PRESS — CARTES EN ESCALIER VERS L'ALIGNEMENT BAS
         }
       });
 
-      cards.forEach(function (card, index) {
+      movingCards.forEach(function (card, index) {
         timeline.fromTo(card, {
           yPercent: PRESS_CONFIG.initialYPercent[index]
         }, {
