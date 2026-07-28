@@ -961,7 +961,7 @@ html.decode-animation-ready .flip__wrapper{
 
 .flip__bg{
   transform-origin:center center;
-  will-change:transform,opacity,clip-path;
+  will-change:transform,clip-path;
 }
 
 @media (prefers-reduced-motion:reduce){
