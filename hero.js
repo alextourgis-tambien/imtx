@@ -89,8 +89,8 @@ PRESS — CARTES EN ESCALIER VERS L'ALIGNEMENT BAS
   const PRESS_CONFIG = {
     animationQuery: "(min-width: 768px)",
     stickyTop: "0px",
-    start: "top 88%",
-    end: "center 52%",
+    start: "top 65%",
+    end: "center 32%",
     scrub: 1,
     initialYPercent: [0, 48],
     alignedYPercent: 85,
@@ -129,6 +129,7 @@ PRESS — CARTES EN ESCALIER VERS L'ALIGNEMENT BAS
       "height",
       "min-height",
       "padding-bottom",
+      "margin-top",
       "box-sizing"
     ];
     const originalParentStyles = new Map(
@@ -194,6 +195,7 @@ PRESS — CARTES EN ESCALIER VERS L'ALIGNEMENT BAS
       }
 
       const paddingBottom = parseFloat(parentStyle.paddingBottom) || 0;
+      const marginTop = parseFloat(parentStyle.marginTop) || 0;
 
       parent.style.boxSizing = "border-box";
       parent.style.height =
@@ -202,6 +204,8 @@ PRESS — CARTES EN ESCALIER VERS L'ALIGNEMENT BAS
         parentBounds.height + extraBottomSpace + "px";
       parent.style.paddingBottom =
         paddingBottom + extraBottomSpace + "px";
+      parent.style.marginTop =
+        marginTop - extraBottomSpace + "px";
 
       return extraBottomSpace;
     }
