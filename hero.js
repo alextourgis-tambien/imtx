@@ -122,6 +122,26 @@ PRESS — CARTES EN ESCALIER VERS L'ALIGNEMENT BAS
       return;
     }
 
+    const parentStyleProperties = [
+      "position",
+      "top",
+      "height",
+      "min-height",
+      "padding-top",
+      "margin-top",
+      "box-sizing"
+    ];
+    const originalParentStyles = new Map(
+      parentStyleProperties.map(function (property) {
+        return [
+          property,
+          {
+            value: parent.style.getPropertyValue(property),
+            priority: parent.style.getPropertyPriority(property)
+          }
+        ];
+      })
+    );
     const animationMedia = window.matchMedia(
       PRESS_CONFIG.animationQuery
     );
@@ -131,6 +151,20 @@ PRESS — CARTES EN ESCALIER VERS L'ALIGNEMENT BAS
     let timeline = null;
     let resizeTimer = null;
     let viewportWidth = window.innerWidth;
+
+    function restoreParentLayout() {
+      originalParentStyles.forEach(function (original, property) {
+        if (original.value) {
+          parent.style.setProperty(
+            property,
+            original.value,
+            original.priority
+          );
+        } else {
+          parent.style.removeProperty(property);
+        }
+      });
+    }
 
     function clearTimeline() {
       if (timeline) {
@@ -144,17 +178,58 @@ PRESS — CARTES EN ESCALIER VERS L'ALIGNEMENT BAS
       gsap.set(cards, {
         clearProps: "transform,willChange"
       });
+      restoreParentLayout();
+    }
+
+    function reserveInitialCardSpace() {
+      const parentBounds = parent.getBoundingClientRect();
+      const parentStyle = window.getComputedStyle(parent);
+      const extraTopSpace = movingCards.reduce(function (
+        maximum,
+        card,
+        index
+      ) {
+        const cardHeight = card.getBoundingClientRect().height;
+        const initialOffset = Math.min(
+          PRESS_CONFIG.initialYPercent[index],
+          0
+        );
+
+        return Math.max(
+          maximum,
+          cardHeight * Math.abs(initialOffset) / 100
+        );
+      }, 0);
+
+      if (!parentBounds.height || !extraTopSpace) {
+        return 0;
+      }
+
+      const paddingTop = parseFloat(parentStyle.paddingTop) || 0;
+      const marginTop = parseFloat(parentStyle.marginTop) || 0;
+
+      parent.style.boxSizing = "border-box";
+      parent.style.height =
+        parentBounds.height + extraTopSpace + "px";
+      parent.style.minHeight =
+        parentBounds.height + extraTopSpace + "px";
+      parent.style.paddingTop =
+        paddingTop + extraTopSpace + "px";
+      parent.style.marginTop =
+        marginTop - extraTopSpace + "px";
+
+      return extraTopSpace;
     }
 
     function createTimeline() {
       clearTimeline();
 
       if (animationMedia.matches) {
+        const extraTopSpace = reserveInitialCardSpace();
         parent.style.position = "sticky";
-        parent.style.top = PRESS_CONFIG.stickyTop;
+        parent.style.top =
+          parseFloat(PRESS_CONFIG.stickyTop) - extraTopSpace + "px";
       } else {
-        parent.style.removeProperty("position");
-        parent.style.removeProperty("top");
         ScrollTrigger.refresh();
         return;
       }
