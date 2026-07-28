@@ -820,6 +820,11 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       tablet: 0.66,
       mobile: 0.73
     },
+    desktopHorizontalSpread: {
+      startHeight: 820,
+      fullHeight: 560,
+      maximumScale: 0.62 / 0.47
+    },
     entranceScale: 0.72,
     outsideMarginDesktop: 80,
     outsideMarginMobile: 36,
@@ -1137,6 +1142,23 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
         contentRectangle.width,
         contentRectangle.height
       ) * radiusFactor;
+      const horizontalSpread = window.innerWidth > 991
+        ? gsap.utils.interpolate(
+            1,
+            FINAL_CONFIG.desktopHorizontalSpread.maximumScale,
+            gsap.utils.clamp(
+              0,
+              1,
+              (
+                FINAL_CONFIG.desktopHorizontalSpread.startHeight -
+                window.innerHeight
+              ) / (
+                FINAL_CONFIG.desktopHorizontalSpread.startHeight -
+                FINAL_CONFIG.desktopHorizontalSpread.fullHeight
+              )
+            )
+          )
+        : 1;
       const outsideMargin = window.innerWidth <= 767
         ? FINAL_CONFIG.outsideMarginMobile
         : FINAL_CONFIG.outsideMarginDesktop;
@@ -1146,7 +1168,7 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
         const angle = (
           FINAL_CONFIG.startAngle + index * 360 / videos.length
         ) * Math.PI / 180;
-        const finalX = Math.cos(angle) * circleRadius;
+        const finalX = Math.cos(angle) * circleRadius * horizontalSpread;
         const finalY = Math.sin(angle) * circleRadius;
         const length = Math.hypot(finalX, finalY);
         const directionX = length > 1
@@ -1170,6 +1192,9 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
         const entranceDistance = Math.max(outsideRadius - length, 0);
 
         return {
+          angle: angle,
+          circleRadius: circleRadius,
+          horizontalSpread: horizontalSpread,
           finalX: finalX,
           finalY: finalY,
           entranceX: directionX * entranceDistance,
@@ -1182,8 +1207,6 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
 
     function positionVideos() {
       const radians = orbitState.angle * Math.PI / 180;
-      const cosine = Math.cos(radians);
-      const sine = Math.sin(radians);
 
       videos.forEach(function (video, index) {
         const measurement = videoMeasurements[index];
@@ -1193,10 +1216,11 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
           return;
         }
 
-        const rotatedX =
-          measurement.finalX * cosine - measurement.finalY * sine;
-        const rotatedY =
-          measurement.finalX * sine + measurement.finalY * cosine;
+        const currentAngle = measurement.angle + radians;
+        const rotatedX = Math.cos(currentAngle) *
+          measurement.circleRadius * measurement.horizontalSpread;
+        const rotatedY = Math.sin(currentAngle) *
+          measurement.circleRadius;
         const orbitX = rotatedX - measurement.finalX;
         const orbitY = rotatedY - measurement.finalY;
 
