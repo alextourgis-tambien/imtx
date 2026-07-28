@@ -902,6 +902,7 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       sticky: ".final__sticky",
       content: ".final__content",
       images: ".final__images",
+      image: ".final__image",
       titles: [
         ".final__title.is--one",
         ".final__title.is--two",
@@ -986,6 +987,9 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
     const sticky = wrapper.querySelector(selectors.sticky);
     const content = wrapper.querySelector(selectors.content);
     const images = wrapper.querySelector(selectors.images);
+    const finalImages = Array.from(
+      wrapper.querySelectorAll(selectors.image)
+    );
     const titles = selectors.titles.map(function (selector) {
       return wrapper.querySelector(selector);
     });
@@ -996,7 +1000,8 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
     [
       [sticky, selectors.sticky],
       [content, selectors.content],
-      [images, selectors.images]
+      [images, selectors.images],
+      [finalImages[0], selectors.image]
     ].concat(
       titles.map(function (element, index) {
         return [element, selectors.titles[index]];
@@ -1090,6 +1095,7 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
     const originalTitleMarkup = new Map();
     const originalTitleStyles = new Map();
     const originalVideoStyles = new Map();
+    const originalImageStyles = new Map();
 
     titles.forEach(function (title) {
       originalTitleMarkup.set(title, title.innerHTML);
@@ -1098,6 +1104,9 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
 
     videos.forEach(function (video) {
       originalVideoStyles.set(video, video.getAttribute("style"));
+    });
+    finalImages.forEach(function (image) {
+      originalImageStyles.set(image, image.getAttribute("style"));
     });
 
     const arrivalStates = videos.map(function () {
@@ -1391,6 +1400,9 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       videos.forEach(function (video) {
         restoreInlineStyle(video, originalVideoStyles.get(video));
       });
+      finalImages.forEach(function (image) {
+        restoreInlineStyle(image, originalImageStyles.get(image));
+      });
       titles.forEach(function (title) {
         restoreInlineStyle(title, originalTitleStyles.get(title));
       });
@@ -1447,6 +1459,7 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
         scale: titleTwoInitialScale,
         transformOrigin: "50% 50%"
       });
+      gsap.set(finalImages, { opacity: 0 });
       positionVideos();
 
       document.documentElement.classList.add("final-animation-ready");
@@ -1473,6 +1486,7 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
           yPercent: 0
           }
         );
+        gsap.set(finalImages, { opacity: 1 });
         return;
       }
 
@@ -1574,6 +1588,11 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
         titleThreeStart,
         titleThreeEnd
       );
+      timeline.to(finalImages, {
+        opacity: 1,
+        duration: titleThreeEnd - titleThreeStart,
+        ease: "none"
+      }, titleThreeStart);
 
       timeline.to(orbitState, {
         offsetY: finalOrbitLift,

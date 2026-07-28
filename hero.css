@@ -884,6 +884,10 @@ html.final-animation-ready .final__bg-video{
   pointer-events:none;
 }
 
+.final__image{
+  will-change:opacity;
+}
+
 .final-split-word{
   display:inline-block;
   margin-right:.25em;
