@@ -4379,7 +4379,7 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
 
       revealAnimations.push(reshuffleTimeline);
 
-      if (wrapperIndex === 0 && fallingTiles.length) {
+      if (fallingTiles.length) {
         const fallingTimeline = gsap.timeline({
           scrollTrigger: {
             trigger: stage,
@@ -4669,6 +4669,9 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
         tile.className = protrudingAtBottom
           ? "pipeline__tile is--protruding is--bottom"
           : "pipeline__tile is--protruding is--top";
+        if (wrapperIndex === 1) {
+          tile.classList.add("is--falling");
+        }
         tile.style.left = originX + column * step + "px";
         tile.style.top = protrudingAtBottom
           ? originY + gridHeight + settings.gap + "px"
