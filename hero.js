@@ -92,7 +92,8 @@ PRESS — CARTES EN ESCALIER VERS L'ALIGNEMENT BAS
     start: "top 88%",
     end: "center 52%",
     scrub: 1,
-    initialYPercent: [-85, -37],
+    initialYPercent: [0, 48],
+    alignedYPercent: 85,
     cardDelay: 0.1,
     cardDuration: 0.8,
     resizeDebounce: 180
@@ -127,8 +128,7 @@ PRESS — CARTES EN ESCALIER VERS L'ALIGNEMENT BAS
       "top",
       "height",
       "min-height",
-      "padding-top",
-      "margin-top",
+      "padding-bottom",
       "box-sizing"
     ];
     const originalParentStyles = new Map(
@@ -181,60 +181,52 @@ PRESS — CARTES EN ESCALIER VERS L'ALIGNEMENT BAS
       restoreParentLayout();
     }
 
-    function reserveInitialCardSpace() {
+    function reserveAlignedCardSpace() {
       const parentBounds = parent.getBoundingClientRect();
       const parentStyle = window.getComputedStyle(parent);
-      const extraTopSpace = movingCards.reduce(function (
-        maximum,
-        card,
-        index
-      ) {
-        const cardHeight = card.getBoundingClientRect().height;
-        const initialOffset = Math.min(
-          PRESS_CONFIG.initialYPercent[index],
-          0
-        );
+      const referenceCardHeight =
+        cards[2].getBoundingClientRect().height;
+      const extraBottomSpace = referenceCardHeight *
+        PRESS_CONFIG.alignedYPercent / 100;
 
-        return Math.max(
-          maximum,
-          cardHeight * Math.abs(initialOffset) / 100
-        );
-      }, 0);
-
-      if (!parentBounds.height || !extraTopSpace) {
+      if (!parentBounds.height || !extraBottomSpace) {
         return 0;
       }
 
-      const paddingTop = parseFloat(parentStyle.paddingTop) || 0;
-      const marginTop = parseFloat(parentStyle.marginTop) || 0;
+      const paddingBottom = parseFloat(parentStyle.paddingBottom) || 0;
 
       parent.style.boxSizing = "border-box";
       parent.style.height =
-        parentBounds.height + extraTopSpace + "px";
+        parentBounds.height + extraBottomSpace + "px";
       parent.style.minHeight =
-        parentBounds.height + extraTopSpace + "px";
-      parent.style.paddingTop =
-        paddingTop + extraTopSpace + "px";
-      parent.style.marginTop =
-        marginTop - extraTopSpace + "px";
+        parentBounds.height + extraBottomSpace + "px";
+      parent.style.paddingBottom =
+        paddingBottom + extraBottomSpace + "px";
 
-      return extraTopSpace;
+      return extraBottomSpace;
     }
 
     function createTimeline() {
       clearTimeline();
 
       if (animationMedia.matches) {
-        const extraTopSpace = reserveInitialCardSpace();
+        reserveAlignedCardSpace();
         parent.style.position = "sticky";
-        parent.style.top =
-          parseFloat(PRESS_CONFIG.stickyTop) - extraTopSpace + "px";
+        parent.style.top = PRESS_CONFIG.stickyTop;
       } else {
         ScrollTrigger.refresh();
         return;
       }
 
+      gsap.set(cards[2], {
+        yPercent: PRESS_CONFIG.alignedYPercent,
+        willChange: "transform"
+      });
+
       if (prefersReducedMotion) {
+        gsap.set(movingCards, {
+          yPercent: PRESS_CONFIG.alignedYPercent
+        });
         ScrollTrigger.refresh();
         return;
       }
@@ -258,7 +250,7 @@ PRESS — CARTES EN ESCALIER VERS L'ALIGNEMENT BAS
         timeline.fromTo(card, {
           yPercent: PRESS_CONFIG.initialYPercent[index]
         }, {
-          yPercent: 0,
+          yPercent: PRESS_CONFIG.alignedYPercent,
           duration: PRESS_CONFIG.cardDuration
         }, index * PRESS_CONFIG.cardDelay);
       });

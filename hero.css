@@ -742,17 +742,6 @@ REDUCED MOTION
 }
 
 /*==================================================
-PRESS — DÉBORDEMENT DES CARTES EN ESCALIER
-==================================================*/
-
-@media (min-width:768px){
-  .press__wrapper,
-  .press__parent{
-    overflow:visible !important;
-  }
-}
-
-/*==================================================
 PIPELINE — GRILLE DE TUILES CARRÉES
 La hauteur et les espacements restent gérés dans Webflow.
 ==================================================*/
