@@ -80,18 +80,26 @@
 })();
 
 /*==================================================
-PRESS — PARENT STICKY, ALIGNEMENT GÉRÉ DANS WEBFLOW
+PRESS — CARTES EN ESCALIER VERS L'ALIGNEMENT BAS
 ==================================================*/
 
-(function initPressStickyParent() {
+(function initPressCollectionsAnimation() {
   "use strict";
 
   const PRESS_CONFIG = {
-    desktopQuery: "(min-width: 992px)",
-    stickyTop: "0px"
+    animationQuery: "(min-width: 768px)",
+    stickyTop: "0px",
+    start: "top 88%",
+    end: "center 52%",
+    scrub: 1,
+    initialYPercent: [18, 66, 103],
+    cardDelay: 0.1,
+    cardDuration: 0.8,
+    resizeDebounce: 180
   };
 
   window.addEventListener("load", function () {
+    const wrapper = document.querySelector(".press__wrapper");
     const parent = document.querySelector(".press__parent");
     const cards = [
       document.querySelector(".press__collection.is--one"),
@@ -99,9 +107,9 @@ PRESS — PARENT STICKY, ALIGNEMENT GÉRÉ DANS WEBFLOW
       document.querySelector(".press__collection.is--three")
     ];
 
-    if (!parent) {
+    if (!wrapper || !parent) {
       console.warn(
-        "Press sticky : .press__parent est introuvable."
+        "Press animation : .press__wrapper ou .press__parent est introuvable."
       );
       return;
     }
@@ -113,36 +121,103 @@ PRESS — PARENT STICKY, ALIGNEMENT GÉRÉ DANS WEBFLOW
       return;
     }
 
-    const desktopMedia = window.matchMedia(
-      PRESS_CONFIG.desktopQuery
+    const animationMedia = window.matchMedia(
+      PRESS_CONFIG.animationQuery
     );
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+    let timeline = null;
+    let resizeTimer = null;
+    let viewportWidth = window.innerWidth;
 
-    function applyPressLayout() {
-      /*
-      Webflow est l'unique source de vérité pour la position
-      des trois cartes. Aucun translate GSAP n'est conservé.
-      */
+    function clearTimeline() {
+      if (timeline) {
+        if (timeline.scrollTrigger) {
+          timeline.scrollTrigger.kill();
+        }
+        timeline.kill();
+        timeline = null;
+      }
+
       gsap.set(cards, {
         clearProps: "transform,willChange"
       });
+    }
 
-      if (desktopMedia.matches) {
+    function createTimeline() {
+      clearTimeline();
+
+      if (animationMedia.matches) {
         parent.style.position = "sticky";
         parent.style.top = PRESS_CONFIG.stickyTop;
       } else {
         parent.style.removeProperty("position");
         parent.style.removeProperty("top");
+        ScrollTrigger.refresh();
+        return;
       }
+
+      if (prefersReducedMotion) {
+        ScrollTrigger.refresh();
+        return;
+      }
+
+      gsap.set(cards, {
+        willChange: "transform"
+      });
+
+      timeline = gsap.timeline({
+        defaults: { ease: "none" },
+        scrollTrigger: {
+          trigger: wrapper,
+          start: PRESS_CONFIG.start,
+          end: PRESS_CONFIG.end,
+          scrub: PRESS_CONFIG.scrub,
+          invalidateOnRefresh: true
+        }
+      });
+
+      cards.forEach(function (card, index) {
+        timeline.fromTo(card, {
+          yPercent: PRESS_CONFIG.initialYPercent[index]
+        }, {
+          yPercent: 0,
+          duration: PRESS_CONFIG.cardDuration
+        }, index * PRESS_CONFIG.cardDelay);
+      });
 
       ScrollTrigger.refresh();
     }
 
-    applyPressLayout();
+    function handleResize() {
+      const nextWidth = window.innerWidth;
 
-    if (typeof desktopMedia.addEventListener === "function") {
-      desktopMedia.addEventListener("change", applyPressLayout);
+      if (
+        nextWidth <= 767 &&
+        Math.abs(nextWidth - viewportWidth) < 2
+      ) {
+        return;
+      }
+
+      viewportWidth = nextWidth;
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(
+        createTimeline,
+        PRESS_CONFIG.resizeDebounce
+      );
+    }
+
+    createTimeline();
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("orientationchange", function () {
+      window.setTimeout(handleResize, 120);
+    });
+
+    if (typeof animationMedia.addEventListener === "function") {
+      animationMedia.addEventListener("change", createTimeline);
     } else {
-      desktopMedia.addListener(applyPressLayout);
+      animationMedia.addListener(createTimeline);
     }
   });
 })();
