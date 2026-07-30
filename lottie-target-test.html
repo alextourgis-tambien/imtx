@@ -83,6 +83,7 @@
       animation.addEventListener("DOMLoaded", function () {
         const lastFrame = Math.max(Math.floor(animation.totalFrames - 1), 0);
 
+        animation.setSubframe(false);
         scrubber.max = String(lastFrame);
         scrubber.disabled = false;
         toggle.disabled = false;
