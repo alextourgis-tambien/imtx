@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IMTX — Test Lottie Target</title>
+  <style>
+    *{box-sizing:border-box}
+    html,body{min-height:100%;margin:0}
+    body{
+      display:grid;
+      place-items:center;
+      padding:24px;
+      background:#f5f5f2;
+      color:#111;
+      font:16px/1.4 Arial,sans-serif
+    }
+    main{width:min(900px,100%)}
+    h1{margin:0 0 16px;font-size:clamp(24px,4vw,42px)}
+    #target{
+      width:100%;
+      aspect-ratio:1;
+      overflow:hidden;
+      background:#fff;
+      border:1px solid #d8d8d2;
+      border-radius:16px
+    }
+    #target canvas{display:block;width:100%!important;height:100%!important}
+    .controls{
+      display:grid;
+      grid-template-columns:auto 1fr auto;
+      gap:16px;
+      align-items:center;
+      margin-top:16px
+    }
+    button{
+      padding:10px 16px;
+      border:0;
+      border-radius:999px;
+      background:#111;
+      color:#fff;
+      cursor:pointer
+    }
+    input{width:100%}
+    #status{margin:12px 0 0;color:#555}
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Test autonome — IMTX Target</h1>
+    <div id="target"></div>
+    <div class="controls">
+      <button id="toggle" type="button" disabled>Lecture</button>
+      <input id="scrubber" type="range" min="0" max="49" value="0" disabled>
+      <output id="frame">Frame 0 / 49</output>
+    </div>
+    <p id="status">Chargement du lecteur et du JSON…</p>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/lottie-web@5.13.0/build/player/lottie.min.js"></script>
+  <script>
+    (function () {
+      "use strict";
+
+      const target = document.getElementById("target");
+      const toggle = document.getElementById("toggle");
+      const scrubber = document.getElementById("scrubber");
+      const frame = document.getElementById("frame");
+      const status = document.getElementById("status");
+      let playing = false;
+
+      const animation = lottie.loadAnimation({
+        container: target,
+        renderer: "canvas",
+        loop: true,
+        autoplay: false,
+        path: "imtx-target-prame-v01.json",
+        rendererSettings: {
+          preserveAspectRatio: "xMidYMid meet",
+          clearCanvas: true
+        }
+      });
+
+      animation.addEventListener("DOMLoaded", function () {
+        const lastFrame = Math.max(Math.floor(animation.totalFrames - 1), 0);
+
+        scrubber.max = String(lastFrame);
+        scrubber.disabled = false;
+        toggle.disabled = false;
+        status.textContent =
+          "Prêt — rendu Canvas indépendant du composant Webflow.";
+        animation.goToAndStop(0, true);
+      });
+
+      animation.addEventListener("enterFrame", function (event) {
+        const current = Math.max(Math.round(event.currentTime), 0);
+        const lastFrame = Number(scrubber.max);
+
+        scrubber.value = String(Math.min(current, lastFrame));
+        frame.value = "Frame " + current + " / " + lastFrame;
+      });
+
+      animation.addEventListener("data_failed", function () {
+        status.textContent = "Échec du chargement du JSON.";
+      });
+
+      toggle.addEventListener("click", function () {
+        playing = !playing;
+        toggle.textContent = playing ? "Pause" : "Lecture";
+
+        if (playing) {
+          animation.play();
+        } else {
+          animation.pause();
+        }
+      });
+
+      scrubber.addEventListener("input", function () {
+        playing = false;
+        toggle.textContent = "Lecture";
+        animation.goToAndStop(Number(scrubber.value), true);
+      });
+    })();
+  </script>
+</body>
+</html>
