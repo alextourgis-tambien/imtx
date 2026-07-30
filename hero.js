@@ -1889,8 +1889,13 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
 
       lottieFrameStart: 1.22,
       lottieFrameEnd: 1.70,
-      lottieLookupAttempts: 120,
-      lottieLookupInterval: 50,
+      lottieLibraryUrl:
+        "https://cdn.jsdelivr.net/npm/lottie-web@5.13.0/" +
+        "build/player/lottie.min.js",
+      lottieJsonUrl:
+        "https://alextourgis-tambien.github.io/imtx/" +
+        "imtx-target-prame-v01.json",
+      lottieRenderer: "canvas",
 
       end: 2.62,
       exitViewportDistance: 0.35,
@@ -2545,68 +2550,52 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
     let targetMainTwoDirection = 1;
     const targetLottieState = { progress: 0 };
     let targetLottieAnimation = null;
-    let targetLottieLookupCount = 0;
+    let targetLottieLoadPromise = null;
 
-    function getTargetLottieRuntimes() {
-      const runtimes = [];
+    function loadStandaloneLottieRuntime() {
+      return new Promise(function (resolve, reject) {
+        const previousLottie = window.lottie;
+        const script = document.createElement("script");
 
-      if (window.lottie) {
-        runtimes.push(window.lottie);
-      }
+        script.src = CONFIG.targetSequence.lottieLibraryUrl;
+        script.async = true;
+        script.crossOrigin = "anonymous";
 
-      if (window.Webflow && typeof window.Webflow.require === "function") {
-        try {
-          const module = window.Webflow.require("lottie");
+        script.addEventListener("load", function () {
+          const standaloneLottie = window.lottie;
 
-          if (module && module.lottie) {
-            runtimes.push(module.lottie);
+          if (typeof previousLottie === "undefined") {
+            delete window.lottie;
+          } else {
+            window.lottie = previousLottie;
           }
-        } catch (error) {
-          /* Le module Webflow Lottie n'est pas encore initialisé. */
-        }
-      }
 
-      return runtimes;
-    }
+          if (
+            !standaloneLottie ||
+            typeof standaloneLottie.loadAnimation !== "function"
+          ) {
+            reject(new Error("Lecteur lottie-web autonome invalide."));
+            return;
+          }
 
-    function findTargetLottieAnimation() {
-      if (!targetLottie) {
-        return null;
-      }
+          resolve(standaloneLottie);
+        }, { once: true });
 
-      const runtimes = getTargetLottieRuntimes();
+        script.addEventListener("error", function () {
+          if (typeof previousLottie === "undefined") {
+            delete window.lottie;
+          } else {
+            window.lottie = previousLottie;
+          }
 
-      for (let runtimeIndex = 0;
-        runtimeIndex < runtimes.length;
-        runtimeIndex += 1) {
-        const runtime = runtimes[runtimeIndex];
-        const animations = typeof runtime.getRegisteredAnimations ===
-          "function"
-          ? runtime.getRegisteredAnimations()
-          : [];
-        const match = animations.find(function (animation) {
-          const animationWrapper = animation.wrapper || animation.container;
+          reject(new Error("Chargement du lecteur lottie-web impossible."));
+        }, { once: true });
 
-          return animationWrapper && (
-            animationWrapper === targetLottie ||
-            targetLottie.contains(animationWrapper) ||
-            animationWrapper.contains(targetLottie)
-          );
-        });
-
-        if (match) {
-          return match;
-        }
-      }
-
-      return null;
+        document.head.appendChild(script);
+      });
     }
 
     function renderTargetLottieFrame() {
-      if (!targetLottieAnimation) {
-        targetLottieAnimation = findTargetLottieAnimation();
-      }
-
       if (!targetLottieAnimation) {
         return;
       }
@@ -2631,32 +2620,46 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
     }
 
     function lockTargetLottieToScroll() {
-      if (!targetLottie) {
+      if (!targetLottie || targetLottieLoadPromise) {
         return;
       }
 
-      targetLottieAnimation = findTargetLottieAnimation();
+      targetLottieLoadPromise = loadStandaloneLottieRuntime()
+        .then(function (standaloneLottie) {
+          targetLottie.replaceChildren();
+          targetLottieAnimation = standaloneLottie.loadAnimation({
+            container: targetLottie,
+            renderer: CONFIG.targetSequence.lottieRenderer,
+            loop: false,
+            autoplay: false,
+            path: CONFIG.targetSequence.lottieJsonUrl,
+            rendererSettings: {
+              preserveAspectRatio: "xMidYMid meet",
+              clearCanvas: true
+            }
+          });
 
-      if (targetLottieAnimation) {
-        renderTargetLottieFrame();
-        return;
-      }
-
-      targetLottieLookupCount += 1;
-
-      if (
-        targetLottieLookupCount <
-        CONFIG.targetSequence.lottieLookupAttempts
-      ) {
-        window.setTimeout(
-          lockTargetLottieToScroll,
-          CONFIG.targetSequence.lottieLookupInterval
-        );
-      } else {
-        console.warn(
-          "Hero target : impossible de récupérer l'instance du Lottie Webflow."
-        );
-      }
+          targetLottieAnimation.addEventListener(
+            "DOMLoaded",
+            function () {
+              renderTargetLottieFrame();
+              fitTargetLottieOnMobile();
+            }
+          );
+          targetLottieAnimation.addEventListener(
+            "data_failed",
+            function () {
+              console.warn(
+                "Hero target : chargement du JSON Lottie impossible."
+              );
+            }
+          );
+        })
+        .catch(function (error) {
+          console.warn(
+            "Hero target : " + error.message
+          );
+        });
     }
 
     const itemCount = imageItems.length + 1;
