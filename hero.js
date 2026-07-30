@@ -2604,12 +2604,10 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
         Number(targetLottieAnimation.totalFrames) || 1,
         1
       );
-      const frame = Math.round(
-        gsap.utils.clamp(
-          0,
-          frameCount - 1,
-          targetLottieState.progress * (frameCount - 1)
-        )
+      const frame = gsap.utils.clamp(
+        0,
+        frameCount - 1,
+        targetLottieState.progress * (frameCount - 1)
       );
 
       if (typeof targetLottieAnimation.pause === "function") {
@@ -2644,11 +2642,6 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
           targetLottieAnimation.addEventListener(
             "DOMLoaded",
             function () {
-              if (
-                typeof targetLottieAnimation.setSubframe === "function"
-              ) {
-                targetLottieAnimation.setSubframe(false);
-              }
               renderTargetLottieFrame();
               fitTargetLottieOnMobile();
             }
