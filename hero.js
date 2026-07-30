@@ -1894,7 +1894,7 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
         "build/player/lottie.min.js",
       lottieJsonUrl:
         "https://alextourgis-tambien.github.io/imtx/" +
-        "imtx-target-prame-v01.json",
+        "imtx-website-prame-v03.json",
       lottieRenderer: "canvas",
 
       end: 2.62,
