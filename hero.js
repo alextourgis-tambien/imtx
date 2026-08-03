@@ -2253,6 +2253,9 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
     const waveTiles = animatedTiles.map(function (tile, index) {
       const row = Math.floor(index / settings.columns);
       const column = index % settings.columns;
+      const axisValue = Math.sin(
+        (row + 1) * 12.9898 + (column + 1) * 78.233
+      ) * 43758.5453;
       const normalizedX =
         ((column + 0.5) / settings.columns - CONFIG.tiles.originX) *
         2 * CONFIG.tiles.horizontalWeight;
@@ -2262,7 +2265,10 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
 
       return {
         tile: tile,
-        distance: Math.hypot(normalizedX, normalizedY)
+        distance: Math.hypot(normalizedX, normalizedY),
+        flipAxis: axisValue - Math.floor(axisValue) < 0.5
+          ? "X"
+          : "Y"
       };
     });
     const maximumDistance = waveTiles.length
@@ -2280,10 +2286,12 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
         Math.random() * CONFIG.tiles.randomDelay;
 
       window.setTimeout(function () {
+        const rotation = "rotate" + entry.flipAxis;
+
         entry.tile.animate(
           [
-            { transform: "rotateY(0deg)" },
-            { transform: "rotateY(180deg)" }
+            { transform: rotation + "(0deg)" },
+            { transform: rotation + "(180deg)" }
           ],
           {
             duration: CONFIG.tiles.flipDuration,
@@ -4236,6 +4244,18 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
       return value - Math.floor(value);
     }
 
+    function getTileFlipAxis(tile) {
+      const row = Number(tile.dataset.pipelineRow) || 0;
+      const column = Number(tile.dataset.pipelineColumn) || 0;
+
+      return deterministicValue(
+        row + wrapperIndex * 31 + 157,
+        column + wrapperIndex * 47 + 211
+      ) < 0.5
+        ? "x"
+        : "y";
+    }
+
     function rectanglesIntersect(tile, exclusion) {
       return (
         tile.right > exclusion.left &&
@@ -4361,6 +4381,7 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
 
       gsap.set(tileLayer.querySelectorAll(".pipeline__tile"), {
         scale: 1,
+        rotationX: 0,
         rotationY: 0,
         transformOrigin: "50% 50%"
       });
@@ -4391,7 +4412,12 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
       });
 
       reshuffleTimeline.to(orderedReshuffleTiles, {
-        rotationY: 180,
+        rotationX: function (index, tile) {
+          return getTileFlipAxis(tile) === "x" ? 180 : 0;
+        },
+        rotationY: function (index, tile) {
+          return getTileFlipAxis(tile) === "y" ? 180 : 0;
+        },
         duration: 0.72,
         stagger: orderedReshuffleTiles.length
           ? reveal.tileStagger / orderedReshuffleTiles.length
@@ -4468,7 +4494,12 @@ PIPELINE — GÉNÉRATION RESPONSIVE DES TUILES CARRÉES
         });
 
         itemTimeline.to(orderedTiles, {
-          rotationY: 180,
+          rotationX: function (index, tile) {
+            return getTileFlipAxis(tile) === "x" ? 180 : 0;
+          },
+          rotationY: function (index, tile) {
+            return getTileFlipAxis(tile) === "y" ? 180 : 0;
+          },
           duration: 0.68,
           stagger: orderedTiles.length
             ? reveal.tileStagger / orderedTiles.length
