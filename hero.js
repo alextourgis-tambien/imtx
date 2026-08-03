@@ -5004,12 +5004,12 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       paragraphOneIn: 0,
       paragraphOneOut: 0.23,
 
-      videoOneIn: 0.15,
-      videoTwoIn: 0.2,
-      videoThreeIn: 0.25,
+      videoOneIn: 0.1,
+      videoTwoIn: 0.15,
+      videoThreeIn: 0.2,
       videoInDuration: 0.2,
 
-      videoThreeFullscreen: 0.45,
+      videoThreeFullscreen: 0.4,
       videoThreeFullscreenDuration: 0.16,
 
       videoOneOut: 0.55,
@@ -5620,7 +5620,7 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       timeline.to(videoEntranceStates.get(videoThree), {
         entry: 1,
         duration: timing.videoInDuration,
-        ease: "power2.out",
+        ease: "power1.in",
         onUpdate: function () {
           renderVideoEntrance(videoThree);
         }
@@ -5632,7 +5632,7 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
         scale: videoThreeFullscreenScale,
         borderRadius: "0px",
         duration: timing.videoThreeFullscreenDuration,
-        ease: "power2.inOut"
+        ease: "power1.out"
       }, timing.videoThreeFullscreen);
 
       [
