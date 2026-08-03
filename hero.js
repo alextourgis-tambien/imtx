@@ -271,6 +271,8 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
       backgroundRadiusStart: 0.60,
       backgroundMove: 0.65,
       backgroundMoveDuration: 0.17,
+      firstCardFadeDuration: 0.018,
+      backgroundFadeDuration: 0.035,
       lottieOut: 0.805,
       lottieOutDuration: 0.07,
       firstPairIn: 0.65,
@@ -694,6 +696,7 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
         transformOrigin: "50% 50%"
       });
       gsap.set(allCardTitles, { opacity: 0 });
+      gsap.set(firstCardTitle, { opacity: 1 });
 
       lottieState.progress = 0;
       renderLottieFrame();
@@ -712,8 +715,8 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
         gsap.set(allTitleWords(), { opacity: 0, yPercent: 0 });
         gsap.set(flipWrapper, { opacity: 1 });
         gsap.set(flipBackground, {
-          opacity: 1,
-          visibility: "visible",
+          opacity: 0,
+          visibility: "hidden",
           x: backgroundTargetX,
           y: backgroundTargetY,
           scaleX: backgroundTargetScaleX,
@@ -798,17 +801,31 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
         duration: timing.lottieOutDuration
       }, timing.lottieOut);
 
+      const backgroundMoveEnd = timing.backgroundMove +
+        timing.backgroundMoveDuration;
+      const firstCardFadeStart = backgroundMoveEnd -
+        timing.firstCardFadeDuration;
+
       timeline.set(cards[0], {
-        opacity: 1,
         rotationY: 0,
         visibility: "visible"
-      }, timing.backgroundMove);
+      }, firstCardFadeStart);
 
-      timeline.to(firstCardTitle, {
+      timeline.to(cards[0], {
         opacity: 1,
-        duration: timing.backgroundMoveDuration,
-        ease: "power1.inOut"
-      }, timing.backgroundMove);
+        duration: timing.firstCardFadeDuration,
+        ease: "none"
+      }, firstCardFadeStart);
+
+      timeline.to(flipBackground, {
+        opacity: 0,
+        duration: timing.backgroundFadeDuration,
+        ease: "power1.out"
+      }, backgroundMoveEnd);
+
+      timeline.set(flipBackground, {
+        visibility: "hidden"
+      }, backgroundMoveEnd + timing.backgroundFadeDuration);
 
       const secondCardStart = timing.firstPairIn +
         timing.firstPairInDuration;
@@ -836,14 +853,21 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
       firstPair.forEach(function (card, index) {
         const cardStart = timing.firstPairOut +
           index * DECODE_CONFIG.cardStagger;
+        const titlesToFade = cardTitles[index].filter(
+          function (cardTitle) {
+            return cardTitle !== firstCardTitle;
+          }
+        );
 
-        timeline.to(cardTitles[index], {
-          opacity: 0,
-          duration:
-            timing.firstPairOutDuration *
-            DECODE_CONFIG.cardTextFadeRatio,
-          ease: "power1.in"
-        }, cardStart);
+        if (titlesToFade.length) {
+          timeline.to(titlesToFade, {
+            opacity: 0,
+            duration:
+              timing.firstPairOutDuration *
+              DECODE_CONFIG.cardTextFadeRatio,
+            ease: "power1.in"
+          }, cardStart);
+        }
 
         timeline.to(card, {
           opacity: 0,
