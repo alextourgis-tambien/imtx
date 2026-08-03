@@ -5009,7 +5009,7 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       videoThreeIn: 0.25,
       videoInDuration: 0.2,
 
-      videoThreeFullscreen: 0.54,
+      videoThreeFullscreen: 0.45,
       videoThreeFullscreenDuration: 0.16,
 
       videoOneOut: 0.55,
