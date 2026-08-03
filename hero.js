@@ -288,7 +288,6 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
     },
 
     backgroundStartSquareRatio: 0.55,
-    backgroundLeftScaleX: 0.9,
     cardStagger: 0.018,
     cardTextFadeRatio: 0.65,
     resizeDebounce: 220,
@@ -355,6 +354,9 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
     const cardTitles = cards.map(function (card) {
       return Array.from(card.querySelectorAll(".decode__title"));
     });
+    const firstCardTitle = cards[0].querySelector(
+      ".decode__title.is--one"
+    ) || cardTitles[0][0];
     const allCardTitles = cardTitles.reduce(function (all, titles) {
       return all.concat(titles);
     }, []);
@@ -609,8 +611,8 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
       const backgroundStyle = window.getComputedStyle(flipBackground);
       const finalBackgroundRadius = backgroundStyle.borderRadius;
       const backgroundBounds = flipBackground.getBoundingClientRect();
+      const firstCardBounds = cards[0].getBoundingClientRect();
       const fallbackBounds = sticky.getBoundingClientRect();
-      const flipWrapperBounds = flipWrapper.getBoundingClientRect();
       const backgroundWidth = backgroundBounds.width ||
         fallbackBounds.width;
       const backgroundHeight = backgroundBounds.height ||
@@ -634,12 +636,24 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
         "inset(0px 0px round " + finalBackgroundRadius + ")";
       const backgroundWebflowX =
         Number(gsap.getProperty(flipBackground, "x")) || 0;
+      const backgroundWebflowY =
+        Number(gsap.getProperty(flipBackground, "y")) || 0;
       const backgroundCenterX =
         backgroundBounds.left + backgroundBounds.width / 2;
-      const leftHalfCenterX =
-        flipWrapperBounds.left + flipWrapperBounds.width * 0.25;
-      const backgroundLeftX =
-        backgroundWebflowX + leftHalfCenterX - backgroundCenterX;
+      const backgroundCenterY =
+        backgroundBounds.top + backgroundBounds.height / 2;
+      const firstCardCenterX =
+        firstCardBounds.left + firstCardBounds.width / 2;
+      const firstCardCenterY =
+        firstCardBounds.top + firstCardBounds.height / 2;
+      const backgroundTargetX =
+        backgroundWebflowX + firstCardCenterX - backgroundCenterX;
+      const backgroundTargetY =
+        backgroundWebflowY + firstCardCenterY - backgroundCenterY;
+      const backgroundTargetScaleX = firstCardBounds.width /
+        backgroundWidth;
+      const backgroundTargetScaleY = firstCardBounds.height /
+        backgroundHeight;
       const firstPair = [cards[0], cards[1]];
       const secondPair = [cards[2], cards[3]];
 
@@ -658,7 +672,14 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
         WebkitClipPath: backgroundSquareClipPath,
         transformOrigin: "50% 50%"
       });
-      gsap.set(firstPair, {
+      gsap.set(cards[0], {
+        opacity: 0,
+        visibility: "hidden",
+        rotationY: 0,
+        transformPerspective: 1200,
+        transformOrigin: "50% 50%"
+      });
+      gsap.set(cards[1], {
         opacity: 0,
         visibility: "hidden",
         rotationY: 90,
@@ -693,12 +714,13 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
         gsap.set(flipBackground, {
           opacity: 1,
           visibility: "visible",
-          x: backgroundLeftX,
-          scale: 1,
-          scaleX: DECODE_CONFIG.backgroundLeftScaleX,
+          x: backgroundTargetX,
+          y: backgroundTargetY,
+          scaleX: backgroundTargetScaleX,
+          scaleY: backgroundTargetScaleY,
           clipPath: backgroundFinalClipPath,
           WebkitClipPath: backgroundFinalClipPath,
-          transformOrigin: "0% 50%"
+          transformOrigin: "50% 50%"
         });
         gsap.set(firstPair, {
           opacity: 0,
@@ -759,12 +781,14 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
       }, timing.backgroundRadiusStart);
 
       timeline.set(flipBackground, {
-        transformOrigin: "0% 50%"
+        transformOrigin: "50% 50%"
       }, timing.backgroundMove);
 
       timeline.to(flipBackground, {
-        x: backgroundLeftX,
-        scaleX: DECODE_CONFIG.backgroundLeftScaleX,
+        x: backgroundTargetX,
+        y: backgroundTargetY,
+        scaleX: backgroundTargetScaleX,
+        scaleY: backgroundTargetScaleY,
         duration: timing.backgroundMoveDuration,
         ease: "power2.inOut"
       }, timing.backgroundMove);
@@ -774,30 +798,40 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
         duration: timing.lottieOutDuration
       }, timing.lottieOut);
 
-      firstPair.forEach(function (card, index) {
-        const cardStart = timing.firstPairIn +
-          index * timing.firstPairInDuration;
+      timeline.set(cards[0], {
+        opacity: 1,
+        rotationY: 0,
+        visibility: "visible"
+      }, timing.backgroundMove);
 
-        timeline.set(card, {
-          visibility: "visible"
-        }, cardStart);
+      timeline.to(firstCardTitle, {
+        opacity: 1,
+        duration: timing.backgroundMoveDuration,
+        ease: "power1.inOut"
+      }, timing.backgroundMove);
 
-        timeline.to(card, {
-          opacity: 1,
-          rotationY: 0,
-          duration: timing.firstPairInDuration,
-          ease: "power2.out"
-        }, cardStart);
+      const secondCardStart = timing.firstPairIn +
+        timing.firstPairInDuration;
 
-        timeline.to(cardTitles[index], {
-          opacity: 1,
-          duration:
-            timing.firstPairInDuration *
-            DECODE_CONFIG.cardTextFadeRatio,
-          ease: "power1.out"
-        }, cardStart + timing.firstPairInDuration *
-          (1 - DECODE_CONFIG.cardTextFadeRatio));
-      });
+      timeline.set(cards[1], {
+        visibility: "visible"
+      }, secondCardStart);
+
+      timeline.to(cards[1], {
+        opacity: 1,
+        rotationY: 0,
+        duration: timing.firstPairInDuration,
+        ease: "power2.out"
+      }, secondCardStart);
+
+      timeline.to(cardTitles[1], {
+        opacity: 1,
+        duration:
+          timing.firstPairInDuration *
+          DECODE_CONFIG.cardTextFadeRatio,
+        ease: "power1.out"
+      }, secondCardStart + timing.firstPairInDuration *
+        (1 - DECODE_CONFIG.cardTextFadeRatio));
 
       firstPair.forEach(function (card, index) {
         const cardStart = timing.firstPairOut +
