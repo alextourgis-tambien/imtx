@@ -875,6 +875,10 @@ html.final-animation-ready .final__bg-video{
   overflow:visible !important;
 }
 
+.final__title-wrapper{
+  row-gap:1rem;
+}
+
 .final__bg-video{
   position:absolute !important;
   top:50% !important;
