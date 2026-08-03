@@ -876,7 +876,7 @@ html.final-animation-ready .final__bg-video{
 }
 
 .final__title-wrapper{
-  row-gap:1rem;
+  row-gap:0.5rem;
 }
 
 .final__bg-video{

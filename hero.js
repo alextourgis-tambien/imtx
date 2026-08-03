@@ -5029,10 +5029,8 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       hiddenYPercent: 70
     },
 
-    videoStack: {
-      gapDesktop: 48,
-      gapTablet: 38,
-      gapMobile: 26,
+    videoBuild: {
+      widthRatio: 0.5,
       entryOffsetDesktop: 110,
       entryOffsetTablet: 88,
       entryOffsetMobile: 64
@@ -5308,28 +5306,16 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       rebuildLines();
     }
 
-    function getVideoStackGap() {
-      if (window.innerWidth <= 767) {
-        return SECOND_CONFIG.videoStack.gapMobile;
-      }
-
-      if (window.innerWidth <= 991) {
-        return SECOND_CONFIG.videoStack.gapTablet;
-      }
-
-      return SECOND_CONFIG.videoStack.gapDesktop;
-    }
-
     function getVideoEntryOffset() {
       if (window.innerWidth <= 767) {
-        return SECOND_CONFIG.videoStack.entryOffsetMobile;
+        return SECOND_CONFIG.videoBuild.entryOffsetMobile;
       }
 
       if (window.innerWidth <= 991) {
-        return SECOND_CONFIG.videoStack.entryOffsetTablet;
+        return SECOND_CONFIG.videoBuild.entryOffsetTablet;
       }
 
-      return SECOND_CONFIG.videoStack.entryOffsetDesktop;
+      return SECOND_CONFIG.videoBuild.entryOffsetDesktop;
     }
 
     function createTimeline() {
@@ -5386,8 +5372,9 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
         parentRectangle.left + parentRectangle.width / 2;
       const parentCenterY =
         parentRectangle.top + parentRectangle.height / 2;
-      const stackGap = getVideoStackGap();
       const entryOffset = getVideoEntryOffset();
+      const buildWidth =
+        parentRectangle.width * SECOND_CONFIG.videoBuild.widthRatio;
       const videoDepth = new Map([
         [videoOne, 1],
         [videoTwo, 2],
@@ -5396,6 +5383,7 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       const centeredVideoX = new Map();
       const centeredVideoY = new Map();
       const startVideoY = new Map();
+      const buildVideoScales = new Map();
 
       videos.forEach(function (video) {
         const rectangle = videoRectangles.get(video);
@@ -5413,6 +5401,10 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
         startVideoY.set(
           video,
           centeredVideoY.get(video) + entryOffset
+        );
+        buildVideoScales.set(
+          video,
+          finalVideoScales.get(video) * buildWidth / rectangle.width
         );
       });
 
@@ -5458,21 +5450,19 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       });
 
       /*
-      L'entrée et le décalage vertical de la pile se chevauchent.
-      On anime donc deux progressions indépendantes, puis on compose
-      leur résultat ici. Cela évite que deux tweens concurrents écrivent
-      simultanément la propriété `y`, ce qui provoquait un saut visible.
+      Les trois vidéos se construisent au même emplacement et à la même
+      largeur. La troisième part de ce format intermédiaire avant de
+      poursuivre seule jusqu'au plein écran.
       */
       const videoEntranceStates = new Map();
 
       videos.forEach(function (video) {
         videoEntranceStates.set(video, {
-          entry: 0,
-          stack: 0
+          entry: 0
         });
       });
 
-      function renderVideoEntrance(video, stackDistance) {
+      function renderVideoEntrance(video) {
         const state = videoEntranceStates.get(video);
         const startY = startVideoY.get(video);
         const centeredY = centeredVideoY.get(video);
@@ -5480,9 +5470,8 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
         gsap.set(video, {
           y:
             startY +
-            (centeredY - startY) * state.entry -
-            stackDistance * state.stack,
-          scale: finalVideoScales.get(video) * state.entry
+            (centeredY - startY) * state.entry,
+          scale: buildVideoScales.get(video) * state.entry
         });
       }
 
@@ -5615,43 +5604,25 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
         duration: timing.videoInDuration,
         ease: "power2.out",
         onUpdate: function () {
-          renderVideoEntrance(videoOne, stackGap * 2);
+          renderVideoEntrance(videoOne);
         }
       }, timing.videoOneIn);
-
-      timeline.to(videoEntranceStates.get(videoOne), {
-        stack: 1,
-        duration: timing.videoInDuration,
-        ease: "power2.inOut",
-        onUpdate: function () {
-          renderVideoEntrance(videoOne, stackGap * 2);
-        }
-      }, timing.videoTwoIn);
 
       timeline.to(videoEntranceStates.get(videoTwo), {
         entry: 1,
         duration: timing.videoInDuration,
         ease: "power2.out",
         onUpdate: function () {
-          renderVideoEntrance(videoTwo, stackGap);
+          renderVideoEntrance(videoTwo);
         }
       }, timing.videoTwoIn);
-
-      timeline.to(videoEntranceStates.get(videoTwo), {
-        stack: 1,
-        duration: timing.videoInDuration,
-        ease: "power2.inOut",
-        onUpdate: function () {
-          renderVideoEntrance(videoTwo, stackGap);
-        }
-      }, timing.videoThreeIn);
 
       timeline.to(videoEntranceStates.get(videoThree), {
         entry: 1,
         duration: timing.videoInDuration,
         ease: "power2.out",
         onUpdate: function () {
-          renderVideoEntrance(videoThree, 0);
+          renderVideoEntrance(videoThree);
         }
       }, timing.videoThreeIn);
 
