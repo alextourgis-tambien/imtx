@@ -4111,6 +4111,42 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
         const cellLottieTiming = CONFIG.cellLottieSequence;
 
         cellLottieStates.forEach(function (state, index) {
+          if (index === 0) {
+            const firstCellMoveStart = deterministic(
+              index,
+              scroll.cellsSpreadStart,
+              scroll.cellsSpreadLatestStart,
+              31
+            ) + scroll.firstCellMoveDelay;
+            const firstCellMoveDuration = deterministic(
+              index,
+              scroll.cellsSpreadDurationMin,
+              scroll.cellsSpreadDurationMax,
+              32
+            );
+
+            /*
+            .is--one joue 75 % de ses frames pendant son scale au centre,
+            puis termine les 25 % restants pendant son placement.
+            */
+            timeline.to(state, {
+              progress: 0.75,
+              duration: scroll.firstCellEnd - scroll.firstCellStart,
+              onUpdate: function () {
+                renderCellLottieFrame(index);
+              }
+            }, scroll.firstCellStart);
+
+            timeline.to(state, {
+              progress: 1,
+              duration: firstCellMoveDuration,
+              onUpdate: function () {
+                renderCellLottieFrame(index);
+              }
+            }, firstCellMoveStart);
+            return;
+          }
+
           timeline.to(state, {
             progress: 1,
             duration:
