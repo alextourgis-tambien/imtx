@@ -5990,17 +5990,27 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
             return a.top - b.top;
           });
 
-          visualLines.forEach(function (line, index) {
-            entryTransition.to(line.words, {
-              opacity: 0,
-              yPercent: -75,
-              duration:
-                SECOND_CONFIG.previousSection.targetTextExitDuration
-            },
-            SECOND_CONFIG.previousSection.targetTextExitStart +
-              index *
-              SECOND_CONFIG.previousSection.targetTextLineStagger);
-          });
+          /*
+          Le reveal du hero reste l'unique propriétaire des mots. La
+          transition vers la section suivante anime seulement leur parent :
+          les deux timelines ne peuvent ainsi plus laisser les mots dans un
+          état invisible après un scroll complet suivi d'un retour en haut.
+          */
+          const targetTextExitDuration =
+            SECOND_CONFIG.previousSection.targetTextExitDuration +
+            Math.max(visualLines.length - 1, 0) *
+              SECOND_CONFIG.previousSection.targetTextLineStagger;
+
+          entryTransition.fromTo(previousTargetParagraphTwo, {
+            opacity: 1,
+            yPercent: 0
+          }, {
+            opacity: 0,
+            yPercent: -75,
+            duration: targetTextExitDuration,
+            ease: "none",
+            immediateRender: false
+          }, SECOND_CONFIG.previousSection.targetTextExitStart);
         }
       }
     }

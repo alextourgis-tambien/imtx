@@ -676,6 +676,17 @@ La hauteur de .h-second__wrapper reste gérée dans Webflow.
   overflow:hidden;
 }
 
+@media (max-width:767px){
+  .h-second__parent{
+    /*
+    La scène doit couvrir aussi la hauteur gagnée lorsque les barres du
+    navigateur mobile se rétractent. 100vh reste le fallback Safari ancien.
+    */
+    height:100vh;
+    height:100lvh;
+  }
+}
+
 .hs_p,
 .hs__video,
 .hs__button-wrapper{
