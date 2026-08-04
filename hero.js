@@ -2648,6 +2648,9 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
     const cellLottieAnimations = cells.map(function () {
       return null;
     });
+    const cellLottieViewBoxes = cells.map(function () {
+      return null;
+    });
     let cellLottiesLoadPromise = null;
     let standaloneLottieRuntimePromise = null;
 
@@ -2792,6 +2795,39 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       if (typeof animation.goToAndStop === "function") {
         animation.goToAndStop(frame, true);
       }
+
+      centerFirstCellLottieFrame(index);
+    }
+
+    function centerFirstCellLottieFrame(index) {
+      if (index !== 0 || !cellLottieViewBoxes[index]) {
+        return;
+      }
+
+      const svg = cells[index].querySelector("svg");
+
+      if (!svg || typeof svg.getBBox !== "function") {
+        return;
+      }
+
+      try {
+        const content = svg.querySelector("g") || svg;
+        const bounds = content.getBBox();
+        const viewBox = cellLottieViewBoxes[index];
+
+        if (bounds.width <= 0 || bounds.height <= 0) {
+          return;
+        }
+
+        svg.setAttribute("viewBox", [
+          bounds.x + bounds.width / 2 - viewBox.width / 2,
+          bounds.y + bounds.height / 2 - viewBox.height / 2,
+          viewBox.width,
+          viewBox.height
+        ].join(" "));
+      } catch (error) {
+        /* La frame zéro peut être vide : la frame suivante sera recentrée. */
+      }
     }
 
     function renderAllCellLottieFrames() {
@@ -2826,12 +2862,19 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
                 bounds.width,
                 bounds.height
               ) * 0.045;
+              const normalizedWidth = bounds.width + padding * 2;
+              const normalizedHeight = bounds.height + padding * 2;
+
+              cellLottieViewBoxes[index] = {
+                width: normalizedWidth,
+                height: normalizedHeight
+              };
 
               svg.setAttribute("viewBox", [
                 bounds.x - padding,
                 bounds.y - padding,
-                bounds.width + padding * 2,
-                bounds.height + padding * 2
+                normalizedWidth,
+                normalizedHeight
               ].join(" "));
               svg.setAttribute(
                 "preserveAspectRatio",
