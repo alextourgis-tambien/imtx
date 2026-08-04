@@ -1925,9 +1925,23 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
     cellLottieSequence: {
       frameStart: 0.205,
       frameEnd: 0.90,
-      jsonUrl:
-        "https://alextourgis-tambien.github.io/imtx/" +
-        "imtx-website-cell-v06.json",
+      jsonUrls: [
+        "imtx-website-auxcell-special.json",
+        "imtx-website-auxcell-large-a.json",
+        "imtx-website-auxcell-small.json",
+        "imtx-website-auxcell-medium.json",
+        "imtx-website-auxcell-small.json",
+        "imtx-website-auxcell-medium.json",
+        "imtx-website-auxcell-small.json",
+        "imtx-website-auxcell-large-b.json",
+        "imtx-website-auxcell-small.json",
+        "imtx-website-auxcell-small.json",
+        "imtx-website-auxcell-small.json",
+        "imtx-website-auxcell-medium.json",
+        "imtx-website-auxcell-small.json"
+      ].map(function (fileName) {
+        return "https://alextourgis-tambien.github.io/imtx/" + fileName;
+      }),
       renderer: "canvas"
     },
 
@@ -2488,10 +2502,6 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       }
       return element;
     }).filter(Boolean);
-    const cellOneLottie = document.querySelector(
-      CONFIG.cellSelectors[0]
-    );
-
     const cancerCells = CONFIG.cancerCellSelectors.map(function (selector) {
       const element = document.querySelector(selector);
       if (!element) {
@@ -2630,11 +2640,15 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
     let targetMainOneDirection = -1;
     let targetMainTwoDirection = 1;
     const targetLottieState = { progress: 0 };
-    const cellOneLottieState = { progress: 0 };
+    const cellLottieStates = cells.map(function () {
+      return { progress: 0 };
+    });
     let targetLottieAnimation = null;
     let targetLottieLoadPromise = null;
-    let cellOneLottieAnimation = null;
-    let cellOneLottieLoadPromise = null;
+    const cellLottieAnimations = cells.map(function () {
+      return null;
+    });
+    let cellLottiesLoadPromise = null;
     let standaloneLottieRuntimePromise = null;
 
     function loadStandaloneLottieRuntime() {
@@ -2753,68 +2767,96 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
         });
     }
 
-    function renderCellOneLottieFrame() {
-      if (!cellOneLottieAnimation) {
+    function renderCellLottieFrame(index) {
+      const animation = cellLottieAnimations[index];
+      const state = cellLottieStates[index];
+
+      if (!animation || !state) {
         return;
       }
 
       const frameCount = Math.max(
-        Number(cellOneLottieAnimation.totalFrames) || 1,
+        Number(animation.totalFrames) || 1,
         1
       );
       const frame = gsap.utils.clamp(
         0,
         frameCount - 1,
-        cellOneLottieState.progress * (frameCount - 1)
+        state.progress * (frameCount - 1)
       );
 
-      if (typeof cellOneLottieAnimation.pause === "function") {
-        cellOneLottieAnimation.pause();
+      if (typeof animation.pause === "function") {
+        animation.pause();
       }
 
-      if (typeof cellOneLottieAnimation.goToAndStop === "function") {
-        cellOneLottieAnimation.goToAndStop(frame, true);
+      if (typeof animation.goToAndStop === "function") {
+        animation.goToAndStop(frame, true);
       }
     }
 
-    function lockCellOneLottieToScroll() {
-      if (!cellOneLottie || cellOneLottieLoadPromise) {
+    function renderAllCellLottieFrames() {
+      cellLottieAnimations.forEach(function (_, index) {
+        renderCellLottieFrame(index);
+      });
+    }
+
+    function lockCellLottiesToScroll() {
+      if (!cells.length || cellLottiesLoadPromise) {
         return;
       }
 
-      cellOneLottieLoadPromise = loadStandaloneLottieRuntime()
+      cellLottiesLoadPromise = loadStandaloneLottieRuntime()
         .then(function (standaloneLottie) {
-          cellOneLottie.replaceChildren();
-          cellOneLottieAnimation = standaloneLottie.loadAnimation({
-            container: cellOneLottie,
-            renderer: CONFIG.cellLottieSequence.renderer,
-            loop: false,
-            autoplay: false,
-            path: CONFIG.cellLottieSequence.jsonUrl,
-            rendererSettings: {
-              preserveAspectRatio: "xMidYMid meet",
-              clearCanvas: true
-            }
+          const loadPromises = cells.map(function (cell, index) {
+            return new Promise(function (resolve) {
+              const jsonUrl =
+                CONFIG.cellLottieSequence.jsonUrls[index];
+
+              if (!jsonUrl) {
+                console.warn(
+                  "Hero cellules : JSON absent pour la cellule " +
+                  (index + 1) + "."
+                );
+                resolve();
+                return;
+              }
+
+              cell.replaceChildren();
+              const animation = standaloneLottie.loadAnimation({
+                container: cell,
+                renderer: CONFIG.cellLottieSequence.renderer,
+                loop: false,
+                autoplay: false,
+                path: jsonUrl,
+                rendererSettings: {
+                  preserveAspectRatio: "xMidYMid meet",
+                  clearCanvas: true
+                }
+              });
+
+              cellLottieAnimations[index] = animation;
+
+              animation.addEventListener("DOMLoaded", function () {
+                renderCellLottieFrame(index);
+                resolve();
+              });
+              animation.addEventListener("data_failed", function () {
+                console.warn(
+                  "Hero cellules : chargement du JSON Lottie impossible " +
+                  "pour la cellule " + (index + 1) + "."
+                );
+                resolve();
+              });
+            });
           });
 
-          cellOneLottieAnimation.addEventListener(
-            "DOMLoaded",
-            function () {
-              renderCellOneLottieFrame();
+          return Promise.all(loadPromises).then(function () {
+            renderAllCellLottieFrames();
 
-              if (!prefersReducedMotion) {
-                createFloating();
-              }
+            if (!prefersReducedMotion) {
+              createFloating();
             }
-          );
-          cellOneLottieAnimation.addEventListener(
-            "data_failed",
-            function () {
-              console.warn(
-                "Hero cellules : chargement du JSON Lottie impossible."
-              );
-            }
-          );
+          });
         })
         .catch(function (error) {
           console.warn(
@@ -3708,8 +3750,10 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       cancerProgress.forEach(function (state) {
         state.value = 0;
       });
-      cellOneLottieState.progress = 0;
-      renderCellOneLottieFrame();
+      cellLottieStates.forEach(function (state) {
+        state.progress = 0;
+      });
+      renderAllCellLottieFrames();
       targetLottieState.progress = 0;
       renderTargetLottieFrame();
 
@@ -3880,8 +3924,10 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
         if (targetLottieWrapper) {
           gsap.set(targetLottieWrapper, { opacity: 1 });
         }
-        cellOneLottieState.progress = 1;
-        renderCellOneLottieFrame();
+        cellLottieStates.forEach(function (state) {
+          state.progress = 1;
+        });
+        renderAllCellLottieFrames();
         targetLottieState.progress = 1;
         renderTargetLottieFrame();
         return;
@@ -4004,15 +4050,19 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
         }, scroll.firstCellStart);
       }
 
-      if (cellOneLottie) {
+      if (cellLottieStates.length) {
         const cellLottieTiming = CONFIG.cellLottieSequence;
 
-        timeline.to(cellOneLottieState, {
-          progress: 1,
-          duration:
-            cellLottieTiming.frameEnd - cellLottieTiming.frameStart,
-          onUpdate: renderCellOneLottieFrame
-        }, cellLottieTiming.frameStart);
+        cellLottieStates.forEach(function (state, index) {
+          timeline.to(state, {
+            progress: 1,
+            duration:
+              cellLottieTiming.frameEnd - cellLottieTiming.frameStart,
+            onUpdate: function () {
+              renderCellLottieFrame(index);
+            }
+          }, cellLottieTiming.frameStart);
+        });
       }
 
       cellsProgress.forEach(function (state, index) {
@@ -4277,7 +4327,7 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
     createTimeline();
     playOldTitleIntro();
     lockTargetLottieToScroll();
-    lockCellOneLottieToScroll();
+    lockCellLottiesToScroll();
     window.addEventListener("resize", function () {
       handleResize(false);
     });
