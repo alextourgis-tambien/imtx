@@ -1942,7 +1942,7 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       ].map(function (fileName) {
         return "https://alextourgis-tambien.github.io/imtx/" + fileName;
       }),
-      renderer: "canvas"
+      renderer: "svg"
     },
 
     /*
@@ -2801,9 +2801,9 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
     }
 
     function normalizeCellLottieContent(cell, animation, index) {
-      const canvas = cell.querySelector("canvas");
+      const svg = cell.querySelector("svg");
 
-      if (!canvas || typeof canvas.getContext !== "function") {
+      if (!svg || typeof svg.getBBox !== "function") {
         renderCellLottieFrame(index);
         return Promise.resolve();
       }
@@ -2818,42 +2818,25 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       return new Promise(function (resolve) {
         window.requestAnimationFrame(function () {
           try {
-            const context = canvas.getContext("2d", {
-              willReadFrequently: true
-            });
-            const width = canvas.width;
-            const height = canvas.height;
-            const pixels = context.getImageData(0, 0, width, height).data;
-            let minimumX = width;
-            let minimumY = height;
-            let maximumX = -1;
-            let maximumY = -1;
+            const content = svg.querySelector("g") || svg;
+            const bounds = content.getBBox();
 
-            for (let y = 0; y < height; y += 1) {
-              for (let x = 0; x < width; x += 1) {
-                const alpha = pixels[(y * width + x) * 4 + 3];
+            if (bounds.width > 0 && bounds.height > 0) {
+              const padding = Math.max(
+                bounds.width,
+                bounds.height
+              ) * 0.045;
 
-                if (alpha <= 8) {
-                  continue;
-                }
-
-                minimumX = Math.min(minimumX, x);
-                minimumY = Math.min(minimumY, y);
-                maximumX = Math.max(maximumX, x);
-                maximumY = Math.max(maximumY, y);
-              }
-            }
-
-            if (maximumX >= minimumX && maximumY >= minimumY) {
-              const contentWidth = maximumX - minimumX + 1;
-              const contentHeight = maximumY - minimumY + 1;
-              const contentScale = Math.min(
-                width / contentWidth,
-                height / contentHeight
-              ) * 0.92;
-
-              canvas.style.transform =
-                "scale(" + Math.max(contentScale, 1) + ")";
+              svg.setAttribute("viewBox", [
+                bounds.x - padding,
+                bounds.y - padding,
+                bounds.width + padding * 2,
+                bounds.height + padding * 2
+              ].join(" "));
+              svg.setAttribute(
+                "preserveAspectRatio",
+                "xMidYMid meet"
+              );
             }
           } catch (error) {
             console.warn(

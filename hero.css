@@ -496,14 +496,14 @@ html.hero-animation-ready .hh__cells-wrapper{
 }
 
 .hh-cell-lottie-renderer,
-.hh-cell-lottie-renderer canvas{
+.hh-cell-lottie-renderer svg{
   display:block;
   width:100%;
   height:100%;
   overflow:visible;
 }
 
-.hh-cell-lottie-renderer canvas{
+.hh-cell-lottie-renderer svg{
   transform-origin:center center;
 }
 
