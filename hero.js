@@ -2800,6 +2800,74 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       });
     }
 
+    function normalizeCellLottieContent(cell, animation, index) {
+      const canvas = cell.querySelector("canvas");
+
+      if (!canvas || typeof canvas.getContext !== "function") {
+        renderCellLottieFrame(index);
+        return Promise.resolve();
+      }
+
+      const frameCount = Math.max(
+        Number(animation.totalFrames) || 1,
+        1
+      );
+
+      animation.goToAndStop(frameCount - 1, true);
+
+      return new Promise(function (resolve) {
+        window.requestAnimationFrame(function () {
+          try {
+            const context = canvas.getContext("2d", {
+              willReadFrequently: true
+            });
+            const width = canvas.width;
+            const height = canvas.height;
+            const pixels = context.getImageData(0, 0, width, height).data;
+            let minimumX = width;
+            let minimumY = height;
+            let maximumX = -1;
+            let maximumY = -1;
+
+            for (let y = 0; y < height; y += 1) {
+              for (let x = 0; x < width; x += 1) {
+                const alpha = pixels[(y * width + x) * 4 + 3];
+
+                if (alpha <= 8) {
+                  continue;
+                }
+
+                minimumX = Math.min(minimumX, x);
+                minimumY = Math.min(minimumY, y);
+                maximumX = Math.max(maximumX, x);
+                maximumY = Math.max(maximumY, y);
+              }
+            }
+
+            if (maximumX >= minimumX && maximumY >= minimumY) {
+              const contentWidth = maximumX - minimumX + 1;
+              const contentHeight = maximumY - minimumY + 1;
+              const contentScale = Math.min(
+                width / contentWidth,
+                height / contentHeight
+              ) * 0.92;
+
+              canvas.style.transform =
+                "scale(" + Math.max(contentScale, 1) + ")";
+            }
+          } catch (error) {
+            console.warn(
+              "Hero cellules : normalisation du Lottie impossible pour " +
+              "la cellule " + (index + 1) + "."
+            );
+          }
+
+          renderCellLottieFrame(index);
+          resolve();
+        });
+      });
+    }
+
     function lockCellLottiesToScroll() {
       if (!cells.length || cellLottiesLoadPromise) {
         return;
@@ -2821,9 +2889,12 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
                 return;
               }
 
-              cell.replaceChildren();
+              const renderer = document.createElement("div");
+              renderer.className = "hh-cell-lottie-renderer";
+              cell.replaceChildren(renderer);
+
               const animation = standaloneLottie.loadAnimation({
-                container: cell,
+                container: renderer,
                 renderer: CONFIG.cellLottieSequence.renderer,
                 loop: false,
                 autoplay: false,
@@ -2837,8 +2908,11 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
               cellLottieAnimations[index] = animation;
 
               animation.addEventListener("DOMLoaded", function () {
-                renderCellLottieFrame(index);
-                resolve();
+                normalizeCellLottieContent(
+                  cell,
+                  animation,
+                  index
+                ).then(resolve);
               });
               animation.addEventListener("data_failed", function () {
                 console.warn(

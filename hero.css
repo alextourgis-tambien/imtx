@@ -492,6 +492,19 @@ html.hero-animation-ready .hh__cells-wrapper{
   transform-origin:center center;
   will-change:transform;
   pointer-events:none;
+  overflow:visible;
+}
+
+.hh-cell-lottie-renderer,
+.hh-cell-lottie-renderer canvas{
+  display:block;
+  width:100%;
+  height:100%;
+  overflow:visible;
+}
+
+.hh-cell-lottie-renderer canvas{
+  transform-origin:center center;
 }
 
 /*==================================================
