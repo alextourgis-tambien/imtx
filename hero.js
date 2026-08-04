@@ -5217,6 +5217,7 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
 
     videoBuild: {
       widthRatio: 0.5,
+      fullscreenOverscan: 1.1,
       entryOffsetDesktop: 110,
       entryOffsetTablet: 88,
       entryOffsetMobile: 64
@@ -5600,7 +5601,9 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
       const videoThreeCenterY =
         videoThreeRectangle.top + videoThreeRectangle.height / 2;
       const videoThreeFullscreenScale =
-        finalVideoScales.get(videoThree) * Math.max(
+        finalVideoScales.get(videoThree) *
+        SECOND_CONFIG.videoBuild.fullscreenOverscan *
+        Math.max(
           parentRectangle.width / videoThreeRectangle.width,
           parentRectangle.height / videoThreeRectangle.height
         );
