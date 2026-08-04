@@ -2958,6 +2958,14 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
           return Promise.all(loadPromises).then(function () {
             renderAllCellLottieFrames();
 
+            /*
+            L'injection des renderers SVG peut modifier les dimensions de
+            mise en page. On remesure alors les positions Webflow avant de
+            réappliquer l'état courant de la timeline.
+            */
+            measureCells();
+            positionCells();
+
             if (!prefersReducedMotion) {
               createFloating();
             }
@@ -4166,10 +4174,18 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
               scroll.cellsSpreadLatestStart,
               31
             ) + scroll.firstCellMoveDelay;
+            const firstCellMoveDuration = deterministic(
+              index,
+              scroll.cellsSpreadDurationMin,
+              scroll.cellsSpreadDurationMax,
+              32
+            );
+            const firstCellLottieEnd =
+              firstCellMoveStart + firstCellMoveDuration / 2;
 
             /*
             .is--one joue 75 % de ses frames pendant son scale au centre,
-            puis termine les 25 % restants avant de commencer son placement.
+            puis termine les 25 % restants à mi-chemin de son placement.
             */
             timeline.to(state, {
               progress: 0.75,
@@ -4182,7 +4198,7 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
             timeline.to(state, {
               progress: 1,
               duration: Math.max(
-                firstCellMoveStart - scroll.firstCellEnd,
+                firstCellLottieEnd - scroll.firstCellEnd,
                 0.001
               ),
               onUpdate: function () {
