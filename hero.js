@@ -1981,6 +1981,7 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
     },
 
     resizeDebounce: 200,
+    timelineResizeDelay: 280,
 
     tiles: {
       startDelay: 150,
@@ -3743,6 +3744,23 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
         gsap.set(cellsWrapper, { clearProps: "transform" });
       }
 
+      /*
+      La grille carrée vient de recalculer la géométrie du panneau de texte.
+      On retire uniquement les propriétés animées par la timeline précédente
+      avant de redécouper les lignes, sans toucher à left/top/width/height.
+      */
+      if (oldTextCard) {
+        gsap.set(oldTextCard, {
+          clearProps: "transform,opacity"
+        });
+
+        const oldTextCardCache = gsap.core.getCache(oldTextCard);
+
+        if (oldTextCardCache) {
+          oldTextCardCache.uncache = 1;
+        }
+      }
+
       restoreTargetStyles();
       measureCells();
       measureCancerCells();
@@ -4253,7 +4271,7 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       resizeTimer = window.setTimeout(function () {
         createTimeline();
         ScrollTrigger.refresh();
-      }, CONFIG.resizeDebounce);
+      }, CONFIG.timelineResizeDelay);
     }
 
     createTimeline();
