@@ -5816,9 +5816,21 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
         x: videoThreeFullscreenX,
         y: videoThreeFullscreenY,
         scale: videoThreeFullscreenScale,
-        borderRadius: "0px",
         duration: timing.videoThreeFullscreenDuration,
         ease: "power1.out"
+      }, timing.videoThreeFullscreen);
+
+      /*
+      Le radius suit une trajectoire explicite pour rester déterministe
+      après un refresh mobile : radius Webflow vers zéro au plein écran.
+      */
+      timeline.fromTo(videoThree, {
+        borderRadius: videoThreeWebflowBorderRadius
+      }, {
+        borderRadius: "0px",
+        duration: timing.videoThreeFullscreenDuration,
+        ease: "power1.out",
+        immediateRender: false
       }, timing.videoThreeFullscreen);
 
       [
@@ -5832,16 +5844,18 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
           ease: item[3]
         };
 
-        /*
-        Le radius de la troisième vidéo revient pendant son scale-down,
-        et non après celui-ci.
-        */
-        if (item[0] === videoThree) {
-          exitAnimation.borderRadius = videoThreeWebflowBorderRadius;
-        }
-
         timeline.to(item[0], exitAnimation, item[1]);
       });
+
+      /* Le radius revient progressivement pendant le scale-down. */
+      timeline.fromTo(videoThree, {
+        borderRadius: "0px"
+      }, {
+        borderRadius: videoThreeWebflowBorderRadius,
+        duration: timing.videoThreeOutDuration,
+        ease: "power1.inOut",
+        immediateRender: false
+      }, timing.videoThreeOut);
 
       animateLinesIn(paragraphTwo, timing.paragraphTwoIn);
 
