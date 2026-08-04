@@ -2960,15 +2960,26 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
 
             /*
             L'injection des renderers SVG peut modifier les dimensions de
-            mise en page. On remesure alors les positions Webflow avant de
-            réappliquer l'état courant de la timeline.
+            mise en page. On reconstruit donc toute la timeline après leur
+            montage, puis on la resynchronise avec le scroll réellement
+            restauré par le navigateur. Sans cela, les cellules peuvent
+            conserver ponctuellement leur état intermédiaire au centre.
             */
-            measureCells();
-            positionCells();
+            createTimeline();
+            ScrollTrigger.refresh();
+            ScrollTrigger.update();
 
-            if (!prefersReducedMotion) {
-              createFloating();
-            }
+            window.requestAnimationFrame(function () {
+              window.requestAnimationFrame(function () {
+                ScrollTrigger.refresh();
+                ScrollTrigger.update();
+              });
+            });
+
+            window.setTimeout(function () {
+              ScrollTrigger.refresh();
+              ScrollTrigger.update();
+            }, 160);
           });
         })
         .catch(function (error) {
