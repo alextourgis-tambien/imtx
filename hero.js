@@ -1182,6 +1182,18 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       } else {
         element.setAttribute("style", originalStyle);
       }
+
+      /*
+      Après un resize, GSAP peut conserver les anciennes composantes de
+      transform dans son cache même si l'attribut style vient d'être remis
+      dans son état Webflow. La prochaine mesure doit impérativement relire
+      la matrice réelle, sinon le second titre repart de sa position finale.
+      */
+      const transformCache = gsap.core.getCache(element);
+
+      if (transformCache) {
+        transformCache.uncache = 1;
+      }
     }
 
     function splitTitleIntoLines(title) {
