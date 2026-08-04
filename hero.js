@@ -4184,27 +4184,19 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
               firstCellMoveStart + firstCellMoveDuration / 2;
 
             /*
-            .is--one joue 75 % de ses frames pendant son scale au centre,
-            puis termine les 25 % restants à mi-chemin de son placement.
+            .is--one joue ses frames en continu et atteint 100 % exactement
+            à mi-chemin de son placement.
             */
-            timeline.to(state, {
-              progress: 0.75,
-              duration: scroll.firstCellEnd - scroll.firstCellStart,
-              onUpdate: function () {
-                renderCellLottieFrame(index);
-              }
-            }, scroll.firstCellStart);
-
             timeline.to(state, {
               progress: 1,
               duration: Math.max(
-                firstCellLottieEnd - scroll.firstCellEnd,
+                firstCellLottieEnd - cellLottieTiming.frameStart,
                 0.001
               ),
               onUpdate: function () {
                 renderCellLottieFrame(index);
               }
-            }, scroll.firstCellEnd);
+            }, cellLottieTiming.frameStart);
             return;
           }
 
