@@ -4161,16 +4161,10 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
               scroll.cellsSpreadLatestStart,
               31
             ) + scroll.firstCellMoveDelay;
-            const firstCellMoveDuration = deterministic(
-              index,
-              scroll.cellsSpreadDurationMin,
-              scroll.cellsSpreadDurationMax,
-              32
-            );
 
             /*
             .is--one joue 75 % de ses frames pendant son scale au centre,
-            puis termine les 25 % restants pendant son placement.
+            puis termine les 25 % restants avant de commencer son placement.
             */
             timeline.to(state, {
               progress: 0.75,
@@ -4182,11 +4176,14 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
 
             timeline.to(state, {
               progress: 1,
-              duration: firstCellMoveDuration,
+              duration: Math.max(
+                firstCellMoveStart - scroll.firstCellEnd,
+                0.001
+              ),
               onUpdate: function () {
                 renderCellLottieFrame(index);
               }
-            }, firstCellMoveStart);
+            }, scroll.firstCellEnd);
             return;
           }
 
