@@ -1925,6 +1925,7 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
     cellLottieSequence: {
       frameStart: 0.205,
       frameEnd: 0.90,
+      visualScale: 0.8,
       jsonUrls: [
         "imtx-website-auxcell-special.json",
         "imtx-website-auxcell-large-a.json",
@@ -2862,8 +2863,12 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
                 bounds.width,
                 bounds.height
               ) * 0.045;
-              const normalizedWidth = bounds.width + padding * 2;
-              const normalizedHeight = bounds.height + padding * 2;
+              const visualScale =
+                CONFIG.cellLottieSequence.visualScale;
+              const normalizedWidth =
+                (bounds.width + padding * 2) / visualScale;
+              const normalizedHeight =
+                (bounds.height + padding * 2) / visualScale;
 
               cellLottieViewBoxes[index] = {
                 width: normalizedWidth,
@@ -2871,8 +2876,8 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
               };
 
               svg.setAttribute("viewBox", [
-                bounds.x - padding,
-                bounds.y - padding,
+                bounds.x + bounds.width / 2 - normalizedWidth / 2,
+                bounds.y + bounds.height / 2 - normalizedHeight / 2,
                 normalizedWidth,
                 normalizedHeight
               ].join(" "));
