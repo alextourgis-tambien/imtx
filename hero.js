@@ -1910,6 +1910,15 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       durationMax: 4.6
     },
 
+    cellLottieSequence: {
+      frameStart: 0.205,
+      frameEnd: 0.90,
+      jsonUrl:
+        "https://alextourgis-tambien.github.io/imtx/" +
+        "imtx-website-cell-v06.json",
+      renderer: "canvas"
+    },
+
     /*
     Cette séquence commence pendant la disparition des 13 cellules.
     Les valeurs supérieures à 1 prolongent volontairement la timeline.
@@ -2466,6 +2475,9 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       }
       return element;
     }).filter(Boolean);
+    const cellOneLottie = document.querySelector(
+      CONFIG.cellSelectors[0]
+    );
 
     const cancerCells = CONFIG.cancerCellSelectors.map(function (selector) {
       const element = document.querySelector(selector);
@@ -2605,11 +2617,19 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
     let targetMainOneDirection = -1;
     let targetMainTwoDirection = 1;
     const targetLottieState = { progress: 0 };
+    const cellOneLottieState = { progress: 0 };
     let targetLottieAnimation = null;
     let targetLottieLoadPromise = null;
+    let cellOneLottieAnimation = null;
+    let cellOneLottieLoadPromise = null;
+    let standaloneLottieRuntimePromise = null;
 
     function loadStandaloneLottieRuntime() {
-      return new Promise(function (resolve, reject) {
+      if (standaloneLottieRuntimePromise) {
+        return standaloneLottieRuntimePromise;
+      }
+
+      standaloneLottieRuntimePromise = new Promise(function (resolve, reject) {
         const previousLottie = window.lottie;
         const script = document.createElement("script");
 
@@ -2649,6 +2669,8 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
 
         document.head.appendChild(script);
       });
+
+      return standaloneLottieRuntimePromise;
     }
 
     function renderTargetLottieFrame() {
@@ -2714,6 +2736,76 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
         .catch(function (error) {
           console.warn(
             "Hero target : " + error.message
+          );
+        });
+    }
+
+    function renderCellOneLottieFrame() {
+      if (!cellOneLottieAnimation) {
+        return;
+      }
+
+      const frameCount = Math.max(
+        Number(cellOneLottieAnimation.totalFrames) || 1,
+        1
+      );
+      const frame = gsap.utils.clamp(
+        0,
+        frameCount - 1,
+        cellOneLottieState.progress * (frameCount - 1)
+      );
+
+      if (typeof cellOneLottieAnimation.pause === "function") {
+        cellOneLottieAnimation.pause();
+      }
+
+      if (typeof cellOneLottieAnimation.goToAndStop === "function") {
+        cellOneLottieAnimation.goToAndStop(frame, true);
+      }
+    }
+
+    function lockCellOneLottieToScroll() {
+      if (!cellOneLottie || cellOneLottieLoadPromise) {
+        return;
+      }
+
+      cellOneLottieLoadPromise = loadStandaloneLottieRuntime()
+        .then(function (standaloneLottie) {
+          cellOneLottie.replaceChildren();
+          cellOneLottieAnimation = standaloneLottie.loadAnimation({
+            container: cellOneLottie,
+            renderer: CONFIG.cellLottieSequence.renderer,
+            loop: false,
+            autoplay: false,
+            path: CONFIG.cellLottieSequence.jsonUrl,
+            rendererSettings: {
+              preserveAspectRatio: "xMidYMid meet",
+              clearCanvas: true
+            }
+          });
+
+          cellOneLottieAnimation.addEventListener(
+            "DOMLoaded",
+            function () {
+              renderCellOneLottieFrame();
+
+              if (!prefersReducedMotion) {
+                createFloating();
+              }
+            }
+          );
+          cellOneLottieAnimation.addEventListener(
+            "data_failed",
+            function () {
+              console.warn(
+                "Hero cellules : chargement du JSON Lottie impossible."
+              );
+            }
+          );
+        })
+        .catch(function (error) {
+          console.warn(
+            "Hero cellules : " + error.message
           );
         });
     }
@@ -3603,6 +3695,8 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       cancerProgress.forEach(function (state) {
         state.value = 0;
       });
+      cellOneLottieState.progress = 0;
+      renderCellOneLottieFrame();
       targetLottieState.progress = 0;
       renderTargetLottieFrame();
 
@@ -3756,6 +3850,8 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
         if (targetLottieWrapper) {
           gsap.set(targetLottieWrapper, { opacity: 1 });
         }
+        cellOneLottieState.progress = 1;
+        renderCellOneLottieFrame();
         targetLottieState.progress = 1;
         renderTargetLottieFrame();
         return;
@@ -3876,6 +3972,17 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
           duration: scroll.firstCellEnd - scroll.firstCellStart,
           onUpdate: positionCells
         }, scroll.firstCellStart);
+      }
+
+      if (cellOneLottie) {
+        const cellLottieTiming = CONFIG.cellLottieSequence;
+
+        timeline.to(cellOneLottieState, {
+          progress: 1,
+          duration:
+            cellLottieTiming.frameEnd - cellLottieTiming.frameStart,
+          onUpdate: renderCellOneLottieFrame
+        }, cellLottieTiming.frameStart);
       }
 
       cellsProgress.forEach(function (state, index) {
@@ -4140,6 +4247,7 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
     createTimeline();
     playOldTitleIntro();
     lockTargetLottieToScroll();
+    lockCellOneLottieToScroll();
     window.addEventListener("resize", function () {
       handleResize(false);
     });
