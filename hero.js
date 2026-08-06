@@ -2656,6 +2656,7 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
     });
     let cellLottiesLoadPromise = null;
     let cellLottiesInitializationAttempt = 0;
+    let cellSyncFrame = 0;
     const cancerLottieStates = cancerCells.map(function () {
       return { progress: 0 };
     });
@@ -4217,7 +4218,7 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
     }
 
     function queueCellSyncBurst() {
-      const delays = [0, 1, 2, 4, 8, 16, 32, 64, 128, 220];
+      const delays = [0, 1, 2, 4, 8, 16, 32, 64, 128, 220, 400, 700, 1100, 1600];
 
       delays.forEach(function (delay) {
         window.setTimeout(function () {
@@ -4971,6 +4972,17 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
         queueCellSyncBurst();
       });
     });
+    window.addEventListener("scroll", function () {
+      if (cellSyncFrame) {
+        return;
+      }
+
+      cellSyncFrame = window.requestAnimationFrame(function () {
+        cellSyncFrame = 0;
+        ScrollTrigger.update();
+        syncCellsToScrollTrigger();
+      });
+    }, { passive: true });
     ScrollTrigger.refresh();
     queueCellSyncBurst();
   });
