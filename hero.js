@@ -4204,15 +4204,13 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
         return timeline.time();
       }
 
-      const scrollTop = window.pageYOffset ||
-        document.documentElement.scrollTop || 0;
-      const scrollProgress = gsap.utils.clamp(
-        0,
-        1,
-        (scrollTop - trigger.start) / (trigger.end - trigger.start)
-      );
-
-      return scrollProgress * timeline.duration();
+      /*
+      ScrollTrigger reste l'unique source de vérité. window.scrollY peut être
+      momentanément en retard pendant une restauration de page ou avec un
+      smooth-scroll, ce qui inversait visuellement la séquence des cellules.
+      */
+      return gsap.utils.clamp(0, 1, trigger.progress) *
+        timeline.duration();
     }
 
     function syncCellsToScrollTrigger() {
@@ -4631,16 +4629,24 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
           scrub: 1,
           invalidateOnRefresh: true,
           onUpdate: function (self) {
-            syncCellsFromTimelineTime(
-              timeline ? timeline.time() : 0
-            );
-            updateFloating(timeline ? timeline.time() : 0);
+            const cellSceneTime = timeline
+              ? self.progress * timeline.duration()
+              : 0;
+
+            /*
+            Les 13 cellules suivent la progression brute du ScrollTrigger,
+            jamais le playhead lissé du scrub. Ainsi un chargement/restauration
+            ne peut plus afficher l'état final puis repartir vers le centre.
+            */
+            syncCellsFromTimelineTime(cellSceneTime);
+            syncCellLottieFramesFromTimelineTime(cellSceneTime);
+            updateFloating(cellSceneTime);
           },
           onRefresh: function (self) {
             currentSettings = getResponsiveSettings();
             positionOrbitItems();
             syncCellsToScrollTrigger();
-            updateFloating(timeline ? timeline.time() : 0);
+            updateFloating(getScrollLinkedTimelineTime());
           }
         }
       });
@@ -4725,100 +4731,12 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
         animateLinesOut(oldTitle, scroll.oldTextStart);
       }
 
-      if (cells[0]) {
-        timeline.to(cellsProgress[0], {
-          visibility: 1,
-          duration: scroll.firstCellEnd - scroll.firstCellStart,
-          onUpdate: positionCells
-        }, scroll.firstCellStart);
-      }
-
-      if (cellLottieStates.length) {
-        const cellLottieTiming = CONFIG.cellLottieSequence;
-
-        cellLottieStates.forEach(function (state, index) {
-          if (index === 0) {
-            const firstCellMoveStart = deterministic(
-              index,
-              scroll.cellsSpreadStart,
-              scroll.cellsSpreadLatestStart,
-              31
-            ) + scroll.firstCellMoveDelay;
-            const firstCellMoveDuration = deterministic(
-              index,
-              scroll.cellsSpreadDurationMin,
-              scroll.cellsSpreadDurationMax,
-              32
-            );
-            const firstCellLottieEnd =
-              firstCellMoveStart + firstCellMoveDuration / 2;
-
-            /*
-            .is--one joue ses frames en continu et atteint 100 % exactement
-            à mi-chemin de son placement.
-            */
-            timeline.to(state, {
-              progress: 1,
-              duration: Math.max(
-                firstCellLottieEnd - cellLottieTiming.frameStart,
-                0.001
-              ),
-              onUpdate: function () {
-                renderCellLottieFrame(index);
-              }
-            }, cellLottieTiming.frameStart);
-            return;
-          }
-
-          timeline.to(state, {
-            progress: 1,
-            duration:
-              cellLottieTiming.frameEnd - cellLottieTiming.frameStart,
-            onUpdate: function () {
-              renderCellLottieFrame(index);
-            }
-          }, cellLottieTiming.frameStart);
-        });
-      }
-
-      cellsProgress.forEach(function (state, index) {
-        /*
-        Les 13 cellules rejoignent leurs positions dans la même phase.
-        Les départs et durées indépendants restent volontairement chevauchés :
-        ni apparition simultanée, ni cascade mécanique dans l’ordre 1→13.
-        */
-        const organicStart = deterministic(
-          index,
-          scroll.cellsSpreadStart,
-          scroll.cellsSpreadLatestStart,
-          31
-        );
-        const start = index === 0
-          ? organicStart + scroll.firstCellMoveDelay
-          : organicStart;
-        const duration = deterministic(
-          index,
-          scroll.cellsSpreadDurationMin,
-          scroll.cellsSpreadDurationMax,
-          32
-        );
-
-        if (index === 0) {
-          /* .is--one est déjà visible au centre : seul son trajet commence. */
-          timeline.to(state, {
-            position: 1,
-            duration: duration,
-            onUpdate: positionCells
-          }, start);
-        } else {
-          timeline.to(state, {
-            position: 1,
-            visibility: 1,
-            duration: duration,
-            onUpdate: positionCells
-          }, start);
-        }
-      });
+      /*
+      Aucun tween GSAP ne possède plus l'état des cellules. Leur apparition,
+      leur placement, leurs frames Lottie et leur sortie sont reconstruits
+      par syncCellsFromTimelineTime à partir du scroll absolu. Cette source
+      unique rend la séquence identique après reload, resize et pageshow.
+      */
 
       if (titleOne) {
         animateLinesIn(titleOne, scroll.titleOneIn);
@@ -4847,31 +4765,6 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
           index * scroll.mediaExitStagger +
           randomStart
         );
-      });
-
-      cellExit.forEach(function (state, cellIndex) {
-        /*
-        Chaque cellule possède un départ et une durée indépendants.
-        Les scale-down se chevauchent, sans ordre spatial ou numérique.
-        */
-        const start = deterministic(
-          cellIndex,
-          scroll.cellsExitStart,
-          scroll.cellsExitLatestStart,
-          21
-        );
-        const duration = deterministic(
-          cellIndex,
-          scroll.cellsExitDurationMin,
-          scroll.cellsExitDurationMax,
-          22
-        );
-
-        timeline.to(state, {
-          value: 0,
-          duration: duration,
-          onUpdate: positionCells
-        }, start);
       });
 
       /*================================================
