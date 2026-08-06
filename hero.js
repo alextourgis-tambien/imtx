@@ -1936,7 +1936,7 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
       jsonUrls: [
         "imtx-website-auxcell-large-a.json",
         "imtx-website-auxcell-small.json",
-        "imtx-website-auxcell-small.json",
+        "imtx-website-auxcell-large-a-green.json",
         "imtx-website-auxcell-medium-blue.json",
         "imtx-website-auxcell-small.json",
         "imtx-website-auxcell-large-b-green.json",
@@ -1947,7 +1947,7 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
         "imtx-website-auxcell-medium-green.json",
         "imtx-website-auxcell-medium-blue.json",
         "imtx-website-auxcell-small.json",
-        "imtx-website-auxcell-small.json",
+        "imtx-website-auxcell-medium-blue.json",
         "imtx-website-auxcell-large-b.json",
         "imtx-website-auxcell-large-a-green.json",
         "imtx-website-auxcell-medium.json",
