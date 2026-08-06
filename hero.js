@@ -1743,7 +1743,6 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
       oldTitle: ".h-hero__title",
       cellsWrapper: ".hh__cells-wrapper",
       cellTitleOne: ".hh__cell-title.is--one",
-      cellTitleTwo: ".hh__cell-title.is--two",
       targetWrapper: ".hh__target-wrapper",
       targetLottieWrapper: ".hh__target-lottie-wrapper",
       targetLottie: ".hh__target-lottie",
@@ -1803,10 +1802,10 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
 
       firstCellStart: 0.205,
       firstCellEnd: 0.265,
-      cellsSpreadStart: 0.325,
-      cellsSpreadLatestStart: 0.42,
-      cellsSpreadDurationMin: 0.12,
-      cellsSpreadDurationMax: 0.19,
+      cellsSpreadStart: 0.31,
+      cellsSpreadLatestStart: 0.43,
+      cellsSpreadDurationMin: 0.18,
+      cellsSpreadDurationMax: 0.24,
       firstCellMoveDelay: 0.06,
 
       mediaExitStart: 0.49,
@@ -1815,15 +1814,13 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
       mediaExitDurationMin: 0.065,
       mediaExitDurationMax: 0.09,
 
-      titleOneIn: 0.60,
-      titleOneOut: 0.72,
-      titleTwoIn: 0.80,
-      titleTwoOut: 0.89,
+      titleOneIn: 0.66,
+      titleOneOut: 0.78,
 
-      cellsExitStart: 0.90,
-      cellsExitLatestStart: 0.95,
-      cellsExitDurationMin: 0.025,
-      cellsExitDurationMax: 0.045
+      cellsExitStart: 0.82,
+      cellsExitLatestStart: 0.89,
+      cellsExitDurationMin: 0.07,
+      cellsExitDurationMax: 0.10
     },
 
     headerYPercent: -115,
@@ -1909,7 +1906,7 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
 
     cellLottieSequence: {
       frameStart: 0.205,
-      frameEnd: 0.90,
+      frameEnd: 0.82,
       visualScale: 0.8,
       jsonUrls: [
         "imtx-website-auxcell-special.json",
@@ -2485,7 +2482,6 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
     const oldTitle = document.querySelector(selectors.oldTitle);
     const cellsWrapper = document.querySelector(selectors.cellsWrapper);
     const titleOne = document.querySelector(selectors.cellTitleOne);
-    const titleTwo = document.querySelector(selectors.cellTitleTwo);
     const targetWrapper = document.querySelector(selectors.targetWrapper);
     const targetLottieWrapper = document.querySelector(
       selectors.targetLottieWrapper
@@ -2617,7 +2613,6 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
     const splitSources = [
       oldTitle,
       titleOne,
-      titleTwo,
       targetMainOne,
       targetMainTwo,
       targetTitleOne,
@@ -4455,7 +4450,7 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
         gsap.set(oldTextCard, { opacity: 1, y: 0 });
       }
 
-      [oldTitle, titleOne, titleTwo].filter(Boolean).forEach(function (title) {
+      [oldTitle, titleOne].filter(Boolean).forEach(function (title) {
         const hideOldTitleForLoad =
           title === oldTitle &&
           !oldTitleIntroPlayed &&
@@ -4505,9 +4500,6 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
 
       if (titleOne) {
         gsap.set(titleOne, { visibility: "visible" });
-      }
-      if (titleTwo) {
-        gsap.set(titleTwo, { visibility: "visible" });
       }
 
       positionCells();
@@ -4782,11 +4774,6 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
       if (titleOne) {
         animateLinesIn(titleOne, scroll.titleOneIn);
         animateLinesOut(titleOne, scroll.titleOneOut);
-      }
-
-      if (titleTwo) {
-        animateLinesIn(titleTwo, scroll.titleTwoIn);
-        animateLinesOut(titleTwo, scroll.titleTwoOut);
       }
 
       mediaExit.forEach(function (state, index) {
