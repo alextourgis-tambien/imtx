@@ -491,9 +491,16 @@ html.hero-animation-ready .hh__cells-wrapper{
 .hh__cells-lottie,
 .hh__cencer-lottie{
   transform-origin:center center;
-  will-change:transform;
   pointer-events:none;
   overflow:visible;
+}
+
+.hh__cells-lottie{
+  will-change:transform;
+}
+
+.hh__cencer-lottie{
+  will-change:auto;
 }
 
 .hh-cell-lottie-renderer,
@@ -509,6 +516,10 @@ html.hero-animation-ready .hh__cells-wrapper{
 .hh-cell-lottie-renderer svg,
 .hh-cancer-lottie-renderer svg{
   transform-origin:center center;
+}
+
+.hh-cancer-lottie-renderer svg{
+  shape-rendering:geometricPrecision;
 }
 
 /*==================================================

@@ -1934,27 +1934,27 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
     cancerLottieSequence: {
       visualScale: 0.8,
       jsonUrls: [
-        "imtx-website-auxcell-large-a-blue.json",
+        "imtx-website-auxcell-large-a.json",
         "imtx-website-auxcell-small.json",
         "imtx-website-auxcell-small.json",
-        "imtx-website-auxcell-medium-green.json",
+        "imtx-website-auxcell-medium-blue.json",
         "imtx-website-auxcell-small.json",
         "imtx-website-auxcell-large-b-green.json",
         "imtx-website-auxcell-small.json",
-        "imtx-website-auxcell-medium-blue.json",
-        "imtx-website-auxcell-large-b-blue.json",
+        "imtx-website-auxcell-medium.json",
+        "imtx-website-auxcell-large-a-blue.json",
         "imtx-website-auxcell-small.json",
         "imtx-website-auxcell-medium-green.json",
         "imtx-website-auxcell-medium-blue.json",
         "imtx-website-auxcell-small.json",
         "imtx-website-auxcell-small.json",
+        "imtx-website-auxcell-large-b.json",
         "imtx-website-auxcell-large-a-green.json",
-        "imtx-website-auxcell-large-a-blue.json",
+        "imtx-website-auxcell-medium.json",
+        "imtx-website-auxcell-small.json",
+        "imtx-website-auxcell-small.json",
+        "imtx-website-auxcell-large-b-blue.json",
         "imtx-website-auxcell-medium-green.json",
-        "imtx-website-auxcell-small.json",
-        "imtx-website-auxcell-small.json",
-        "imtx-website-auxcell-large-b-green.json",
-        "imtx-website-auxcell-medium-blue.json",
         "imtx-website-auxcell-small.json",
         "imtx-website-auxcell-small.json"
       ].map(function (fileName) {
@@ -2004,9 +2004,9 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
     },
 
     cancerSequence: {
-      latestStartOffset: 0.09,
-      durationMin: 0.10,
-      durationMax: 0.18
+      latestStartOffset: 0.20,
+      durationMin: 0.18,
+      durationMax: 0.30
     },
 
     resizeDebounce: 200,
@@ -3731,7 +3731,8 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
           scale: measurement.targetScale * progress,
           rotation: measurement.targetRotation,
           opacity: 1,
-          transformOrigin: "50% 50%"
+          transformOrigin: "50% 50%",
+          force3D: false
         });
       });
     }
@@ -4059,6 +4060,7 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
 
       cells.concat(cancerCells).forEach(function (cell, index) {
         const target = cell.querySelector("svg") || cell.firstElementChild;
+        const useVectorPrecision = index >= cells.length;
 
         if (!target) {
           console.warn(
@@ -4099,7 +4101,8 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
           x: 0,
           y: 0,
           rotation: 0,
-          transformOrigin: "50% 50%"
+          transformOrigin: "50% 50%",
+          force3D: useVectorPrecision ? false : "auto"
         });
 
         const tween = gsap.to(target, {
@@ -4110,7 +4113,8 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
           ease: "sine.inOut",
           repeat: -1,
           yoyo: true,
-          paused: false
+          paused: false,
+          force3D: useVectorPrecision ? false : "auto"
         });
 
         tween.progress((index * 0.173 + 0.11) % 1).play();
