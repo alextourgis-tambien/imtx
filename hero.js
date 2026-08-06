@@ -969,6 +969,7 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
 
     timing: {
       primaryTitleIn: 0.015,
+      primaryTitleRevealDuration: 0.08,
       mediaInStart: 0.02,
       mediaInLatestStart: 0.12,
       mediaInDurationMin: 0.15,
@@ -981,6 +982,7 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
       orbitLiftDuration: 0.44
     },
 
+    primaryTitleEntranceScale: 0.96,
     orbitTurns: 0.4,
     startAngle: -90,
     circleRadius: {
@@ -1497,7 +1499,9 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
       gsap.set(primaryTitle, {
         x: primaryTitleInitialX,
         y: primaryTitleInitialY,
-        scale: primaryTitleFinalScale,
+        scale:
+          primaryTitleFinalScale * FINAL_CONFIG.primaryTitleEntranceScale,
+        opacity: 0,
         transformOrigin: "50% 50%"
       });
       gsap.set(finalImages, { opacity: 0 });
@@ -1518,7 +1522,8 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
         gsap.set(primaryTitle, {
           x: primaryTitleFinalX,
           y: primaryTitleFinalY,
-          scale: primaryTitleFinalScale
+          scale: primaryTitleFinalScale,
+          opacity: 1
         });
         gsap.set(
           flattenLines(primaryTitle).concat(flattenLines(secondaryTitle)),
@@ -1533,9 +1538,9 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
 
       const timing = FINAL_CONFIG.timing;
       const primaryTitleStart = timing.primaryTitleIn;
-      const primaryTitleRevealEnd = getTitleEnd(
-        primaryTitle,
-        timing.primaryTitleIn
+      const primaryTitleRevealEnd = Math.max(
+        getTitleEnd(primaryTitle, timing.primaryTitleIn),
+        timing.primaryTitleIn + timing.primaryTitleRevealDuration
       );
       const primaryTitleMoveStart = Math.max(
         timing.primaryTitleMoveStart,
@@ -1580,6 +1585,12 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
         }
       });
 
+      timeline.to(primaryTitle, {
+        opacity: 1,
+        scale: primaryTitleFinalScale,
+        duration: timing.primaryTitleRevealDuration,
+        ease: "power2.out"
+      }, timing.primaryTitleIn);
       animateLinesIn(primaryTitle, timing.primaryTitleIn);
 
       videos.forEach(function (video, index) {
