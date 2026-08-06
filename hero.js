@@ -2959,26 +2959,32 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
             renderAllCellLottieFrames();
 
             /*
-            L'injection des renderers SVG peut modifier les dimensions de
-            mise en page. On reconstruit donc toute la timeline après leur
-            montage, puis on la resynchronise avec le scroll réellement
-            restauré par le navigateur. Sans cela, les cellules peuvent
-            conserver ponctuellement leur état intermédiaire au centre.
+            La timeline existe déjà lorsque les SVG terminent leur chargement.
+            On ne la reconstruit surtout pas ici : une reconstruction pendant
+            la restauration du scroll pouvait laisser les 13 cellules dans
+            leur état central. On raccorde seulement le floating aux nouveaux
+            SVG, puis on recalcule leur état depuis le ScrollTrigger existant.
             */
-            createTimeline();
+            if (!prefersReducedMotion) {
+              createFloating();
+            }
+
             ScrollTrigger.refresh();
             ScrollTrigger.update();
+            syncCellsToScrollTrigger();
 
             window.requestAnimationFrame(function () {
               window.requestAnimationFrame(function () {
                 ScrollTrigger.refresh();
                 ScrollTrigger.update();
+                syncCellsToScrollTrigger();
               });
             });
 
             window.setTimeout(function () {
               ScrollTrigger.refresh();
               ScrollTrigger.update();
+              syncCellsToScrollTrigger();
             }, 160);
           });
         })
@@ -3726,6 +3732,82 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       });
     }
 
+    /*
+    Les callbacks des tweens ne sont pas une source d'état suffisamment
+    fiable pendant un chargement asynchrone ou une restauration de page.
+    Cette fonction reconstruit donc directement l'état des 13 cellules à
+    partir du temps absolu de la timeline.
+    */
+    function syncCellsFromTimelineTime(time) {
+      const scroll = CONFIG.scroll;
+
+      cellsProgress.forEach(function (state, index) {
+        const organicStart = deterministic(
+          index,
+          scroll.cellsSpreadStart,
+          scroll.cellsSpreadLatestStart,
+          31
+        );
+        const moveStart = index === 0
+          ? organicStart + scroll.firstCellMoveDelay
+          : organicStart;
+        const moveDuration = deterministic(
+          index,
+          scroll.cellsSpreadDurationMin,
+          scroll.cellsSpreadDurationMax,
+          32
+        );
+        const moveProgress = gsap.utils.clamp(
+          0,
+          1,
+          (time - moveStart) / Math.max(moveDuration, 0.001)
+        );
+        const exitStart = deterministic(
+          index,
+          scroll.cellsExitStart,
+          scroll.cellsExitLatestStart,
+          21
+        );
+        const exitDuration = deterministic(
+          index,
+          scroll.cellsExitDurationMin,
+          scroll.cellsExitDurationMax,
+          22
+        );
+        const exitProgress = gsap.utils.clamp(
+          0,
+          1,
+          (time - exitStart) / Math.max(exitDuration, 0.001)
+        );
+
+        state.position = moveProgress;
+        state.visibility = index === 0
+          ? gsap.utils.clamp(
+            0,
+            1,
+            (time - scroll.firstCellStart) /
+              Math.max(scroll.firstCellEnd - scroll.firstCellStart, 0.001)
+          )
+          : moveProgress;
+        cellExit[index].value = 1 - exitProgress;
+      });
+
+      positionCells();
+    }
+
+    function syncCellsToScrollTrigger() {
+      if (!timeline) {
+        return;
+      }
+
+      const trigger = timeline.scrollTrigger;
+      const time = trigger
+        ? trigger.progress * timeline.duration()
+        : timeline.time();
+
+      syncCellsFromTimelineTime(time);
+    }
+
     /*==================================================
     FLOTTEMENT LÉGER DES CELLULES UNE FOIS PLACÉES
     ==================================================*/
@@ -4075,12 +4157,19 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
           scrub: 1,
           invalidateOnRefresh: true,
           onUpdate: function (self) {
+            syncCellsFromTimelineTime(
+              timeline ? timeline.time() : 0
+            );
             updateFloating(timeline ? timeline.time() : 0);
           },
           onRefresh: function (self) {
             currentSettings = getResponsiveSettings();
             positionOrbitItems();
-            positionCells();
+            syncCellsFromTimelineTime(
+              timeline
+                ? self.progress * timeline.duration()
+                : 0
+            );
             updateFloating(timeline ? timeline.time() : 0);
           }
         }
@@ -4492,6 +4581,13 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       window.setTimeout(function () {
         handleResize(true);
       }, 120);
+    });
+    window.addEventListener("pageshow", function () {
+      window.requestAnimationFrame(function () {
+        ScrollTrigger.refresh();
+        ScrollTrigger.update();
+        syncCellsToScrollTrigger();
+      });
     });
     ScrollTrigger.refresh();
   });
