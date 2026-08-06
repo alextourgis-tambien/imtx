@@ -5723,6 +5723,11 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
           const word = document.createElement("span");
           word.className = "hs-split-word";
           word.textContent = piece;
+
+          if (/^[,.;:!?…)\]}]+$/.test(piece)) {
+            word.classList.add("is-punctuation");
+          }
+
           fragment.appendChild(word);
         });
 
@@ -5731,9 +5736,16 @@ SECONDE SECTION — TIMELINE INDÉPENDANTE
 
       const lineGroups = [];
 
-      Array.from(
+      const paragraphWords = Array.from(
         paragraph.querySelectorAll(".hs-split-word")
-      ).forEach(function (word) {
+      );
+
+      if (paragraphWords.length) {
+        paragraphWords[paragraphWords.length - 1]
+          .classList.add("is-last");
+      }
+
+      paragraphWords.forEach(function (word) {
         const top = Math.round(word.getBoundingClientRect().top);
         let line = lineGroups.find(function (candidate) {
           return Math.abs(candidate.top - top) <= 2;

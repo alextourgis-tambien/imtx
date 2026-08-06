@@ -735,6 +735,14 @@ html.second-animation-ready .hs__video{
   will-change:transform,opacity;
 }
 
+.hs-split-word.is-punctuation{
+  margin-left:-.25em;
+}
+
+.hs-split-word.is-last{
+  margin-right:0;
+}
+
 /*==================================================
 REDUCED MOTION
 ==================================================*/
