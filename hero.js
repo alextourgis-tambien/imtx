@@ -1976,12 +1976,12 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
       titleOneIn: 1.48,
       titleOneOut: 1.54,
       titleTwoIn: 1.59,
-      titlesOutStart: 1.70,
+      titlesOutStart: 1.79,
 
-      paragraphTwoIn: 1.80,
+      paragraphTwoIn: 1.89,
 
-      lottieOutStart: 1.70,
-      lottieOutEnd: 1.80,
+      lottieOutStart: 1.79,
+      lottieOutEnd: 1.89,
 
       lottieFrameStart: 1.22,
       lottieFrameEnd: 1.70,
