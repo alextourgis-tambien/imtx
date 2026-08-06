@@ -1977,6 +1977,7 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
       lottieInEnd: 1.34,
 
       titleOneIn: 1.48,
+      titleOneOut: 1.54,
       titleTwoIn: 1.59,
       titlesOutStart: 1.70,
 
@@ -4761,11 +4762,13 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
         animateFadeIn(targetTitleTwo, targetTiming.titleTwoIn);
       }
 
-      /* Les deux titres disparaissent avant le paragraphe final. */
+      /* Le premier titre disparaît entièrement avant l'arrivée du second. */
 
       if (targetTitleOne) {
-        animateFadeOut(targetTitleOne, targetTiming.titlesOutStart);
+        animateFadeOut(targetTitleOne, targetTiming.titleOneOut);
       }
+
+      /* Le second titre disparaît ensuite avant le paragraphe final. */
 
       if (targetTitleTwo) {
         animateFadeOut(targetTitleTwo, targetTiming.titlesOutStart);
