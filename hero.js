@@ -975,7 +975,7 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
       mediaInDurationMax: 0.22,
       orbitStart: 0.18,
       orbitEnd: 1,
-      primaryTitleMoveStart: 0.10,
+      primaryTitleMoveStart: 0.32,
       primaryTitleMoveDuration: 0.44,
       secondaryTitleRevealDuration: 0.07,
       orbitLiftDuration: 0.44
