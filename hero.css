@@ -468,7 +468,7 @@ CELLULES LOTTIE + DEUX TITRES
   pointer-events:none;
 }
 
-html.hero-animation-ready .hh__cells-wrapper{
+html.hero-animation-ready.hero-cells-ready .hh__cells-wrapper{
   visibility:visible;
 }
 

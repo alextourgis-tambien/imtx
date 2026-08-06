@@ -2668,6 +2668,9 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
     });
     let cancerLottiesLoadPromise = null;
     let standaloneLottieRuntimePromise = null;
+    const lottieJsonCache = new Map();
+
+    document.documentElement.classList.remove("hero-cells-ready");
 
     function loadStandaloneLottieRuntime() {
       if (standaloneLottieRuntimePromise) {
@@ -2716,6 +2719,41 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
       });
 
       return standaloneLottieRuntimePromise;
+    }
+
+    function fetchLottieJson(jsonUrl, attempt) {
+      return window.fetch(jsonUrl, {
+        cache: attempt > 0 ? "reload" : "force-cache"
+      }).then(function (response) {
+        if (!response.ok) {
+          throw new Error("HTTP " + response.status);
+        }
+        return response.json();
+      }).catch(function (error) {
+        if (attempt >= 2) {
+          throw error;
+        }
+
+        return new Promise(function (resolve) {
+          window.setTimeout(resolve, 180 * (attempt + 1));
+        }).then(function () {
+          return fetchLottieJson(jsonUrl, attempt + 1);
+        });
+      });
+    }
+
+    function loadLottieJson(jsonUrl) {
+      if (!lottieJsonCache.has(jsonUrl)) {
+        lottieJsonCache.set(jsonUrl, fetchLottieJson(jsonUrl, 0));
+      }
+      return lottieJsonCache.get(jsonUrl);
+    }
+
+    function cloneLottieJson(animationData) {
+      if (typeof window.structuredClone === "function") {
+        return window.structuredClone(animationData);
+      }
+      return JSON.parse(JSON.stringify(animationData));
     }
 
     function renderTargetLottieFrame() {
@@ -2966,51 +3004,99 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
       cellLottiesLoadPromise = loadStandaloneLottieRuntime()
         .then(function (standaloneLottie) {
           const loadPromises = cells.map(function (cell, index) {
-            return new Promise(function (resolve) {
-              const jsonUrl =
-                CONFIG.cellLottieSequence.jsonUrls[index];
+            const jsonUrl = CONFIG.cellLottieSequence.jsonUrls[index];
 
-              if (!jsonUrl) {
-                console.warn(
-                  "Hero cellules : JSON absent pour la cellule " +
-                  (index + 1) + "."
-                );
-                resolve();
-                return;
-              }
+            if (!jsonUrl) {
+              console.warn(
+                "Hero cellules : JSON absent pour la cellule " +
+                (index + 1) + "."
+              );
+              return Promise.resolve();
+            }
 
-              const renderer = document.createElement("div");
-              renderer.className = "hh-cell-lottie-renderer";
-              cell.replaceChildren(renderer);
+            return loadLottieJson(jsonUrl).then(function (animationData) {
+              return new Promise(function (resolve) {
+                let completed = false;
+                let animation = null;
+                let readyTimer = null;
+                const complete = function () {
+                  if (completed || !animation) {
+                    return;
+                  }
+                  completed = true;
+                  window.clearTimeout(readyTimer);
+                  normalizeCellLottieContent(
+                    cell,
+                    animation,
+                    index
+                  ).then(resolve);
+                };
 
-              const animation = standaloneLottie.loadAnimation({
-                container: renderer,
-                renderer: CONFIG.cellLottieSequence.renderer,
-                loop: false,
-                autoplay: false,
-                path: jsonUrl,
-                rendererSettings: {
-                  preserveAspectRatio: "xMidYMid meet",
-                  clearCanvas: true
-                }
+                const renderer = document.createElement("div");
+                renderer.className = "hh-cell-lottie-renderer";
+                cell.replaceChildren(renderer);
+
+                animation = standaloneLottie.loadAnimation({
+                  container: renderer,
+                  renderer: CONFIG.cellLottieSequence.renderer,
+                  loop: false,
+                  autoplay: false,
+                  animationData: cloneLottieJson(animationData),
+                  rendererSettings: {
+                    preserveAspectRatio: "xMidYMid meet",
+                    clearCanvas: true
+                  }
+                });
+
+                cellLottieAnimations[index] = animation;
+
+                animation.addEventListener("DOMLoaded", complete);
+                animation.addEventListener("data_failed", function () {
+                  if (completed) {
+                    return;
+                  }
+                  completed = true;
+                  window.clearTimeout(readyTimer);
+                  console.warn(
+                    "Hero cellules : initialisation Lottie impossible " +
+                    "pour la cellule " + (index + 1) + "."
+                  );
+                  resolve();
+                });
+
+                /*
+                Avec animationData, le SVG peut être injecté avant que
+                l'écouteur DOMLoaded soit exécuté. Ce contrôle rend la fin
+                du chargement déterministe dans les deux cas.
+                */
+                window.requestAnimationFrame(function () {
+                  if (cell.querySelector("svg")) {
+                    complete();
+                  }
+                });
+
+                readyTimer = window.setTimeout(function () {
+                  if (cell.querySelector("svg")) {
+                    complete();
+                    return;
+                  }
+
+                  if (!completed) {
+                    completed = true;
+                    console.warn(
+                      "Hero cellules : délai d'initialisation dépassé pour " +
+                      "la cellule " + (index + 1) + "."
+                    );
+                    resolve();
+                  }
+                }, 4000);
               });
-
-              cellLottieAnimations[index] = animation;
-
-              animation.addEventListener("DOMLoaded", function () {
-                normalizeCellLottieContent(
-                  cell,
-                  animation,
-                  index
-                ).then(resolve);
-              });
-              animation.addEventListener("data_failed", function () {
-                console.warn(
-                  "Hero cellules : chargement du JSON Lottie impossible " +
-                  "pour la cellule " + (index + 1) + "."
-                );
-                resolve();
-              });
+            }).catch(function (error) {
+              console.warn(
+                "Hero cellules : chargement du JSON impossible pour la " +
+                "cellule " + (index + 1) + " (" + error.message + ")."
+              );
+              return Promise.resolve();
             });
           });
 
@@ -3039,6 +3125,7 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
             ScrollTrigger.refresh();
             ScrollTrigger.update();
             syncCellsToScrollTrigger();
+            document.documentElement.classList.add("hero-cells-ready");
 
             window.requestAnimationFrame(function () {
               window.requestAnimationFrame(function () {
@@ -4025,17 +4112,74 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
       positionCells();
     }
 
+    function syncCellLottieFramesFromTimelineTime(time) {
+      const timing = CONFIG.cellLottieSequence;
+
+      cellLottieStates.forEach(function (state, index) {
+        let frameEnd = timing.frameEnd;
+
+        if (index === 0) {
+          const moveStart = deterministic(
+            index,
+            CONFIG.scroll.cellsSpreadStart,
+            CONFIG.scroll.cellsSpreadLatestStart,
+            31
+          ) + CONFIG.scroll.firstCellMoveDelay;
+          const moveDuration = deterministic(
+            index,
+            CONFIG.scroll.cellsSpreadDurationMin,
+            CONFIG.scroll.cellsSpreadDurationMax,
+            32
+          );
+          frameEnd = moveStart + moveDuration / 2;
+        }
+
+        state.progress = gsap.utils.clamp(
+          0,
+          1,
+          (time - timing.frameStart) /
+            Math.max(frameEnd - timing.frameStart, 0.001)
+        );
+      });
+
+      renderAllCellLottieFrames();
+    }
+
+    function getScrollLinkedTimelineTime() {
+      if (!timeline) {
+        return 0;
+      }
+
+      const trigger = timeline.scrollTrigger;
+      if (
+        !trigger ||
+        !Number.isFinite(trigger.start) ||
+        !Number.isFinite(trigger.end) ||
+        trigger.end <= trigger.start
+      ) {
+        return timeline.time();
+      }
+
+      const scrollTop = window.pageYOffset ||
+        document.documentElement.scrollTop || 0;
+      const scrollProgress = gsap.utils.clamp(
+        0,
+        1,
+        (scrollTop - trigger.start) / (trigger.end - trigger.start)
+      );
+
+      return scrollProgress * timeline.duration();
+    }
+
     function syncCellsToScrollTrigger() {
       if (!timeline) {
         return;
       }
 
-      const trigger = timeline.scrollTrigger;
-      const time = trigger
-        ? trigger.progress * timeline.duration()
-        : timeline.time();
+      const time = getScrollLinkedTimelineTime();
 
       syncCellsFromTimelineTime(time);
+      syncCellLottieFramesFromTimelineTime(time);
     }
 
     /*==================================================
@@ -4454,11 +4598,7 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
           onRefresh: function (self) {
             currentSettings = getResponsiveSettings();
             positionOrbitItems();
-            syncCellsFromTimelineTime(
-              timeline
-                ? self.progress * timeline.duration()
-                : 0
-            );
+            syncCellsToScrollTrigger();
             updateFloating(timeline ? timeline.time() : 0);
           }
         }
@@ -4859,6 +4999,8 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
       resizeTimer = window.setTimeout(function () {
         createTimeline();
         ScrollTrigger.refresh();
+        ScrollTrigger.update();
+        syncCellsToScrollTrigger();
       }, CONFIG.timelineResizeDelay);
     }
 
