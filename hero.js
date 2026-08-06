@@ -2640,6 +2640,8 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
     let floatingTweens = [];
     let floatingTargets = [];
     let floatingActive = false;
+    let firstCellFloatingTween = null;
+    let firstCellFloatingTarget = null;
     let originalMainRadius = "0px";
     let originalEmbedRadius = "0px";
     let targetMainOneDirection = -1;
@@ -4045,6 +4047,8 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
 
       floatingTargets = [];
       floatingActive = false;
+      firstCellFloatingTween = null;
+      firstCellFloatingTarget = null;
     }
 
     function createFloating() {
@@ -4061,6 +4065,7 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
       cells.concat(cancerCells).forEach(function (cell, index) {
         const target = cell.querySelector("svg") || cell.firstElementChild;
         const useVectorPrecision = index >= cells.length;
+        const holdAtCenter = index === 0;
 
         if (!target) {
           console.warn(
@@ -4113,11 +4118,18 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
           ease: "sine.inOut",
           repeat: -1,
           yoyo: true,
-          paused: false,
+          paused: holdAtCenter,
           force3D: useVectorPrecision ? false : "auto"
         });
 
-        tween.progress((index * 0.173 + 0.11) % 1).play();
+        if (holdAtCenter) {
+          tween.progress(0).pause();
+          firstCellFloatingTween = tween;
+          firstCellFloatingTarget = target;
+        } else {
+          tween.progress((index * 0.173 + 0.11) % 1).play();
+        }
+
         floatingTargets.push(target);
         floatingTweens.push(tween);
       });
@@ -4134,7 +4146,6 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
         floatingTweens.forEach(function (tween) {
           tween.resume();
         });
-        return;
       }
 
       if (!shouldFloat && floatingActive) {
@@ -4145,6 +4156,28 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
 
         if (scrollProgress < CONFIG.cellFloating.start) {
           gsap.set(floatingTargets, {
+            x: 0,
+            y: 0,
+            rotation: 0
+          });
+        }
+      }
+
+      if (firstCellFloatingTween && firstCellFloatingTarget) {
+        const firstCellMoveStart = deterministic(
+          0,
+          CONFIG.scroll.cellsSpreadStart,
+          CONFIG.scroll.cellsSpreadLatestStart,
+          31
+        ) + CONFIG.scroll.firstCellMoveDelay;
+        const firstCellShouldFloat = shouldFloat &&
+          scrollProgress >= firstCellMoveStart;
+
+        if (firstCellShouldFloat) {
+          firstCellFloatingTween.resume();
+        } else {
+          firstCellFloatingTween.pause(0);
+          gsap.set(firstCellFloatingTarget, {
             x: 0,
             y: 0,
             rotation: 0
