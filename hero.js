@@ -2772,6 +2772,53 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
       centerFirstCellLottieFrame(index);
     }
 
+    function getTransformedSvgContentBounds(svg) {
+      const content = svg.querySelector("g") || svg;
+      const bounds = content.getBBox();
+      const svgMatrix = typeof svg.getScreenCTM === "function"
+        ? svg.getScreenCTM()
+        : null;
+      const contentMatrix = typeof content.getScreenCTM === "function"
+        ? content.getScreenCTM()
+        : null;
+
+      if (
+        !svgMatrix ||
+        !contentMatrix ||
+        typeof svg.createSVGPoint !== "function"
+      ) {
+        return bounds;
+      }
+
+      const relativeMatrix = svgMatrix
+        .inverse()
+        .multiply(contentMatrix);
+      const sourcePoint = svg.createSVGPoint();
+      const corners = [
+        [bounds.x, bounds.y],
+        [bounds.x + bounds.width, bounds.y],
+        [bounds.x, bounds.y + bounds.height],
+        [bounds.x + bounds.width, bounds.y + bounds.height]
+      ].map(function (coordinates) {
+        sourcePoint.x = coordinates[0];
+        sourcePoint.y = coordinates[1];
+        return sourcePoint.matrixTransform(relativeMatrix);
+      });
+      const xValues = corners.map(function (point) { return point.x; });
+      const yValues = corners.map(function (point) { return point.y; });
+      const minimumX = Math.min.apply(Math, xValues);
+      const maximumX = Math.max.apply(Math, xValues);
+      const minimumY = Math.min.apply(Math, yValues);
+      const maximumY = Math.max.apply(Math, yValues);
+
+      return {
+        x: minimumX,
+        y: minimumY,
+        width: maximumX - minimumX,
+        height: maximumY - minimumY
+      };
+    }
+
     function centerFirstCellLottieFrame(index) {
       if (index !== 0 || !cellLottieViewBoxes[index]) {
         return;
@@ -2784,8 +2831,7 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
       }
 
       try {
-        const content = svg.querySelector("g") || svg;
-        const bounds = content.getBBox();
+        const bounds = getTransformedSvgContentBounds(svg);
         const viewBox = cellLottieViewBoxes[index];
 
         if (bounds.width <= 0 || bounds.height <= 0) {
@@ -2827,8 +2873,7 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
       return new Promise(function (resolve) {
         window.requestAnimationFrame(function () {
           try {
-            const content = svg.querySelector("g") || svg;
-            const bounds = content.getBBox();
+            const bounds = getTransformedSvgContentBounds(svg);
 
             if (bounds.width > 0 && bounds.height > 0) {
               const padding = Math.max(
