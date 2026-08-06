@@ -3277,6 +3277,20 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       });
     }
 
+    function animateFadeIn(element, start) {
+      timeline.to(element, {
+        opacity: 1,
+        duration: CONFIG.text.lineDuration
+      }, start);
+    }
+
+    function animateFadeOut(element, start) {
+      timeline.to(element, {
+        opacity: 0,
+        duration: CONFIG.text.lineDuration
+      }, start);
+    }
+
     function animateLinesSideOut(element, start, end, direction) {
       const lines = titleLines.get(element) || [];
       const duration = Math.max(end - start, 0.01);
@@ -4067,12 +4081,24 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       });
 
       targetTextElements.forEach(function (element) {
-        gsap.set(element, { visibility: "visible" });
-        gsap.set(flattenLines(element), {
-          opacity: 0,
-          yPercent: 75,
-          x: 0
+        const isTargetTitle =
+          element === targetTitleOne || element === targetTitleTwo;
+
+        gsap.set(element, {
+          visibility: "visible",
+          opacity: isTargetTitle ? 0 : 1
         });
+        gsap.set(flattenLines(element), isTargetTitle
+          ? {
+            opacity: 1,
+            yPercent: 0,
+            x: 0
+          }
+          : {
+            opacity: 0,
+            yPercent: 75,
+            x: 0
+          });
       });
 
       if (targetLottieWrapper) {
@@ -4127,6 +4153,11 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
         targetTextElements.forEach(function (element) {
           gsap.set(flattenLines(element), { opacity: 1, yPercent: 0 });
         });
+        [targetTitleOne, targetTitleTwo]
+          .filter(Boolean)
+          .forEach(function (element) {
+            gsap.set(element, { opacity: 1 });
+          });
         if (targetLottieWrapper) {
           gsap.set(targetLottieWrapper, { opacity: 1 });
         }
@@ -4466,21 +4497,21 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       /* Pause volontaire pour la future animation Lottie. */
 
       if (targetTitleOne) {
-        animateLinesIn(targetTitleOne, targetTiming.titleOneIn);
+        animateFadeIn(targetTitleOne, targetTiming.titleOneIn);
       }
 
       if (targetTitleTwo) {
-        animateLinesIn(targetTitleTwo, targetTiming.titleTwoIn);
+        animateFadeIn(targetTitleTwo, targetTiming.titleTwoIn);
       }
 
       /* Les deux titres disparaissent avant le premier paragraphe. */
 
       if (targetTitleOne) {
-        animateLinesOut(targetTitleOne, targetTiming.titlesOutStart);
+        animateFadeOut(targetTitleOne, targetTiming.titlesOutStart);
       }
 
       if (targetTitleTwo) {
-        animateLinesOut(targetTitleTwo, targetTiming.titlesOutStart);
+        animateFadeOut(targetTitleTwo, targetTiming.titlesOutStart);
       }
 
       if (targetParagraphOne) {
