@@ -1765,7 +1765,6 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       targetMainTwo: ".hh__target-main.is--two",
       targetTitleOne: ".hh__target-title.is--one",
       targetTitleTwo: ".hh__target-title.is--two",
-      targetParagraphOne: ".hh__target-p.is--one",
       targetParagraphTwo: ".hh__target-p.is--two",
       cancerWrapper: ".hh__cancer-wrapper"
     },
@@ -1963,10 +1962,7 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       titleTwoIn: 1.59,
       titlesOutStart: 1.70,
 
-      paragraphOneIn: 1.80,
-      paragraphOneOut: 1.93,
-
-      paragraphTwoIn: 2.03,
+      paragraphTwoIn: 1.80,
 
       lottieOutStart: 1.70,
       lottieOutEnd: 1.80,
@@ -1981,7 +1977,7 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
         "imtx-website-prame-v03.json",
       lottieRenderer: "canvas",
 
-      end: 2.62,
+      end: 2.39,
       exitViewportDistance: 0.35,
 
       mobileLottieMargin: 24,
@@ -2480,9 +2476,6 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
     const targetMainTwo = document.querySelector(selectors.targetMainTwo);
     const targetTitleOne = document.querySelector(selectors.targetTitleOne);
     const targetTitleTwo = document.querySelector(selectors.targetTitleTwo);
-    const targetParagraphOne = document.querySelector(
-      selectors.targetParagraphOne
-    );
     const targetParagraphTwo = document.querySelector(
       selectors.targetParagraphTwo
     );
@@ -2567,11 +2560,6 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       [targetTitleOne, "target title one", selectors.targetTitleOne],
       [targetTitleTwo, "target title two", selectors.targetTitleTwo],
       [
-        targetParagraphOne,
-        "target paragraph one",
-        selectors.targetParagraphOne
-      ],
-      [
         targetParagraphTwo,
         "target paragraph two",
         selectors.targetParagraphTwo
@@ -2589,7 +2577,6 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       targetMainTwo,
       targetTitleOne,
       targetTitleTwo,
-      targetParagraphOne,
       targetParagraphTwo
     ].filter(Boolean);
 
@@ -2616,7 +2603,6 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       targetMainTwo,
       targetTitleOne,
       targetTitleTwo,
-      targetParagraphOne,
       targetParagraphTwo
     ].filter(Boolean);
     const originalTitleMarkup = new Map();
@@ -4504,7 +4490,7 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
         animateFadeIn(targetTitleTwo, targetTiming.titleTwoIn);
       }
 
-      /* Les deux titres disparaissent avant le premier paragraphe. */
+      /* Les deux titres disparaissent avant le paragraphe final. */
 
       if (targetTitleOne) {
         animateFadeOut(targetTitleOne, targetTiming.titlesOutStart);
@@ -4513,13 +4499,6 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       if (targetTitleTwo) {
         animateFadeOut(targetTitleTwo, targetTiming.titlesOutStart);
       }
-
-      if (targetParagraphOne) {
-        animateLinesIn(targetParagraphOne, targetTiming.paragraphOneIn);
-        animateLinesOut(targetParagraphOne, targetTiming.paragraphOneOut);
-      }
-
-      /* Le second paragraphe attend la disparition complète du premier. */
 
       if (targetParagraphTwo) {
         animateLinesIn(targetParagraphTwo, targetTiming.paragraphTwoIn);
