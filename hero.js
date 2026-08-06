@@ -2655,6 +2655,7 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
       return null;
     });
     let cellLottiesLoadPromise = null;
+    let cellLottiesInitializationAttempt = 0;
     const cancerLottieStates = cancerCells.map(function () {
       return { progress: 0 };
     });
@@ -2711,6 +2712,10 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
         }, { once: true });
 
         document.head.appendChild(script);
+      }).catch(function (error) {
+        /* Un incident CDN ponctuel ne doit pas bloquer toutes les Lottie. */
+        standaloneLottieRuntimePromise = null;
+        throw error;
       });
 
       return standaloneLottieRuntimePromise;
@@ -2725,12 +2730,15 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
         }
         return response.json();
       }).catch(function (error) {
-        if (attempt >= 2) {
+        if (attempt >= 5) {
           throw error;
         }
 
         return new Promise(function (resolve) {
-          window.setTimeout(resolve, 180 * (attempt + 1));
+          window.setTimeout(
+            resolve,
+            Math.min(220 * Math.pow(2, attempt), 1400)
+          );
         }).then(function () {
           return fetchLottieJson(jsonUrl, attempt + 1);
         });
@@ -2739,7 +2747,14 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
 
     function loadLottieJson(jsonUrl) {
       if (!lottieJsonCache.has(jsonUrl)) {
-        lottieJsonCache.set(jsonUrl, fetchLottieJson(jsonUrl, 0));
+        const request = fetchLottieJson(jsonUrl, 0).catch(function (error) {
+          /* Une Promise rejetée ne doit jamais rester figée dans le cache. */
+          if (lottieJsonCache.get(jsonUrl) === request) {
+            lottieJsonCache.delete(jsonUrl);
+          }
+          throw error;
+        });
+        lottieJsonCache.set(jsonUrl, request);
       }
       return lottieJsonCache.get(jsonUrl);
     }
@@ -3002,15 +3017,15 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
             const jsonUrl = CONFIG.cellLottieSequence.jsonUrls[index];
 
             if (!jsonUrl) {
-              console.warn(
-                "Hero cellules : JSON absent pour la cellule " +
-                (index + 1) + "."
+              return Promise.reject(
+                new Error(
+                  "JSON absent pour la cellule " + (index + 1) + "."
+                )
               );
-              return Promise.resolve();
             }
 
             return loadLottieJson(jsonUrl).then(function (animationData) {
-              return new Promise(function (resolve) {
+              return new Promise(function (resolve, reject) {
                 let completed = false;
                 let animation = null;
                 let readyTimer = null;
@@ -3052,50 +3067,64 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
                   }
                   completed = true;
                   window.clearTimeout(readyTimer);
-                  console.warn(
-                    "Hero cellules : initialisation Lottie impossible " +
-                    "pour la cellule " + (index + 1) + "."
+                  reject(
+                    new Error(
+                      "Initialisation Lottie impossible pour la cellule " +
+                      (index + 1) + "."
+                    )
                   );
-                  resolve();
                 });
 
                 /*
                 Avec animationData, le SVG peut être injecté avant que
-                l'écouteur DOMLoaded soit exécuté. Ce contrôle rend la fin
-                du chargement déterministe dans les deux cas.
+                l'écouteur DOMLoaded soit exécuté. On n'utilise le fallback
+                qu'une fois animation.isLoaded confirmé afin de ne jamais
+                mesurer un SVG encore incomplet et artificiellement minuscule.
                 */
                 window.requestAnimationFrame(function () {
-                  if (cell.querySelector("svg")) {
-                    complete();
-                  }
+                  window.requestAnimationFrame(function () {
+                    if (animation.isLoaded && cell.querySelector("svg")) {
+                      complete();
+                    }
+                  });
                 });
 
                 readyTimer = window.setTimeout(function () {
-                  if (cell.querySelector("svg")) {
+                  if (animation.isLoaded && cell.querySelector("svg")) {
                     complete();
                     return;
                   }
 
                   if (!completed) {
                     completed = true;
-                    console.warn(
-                      "Hero cellules : délai d'initialisation dépassé pour " +
-                      "la cellule " + (index + 1) + "."
+                    reject(
+                      new Error(
+                        "Délai d'initialisation dépassé pour la cellule " +
+                        (index + 1) + "."
+                      )
                     );
-                    resolve();
                   }
-                }, 4000);
+                }, 8000);
               });
-            }).catch(function (error) {
-              console.warn(
-                "Hero cellules : chargement du JSON impossible pour la " +
-                "cellule " + (index + 1) + " (" + error.message + ")."
-              );
-              return Promise.resolve();
             });
           });
 
           return Promise.all(loadPromises).then(function () {
+            const readyCellCount = cells.reduce(function (count, cell, index) {
+              return count + (
+                cellLottieAnimations[index] && cell.querySelector("svg")
+                  ? 1
+                  : 0
+              );
+            }, 0);
+
+            if (readyCellCount !== cells.length) {
+              throw new Error(
+                readyCellCount + "/" + cells.length +
+                " cellules seulement ont été initialisées."
+              );
+            }
+
             renderAllCellLottieFrames();
 
             /*
@@ -3120,6 +3149,7 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
             ScrollTrigger.refresh();
             ScrollTrigger.update();
             syncCellsToScrollTrigger();
+            cellLottiesInitializationAttempt = 0;
             document.documentElement.classList.add("hero-cells-ready");
 
             window.requestAnimationFrame(function () {
@@ -3141,6 +3171,25 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
           console.warn(
             "Hero cellules : " + error.message
           );
+
+          document.documentElement.classList.remove("hero-cells-ready");
+          cellLottieAnimations.forEach(function (animation, index) {
+            if (animation && typeof animation.destroy === "function") {
+              animation.destroy();
+            }
+            cellLottieAnimations[index] = null;
+            cellLottieViewBoxes[index] = null;
+          });
+
+          cellLottiesLoadPromise = null;
+          cellLottiesInitializationAttempt += 1;
+
+          if (cellLottiesInitializationAttempt <= 4) {
+            window.setTimeout(
+              lockCellLottiesToScroll,
+              650 * cellLottiesInitializationAttempt
+            );
+          }
         });
     }
 
