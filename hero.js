@@ -3152,19 +3152,7 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
             cellLottiesInitializationAttempt = 0;
             document.documentElement.classList.add("hero-cells-ready");
 
-            window.requestAnimationFrame(function () {
-              window.requestAnimationFrame(function () {
-                ScrollTrigger.refresh();
-                ScrollTrigger.update();
-                syncCellsToScrollTrigger();
-              });
-            });
-
-            window.setTimeout(function () {
-              ScrollTrigger.refresh();
-              ScrollTrigger.update();
-              syncCellsToScrollTrigger();
-            }, 160);
+            queueCellSyncBurst();
           });
         })
         .catch(function (error) {
@@ -4195,22 +4183,52 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
       }
 
       const trigger = timeline.scrollTrigger;
-      if (
-        !trigger ||
-        !Number.isFinite(trigger.start) ||
-        !Number.isFinite(trigger.end) ||
-        trigger.end <= trigger.start
-      ) {
+      if (!trigger) {
         return timeline.time();
       }
 
       /*
-      ScrollTrigger reste l'unique source de vérité. window.scrollY peut être
-      momentanément en retard pendant une restauration de page ou avec un
-      smooth-scroll, ce qui inversait visuellement la séquence des cellules.
+      Pendant un refresh, trigger.progress peut temporairement revenir à zéro
+      avant que ScrollTrigger ait fini de recalculer ses bornes. On lit donc
+      la position via le getter interne de ScrollTrigger et on ne revient à
+      progress qu'en dernier recours. Cela évite le retour intermittent des
+      13 cellules au centre pendant une restauration de page/mobile resize.
       */
-      return gsap.utils.clamp(0, 1, trigger.progress) *
-        timeline.duration();
+      let progress = Number(trigger.progress);
+      const hasBounds = Number.isFinite(trigger.start) &&
+        Number.isFinite(trigger.end) &&
+        trigger.end > trigger.start;
+
+      if (hasBounds && typeof ScrollTrigger.getScrollFunc === "function") {
+        const getScroll = ScrollTrigger.getScrollFunc(trigger.scroller);
+        const scrollPosition = getScroll ? Number(getScroll()) : NaN;
+
+        if (Number.isFinite(scrollPosition)) {
+          progress = (scrollPosition - trigger.start) /
+            (trigger.end - trigger.start);
+        }
+      }
+
+      if (!Number.isFinite(progress)) {
+        return timeline.time();
+      }
+
+      return gsap.utils.clamp(0, 1, progress) * timeline.duration();
+    }
+
+    function queueCellSyncBurst() {
+      const delays = [0, 1, 2, 4, 8, 16, 32, 64, 128, 220];
+
+      delays.forEach(function (delay) {
+        window.setTimeout(function () {
+          if (typeof ScrollTrigger === "undefined") {
+            return;
+          }
+
+          ScrollTrigger.update();
+          syncCellsToScrollTrigger();
+        }, delay);
+      });
     }
 
     function syncCellsToScrollTrigger() {
@@ -4629,9 +4647,7 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
           scrub: 1,
           invalidateOnRefresh: true,
           onUpdate: function (self) {
-            const cellSceneTime = timeline
-              ? self.progress * timeline.duration()
-              : 0;
+            const cellSceneTime = getScrollLinkedTimelineTime();
 
             /*
             Les 13 cellules suivent la progression brute du ScrollTrigger,
@@ -4930,6 +4946,7 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
         ScrollTrigger.refresh();
         ScrollTrigger.update();
         syncCellsToScrollTrigger();
+        queueCellSyncBurst();
       }, CONFIG.timelineResizeDelay);
     }
 
@@ -4951,9 +4968,11 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
         ScrollTrigger.refresh();
         ScrollTrigger.update();
         syncCellsToScrollTrigger();
+        queueCellSyncBurst();
       });
     });
     ScrollTrigger.refresh();
+    queueCellSyncBurst();
   });
 })();
 
