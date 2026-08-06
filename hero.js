@@ -1914,17 +1914,17 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
       jsonUrls: [
         "imtx-website-auxcell-special.json",
         "imtx-website-auxcell-large-a.json",
-        "imtx-website-auxcell-small.json",
+        "imtx-website-auxcell-medium.json",
         "imtx-website-auxcell-medium.json",
         "imtx-website-auxcell-small.json",
         "imtx-website-auxcell-medium.json",
-        "imtx-website-auxcell-small.json",
+        "imtx-website-auxcell-large-a.json",
         "imtx-website-auxcell-large-b.json",
         "imtx-website-auxcell-small.json",
-        "imtx-website-auxcell-small.json",
+        "imtx-website-auxcell-medium.json",
         "imtx-website-auxcell-small.json",
         "imtx-website-auxcell-medium.json",
-        "imtx-website-auxcell-small.json"
+        "imtx-website-auxcell-large-b.json"
       ].map(function (fileName) {
         return "https://alextourgis-tambien.github.io/imtx/" + fileName;
       }),
@@ -3015,6 +3015,14 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
 
           return Promise.all(loadPromises).then(function () {
             renderAllCellLottieFrames();
+
+            /*
+            Les dimensions finales n'existent qu'après l'injection et la
+            normalisation des 13 SVG. On remesure alors leurs conteneurs sans
+            reconstruire la timeline afin que le centrage initial et les
+            positions Webflow utilisent la géométrie réellement affichée.
+            */
+            measureCells();
 
             /*
             La timeline existe déjà lorsque les SVG terminent leur chargement.
