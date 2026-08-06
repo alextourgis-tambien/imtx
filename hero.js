@@ -1931,6 +1931,38 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
       renderer: "svg"
     },
 
+    cancerLottieSequence: {
+      visualScale: 0.8,
+      jsonUrls: [
+        "imtx-website-auxcell-large-a-blue.json",
+        "imtx-website-auxcell-small.json",
+        "imtx-website-auxcell-small.json",
+        "imtx-website-auxcell-medium-green.json",
+        "imtx-website-auxcell-small.json",
+        "imtx-website-auxcell-large-b-green.json",
+        "imtx-website-auxcell-small.json",
+        "imtx-website-auxcell-medium-blue.json",
+        "imtx-website-auxcell-large-b-blue.json",
+        "imtx-website-auxcell-small.json",
+        "imtx-website-auxcell-medium-green.json",
+        "imtx-website-auxcell-medium-blue.json",
+        "imtx-website-auxcell-small.json",
+        "imtx-website-auxcell-small.json",
+        "imtx-website-auxcell-large-a-green.json",
+        "imtx-website-auxcell-large-a-blue.json",
+        "imtx-website-auxcell-medium-green.json",
+        "imtx-website-auxcell-small.json",
+        "imtx-website-auxcell-small.json",
+        "imtx-website-auxcell-large-b-green.json",
+        "imtx-website-auxcell-medium-blue.json",
+        "imtx-website-auxcell-small.json",
+        "imtx-website-auxcell-small.json"
+      ].map(function (fileName) {
+        return "https://alextourgis-tambien.github.io/imtx/" + fileName;
+      }),
+      renderer: "svg"
+    },
+
     /*
     Cette séquence commence pendant la disparition des 13 cellules.
     Les valeurs supérieures à 1 prolongent volontairement la timeline.
@@ -2625,6 +2657,13 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
       return null;
     });
     let cellLottiesLoadPromise = null;
+    const cancerLottieStates = cancerCells.map(function () {
+      return { progress: 0 };
+    });
+    const cancerLottieAnimations = cancerCells.map(function () {
+      return null;
+    });
+    let cancerLottiesLoadPromise = null;
     let standaloneLottieRuntimePromise = null;
 
     function loadStandaloneLottieRuntime() {
@@ -3009,6 +3048,154 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
           console.warn(
             "Hero cellules : " + error.message
           );
+        });
+    }
+
+    function renderCancerLottieFrame(index) {
+      const animation = cancerLottieAnimations[index];
+      const state = cancerLottieStates[index];
+
+      if (!animation || !state) {
+        return;
+      }
+
+      const frameCount = Math.max(Number(animation.totalFrames) || 1, 1);
+      const frame = gsap.utils.clamp(
+        0,
+        frameCount - 1,
+        state.progress * (frameCount - 1)
+      );
+
+      if (typeof animation.pause === "function") {
+        animation.pause();
+      }
+
+      if (typeof animation.goToAndStop === "function") {
+        animation.goToAndStop(frame, true);
+      }
+    }
+
+    function renderAllCancerLottieFrames() {
+      cancerLottieAnimations.forEach(function (_, index) {
+        renderCancerLottieFrame(index);
+      });
+    }
+
+    function normalizeCancerLottieContent(cell, animation, index) {
+      const svg = cell.querySelector("svg");
+
+      if (!svg || typeof svg.getBBox !== "function") {
+        renderCancerLottieFrame(index);
+        return Promise.resolve();
+      }
+
+      const frameCount = Math.max(Number(animation.totalFrames) || 1, 1);
+      animation.goToAndStop(frameCount - 1, true);
+
+      return new Promise(function (resolve) {
+        window.requestAnimationFrame(function () {
+          try {
+            const bounds = getTransformedSvgContentBounds(svg);
+
+            if (bounds.width > 0 && bounds.height > 0) {
+              const padding = Math.max(bounds.width, bounds.height) * 0.045;
+              const visualScale = CONFIG.cancerLottieSequence.visualScale;
+              const normalizedWidth =
+                (bounds.width + padding * 2) / visualScale;
+              const normalizedHeight =
+                (bounds.height + padding * 2) / visualScale;
+
+              svg.setAttribute("viewBox", [
+                bounds.x + bounds.width / 2 - normalizedWidth / 2,
+                bounds.y + bounds.height / 2 - normalizedHeight / 2,
+                normalizedWidth,
+                normalizedHeight
+              ].join(" "));
+              svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+            }
+          } catch (error) {
+            console.warn(
+              "Hero cellules cancer : normalisation du Lottie impossible " +
+              "pour la cellule " + (index + 1) + "."
+            );
+          }
+
+          renderCancerLottieFrame(index);
+          resolve();
+        });
+      });
+    }
+
+    function lockCancerLottiesToScroll() {
+      if (!cancerCells.length || cancerLottiesLoadPromise) {
+        return;
+      }
+
+      cancerLottiesLoadPromise = loadStandaloneLottieRuntime()
+        .then(function (standaloneLottie) {
+          const loadPromises = cancerCells.map(function (cell, index) {
+            return new Promise(function (resolve) {
+              const jsonUrl =
+                CONFIG.cancerLottieSequence.jsonUrls[index];
+
+              if (!jsonUrl) {
+                console.warn(
+                  "Hero cellules cancer : JSON absent pour la cellule " +
+                  (index + 1) + "."
+                );
+                resolve();
+                return;
+              }
+
+              const renderer = document.createElement("div");
+              renderer.className = "hh-cancer-lottie-renderer";
+              cell.replaceChildren(renderer);
+
+              const animation = standaloneLottie.loadAnimation({
+                container: renderer,
+                renderer: CONFIG.cancerLottieSequence.renderer,
+                loop: false,
+                autoplay: false,
+                path: jsonUrl,
+                rendererSettings: {
+                  preserveAspectRatio: "xMidYMid meet",
+                  clearCanvas: true
+                }
+              });
+
+              cancerLottieAnimations[index] = animation;
+
+              animation.addEventListener("DOMLoaded", function () {
+                normalizeCancerLottieContent(
+                  cell,
+                  animation,
+                  index
+                ).then(resolve);
+              });
+              animation.addEventListener("data_failed", function () {
+                console.warn(
+                  "Hero cellules cancer : chargement du JSON Lottie " +
+                  "impossible pour la cellule " + (index + 1) + "."
+                );
+                resolve();
+              });
+            });
+          });
+
+          return Promise.all(loadPromises).then(function () {
+            renderAllCancerLottieFrames();
+
+            if (!prefersReducedMotion) {
+              createFloating();
+            }
+
+            ScrollTrigger.refresh();
+            ScrollTrigger.update();
+            syncCellsToScrollTrigger();
+          });
+        })
+        .catch(function (error) {
+          console.warn("Hero cellules cancer : " + error.message);
         });
     }
 
@@ -3987,6 +4174,10 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
       cancerProgress.forEach(function (state) {
         state.value = 0;
       });
+      cancerLottieStates.forEach(function (state) {
+        state.progress = 0;
+      });
+      renderAllCancerLottieFrames();
       cellLottieStates.forEach(function (state) {
         state.progress = 0;
       });
@@ -4164,6 +4355,10 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
           state.value = 1;
         });
         positionCancerCells();
+        cancerLottieStates.forEach(function (state) {
+          state.progress = 1;
+        });
+        renderAllCancerLottieFrames();
         if (titleOne) {
           gsap.set(flattenLines(titleOne), { opacity: 1, yPercent: 0 });
         }
@@ -4559,6 +4754,14 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
           duration: duration,
           onUpdate: positionCancerCells
         }, targetTiming.paragraphTwoIn + startOffset);
+
+        timeline.to(cancerLottieStates[index], {
+          progress: 1,
+          duration: duration,
+          onUpdate: function () {
+            renderCancerLottieFrame(index);
+          }
+        }, targetTiming.paragraphTwoIn + startOffset);
       });
 
       /*
@@ -4615,6 +4818,7 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
     playOldTitleIntro();
     lockTargetLottieToScroll();
     lockCellLottiesToScroll();
+    lockCancerLottiesToScroll();
     window.addEventListener("resize", function () {
       handleResize(false);
     });
