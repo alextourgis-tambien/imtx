@@ -938,7 +938,7 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
 })();
 
 /*==================================================
-FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
+FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
 ==================================================*/
 
 (function () {
@@ -952,7 +952,6 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       images: ".final__images",
       image: ".final__image",
       titles: [
-        ".final__title.is--one",
         ".final__title.is--two",
         ".final__title.is--three"
       ],
@@ -969,18 +968,16 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
     },
 
     timing: {
-      titleOneIn: 0.015,
+      primaryTitleIn: 0.015,
       mediaInStart: 0.02,
       mediaInLatestStart: 0.12,
       mediaInDurationMin: 0.15,
       mediaInDurationMax: 0.22,
       orbitStart: 0.18,
       orbitEnd: 1,
-      titleOneOut: 0.32,
-      titleTwoIn: 0.35,
-      titleTwoMoveStart: 0.44,
-      titleTwoMoveDuration: 0.44,
-      titleThreeRevealDuration: 0.07,
+      primaryTitleMoveStart: 0.10,
+      primaryTitleMoveDuration: 0.44,
+      secondaryTitleRevealDuration: 0.07,
       orbitLiftDuration: 0.44
     },
 
@@ -1041,6 +1038,8 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
     const titles = selectors.titles.map(function (selector) {
       return wrapper.querySelector(selector);
     });
+    const primaryTitle = titles[0];
+    const secondaryTitle = titles[1];
     const videos = selectors.videos.map(function (selector) {
       return wrapper.querySelector(selector);
     });
@@ -1187,7 +1186,7 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       Après un resize, GSAP peut conserver les anciennes composantes de
       transform dans son cache même si l'attribut style vient d'être remis
       dans son état Webflow. La prochaine mesure doit impérativement relire
-      la matrice réelle, sinon le second titre repart de sa position finale.
+      la matrice réelle, sinon le titre principal repart de sa position finale.
       */
       const transformCache = gsap.core.getCache(element);
 
@@ -1307,16 +1306,6 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
           yPercent: 0,
           duration: lineDuration
         }, start + index * lineStagger);
-      });
-    }
-
-    function animateLinesOut(title, start) {
-      (titleLines.get(title) || []).forEach(function (line, index) {
-        timeline.to(line, {
-          opacity: 0,
-          yPercent: -FINAL_CONFIG.text.hiddenYPercent,
-          duration: FINAL_CONFIG.text.lineDuration
-        }, start + index * FINAL_CONFIG.text.lineStagger);
       });
     }
 
@@ -1470,30 +1459,22 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       measureVideos();
 
       const contentRectangle = content.getBoundingClientRect();
-      const titleTwoRectangle = titles[1].getBoundingClientRect();
-      const titleOneFontSize = parseFloat(
-        window.getComputedStyle(titles[0]).fontSize
-      ) || 1;
-      const titleTwoFontSize = parseFloat(
-        window.getComputedStyle(titles[1]).fontSize
-      ) || titleOneFontSize;
-      const titleTwoFinalX = Number(
-        gsap.getProperty(titles[1], "x")
+      const primaryTitleRectangle = primaryTitle.getBoundingClientRect();
+      const primaryTitleFinalX = Number(
+        gsap.getProperty(primaryTitle, "x")
       ) || 0;
-      const titleTwoFinalY = Number(
-        gsap.getProperty(titles[1], "y")
+      const primaryTitleFinalY = Number(
+        gsap.getProperty(primaryTitle, "y")
       ) || 0;
-      const titleTwoFinalScale = Number(
-        gsap.getProperty(titles[1], "scaleX")
+      const primaryTitleFinalScale = Number(
+        gsap.getProperty(primaryTitle, "scaleX")
       ) || 1;
-      const titleTwoInitialScale = titleTwoFinalScale *
-        titleOneFontSize / titleTwoFontSize;
-      const titleTwoInitialX = titleTwoFinalX +
+      const primaryTitleInitialX = primaryTitleFinalX +
         contentRectangle.left + contentRectangle.width / 2 -
-        (titleTwoRectangle.left + titleTwoRectangle.width / 2);
-      const titleTwoInitialY = titleTwoFinalY +
+        (primaryTitleRectangle.left + primaryTitleRectangle.width / 2);
+      const primaryTitleInitialY = primaryTitleFinalY +
         contentRectangle.top + contentRectangle.height / 2 -
-        (titleTwoRectangle.top + titleTwoRectangle.height / 2);
+        (primaryTitleRectangle.top + primaryTitleRectangle.height / 2);
       const orbitLiftFactor = window.innerWidth <= 767
         ? FINAL_CONFIG.orbitLift.mobile
         : window.innerWidth <= 991
@@ -1513,10 +1494,10 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
           yPercent: FINAL_CONFIG.text.hiddenYPercent
         });
       });
-      gsap.set(titles[1], {
-        x: titleTwoInitialX,
-        y: titleTwoInitialY,
-        scale: titleTwoInitialScale,
+      gsap.set(primaryTitle, {
+        x: primaryTitleInitialX,
+        y: primaryTitleInitialY,
+        scale: primaryTitleFinalScale,
         transformOrigin: "50% 50%"
       });
       gsap.set(finalImages, { opacity: 0 });
@@ -1534,13 +1515,13 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
         });
         orbitState.offsetY = finalOrbitLift;
         positionVideos();
-        gsap.set(titles[1], {
-          x: titleTwoFinalX,
-          y: titleTwoFinalY,
-          scale: titleTwoFinalScale
+        gsap.set(primaryTitle, {
+          x: primaryTitleFinalX,
+          y: primaryTitleFinalY,
+          scale: primaryTitleFinalScale
         });
         gsap.set(
-          flattenLines(titles[1]).concat(flattenLines(titles[2])),
+          flattenLines(primaryTitle).concat(flattenLines(secondaryTitle)),
           {
           opacity: 1,
           yPercent: 0
@@ -1551,37 +1532,34 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
       }
 
       const timing = FINAL_CONFIG.timing;
-      const titleOneEnd = getTitleEnd(titles[0], timing.titleOneOut);
-      const titleTwoStart = timing.titleTwoIn;
-      const titleTwoRevealEnd = getTitleEnd(
-        titles[1],
-        timing.titleTwoIn
+      const primaryTitleStart = timing.primaryTitleIn;
+      const primaryTitleRevealEnd = getTitleEnd(
+        primaryTitle,
+        timing.primaryTitleIn
       );
-      const titleTwoMoveStart = Math.max(
-        timing.titleTwoMoveStart,
-        titleTwoRevealEnd + 0.01
+      const primaryTitleMoveStart = Math.max(
+        timing.primaryTitleMoveStart,
+        primaryTitleRevealEnd + 0.01
       );
-      const titleTwoMoveEnd =
-        titleTwoMoveStart + timing.titleTwoMoveDuration;
-      const titleThreeStart = Math.min(
-        titleTwoMoveEnd + 0.01,
-        timing.orbitEnd - timing.titleThreeRevealDuration
+      const primaryTitleMoveEnd =
+        primaryTitleMoveStart + timing.primaryTitleMoveDuration;
+      const secondaryTitleStart = Math.min(
+        primaryTitleMoveEnd + 0.01,
+        timing.orbitEnd - timing.secondaryTitleRevealDuration
       );
-      const titleThreeEnd = Math.min(
-        titleThreeStart + timing.titleThreeRevealDuration,
+      const secondaryTitleEnd = Math.min(
+        secondaryTitleStart + timing.secondaryTitleRevealDuration,
         timing.orbitEnd
       );
       function syncTitleVisibility(progress) {
-        titles[0].style.visibility = progress <= titleOneEnd
-          ? "visible"
-          : "hidden";
-        titles[1].style.visibility =
-          progress >= titleTwoStart - 0.001
+        primaryTitle.style.visibility =
+          progress >= primaryTitleStart - 0.001
             ? "visible"
             : "hidden";
-        titles[2].style.visibility = progress >= titleThreeStart - 0.001
-          ? "visible"
-          : "hidden";
+        secondaryTitle.style.visibility =
+          progress >= secondaryTitleStart - 0.001
+            ? "visible"
+            : "hidden";
       }
 
       timeline = gsap.timeline({
@@ -1602,7 +1580,7 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
         }
       });
 
-      animateLinesIn(titles[0], timing.titleOneIn);
+      animateLinesIn(primaryTitle, timing.primaryTitleIn);
 
       videos.forEach(function (video, index) {
         const start = deterministic(
@@ -1632,38 +1610,35 @@ FINAL — 3 TITRES + ORBITE DES 8 VIDÉOS
         onUpdate: positionVideos
       }, timing.orbitStart);
 
-      animateLinesOut(titles[0], timing.titleOneOut);
-      animateLinesIn(titles[1], timing.titleTwoIn);
-
-      timeline.to(titles[1], {
-        x: titleTwoFinalX,
-        y: titleTwoFinalY,
-        scale: titleTwoFinalScale,
-        duration: timing.titleTwoMoveDuration,
+      timeline.to(primaryTitle, {
+        x: primaryTitleFinalX,
+        y: primaryTitleFinalY,
+        scale: primaryTitleFinalScale,
+        duration: timing.primaryTitleMoveDuration,
         ease: "power2.inOut"
-      }, titleTwoMoveStart);
+      }, primaryTitleMoveStart);
 
       animateLinesInOverRange(
-        titles[2],
-        titleThreeStart,
-        titleThreeEnd
+        secondaryTitle,
+        secondaryTitleStart,
+        secondaryTitleEnd
       );
       timeline.to(finalImages, {
         opacity: 1,
-        duration: titleThreeEnd - titleThreeStart,
+        duration: secondaryTitleEnd - secondaryTitleStart,
         ease: "none"
-      }, titleThreeStart);
+      }, secondaryTitleStart);
 
       timeline.to(orbitState, {
         offsetY: finalOrbitLift,
         duration: timing.orbitLiftDuration,
         ease: "power2.inOut",
         onUpdate: positionVideos
-      }, titleTwoMoveStart);
+      }, primaryTitleMoveStart);
 
       timeline.to({}, {
-        duration: Math.max(timing.orbitEnd - titleThreeStart, 0.01)
-      }, titleThreeStart);
+        duration: Math.max(timing.orbitEnd - secondaryTitleStart, 0.01)
+      }, secondaryTitleStart);
 
       const orbitEndAngle = 360 * FINAL_CONFIG.orbitTurns;
       const mainOrbitScrollDistance = Math.max(
