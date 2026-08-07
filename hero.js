@@ -4182,19 +4182,41 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
         return timeline.time();
       }
 
-      /*
-      Pendant un refresh, trigger.progress peut temporairement revenir à zéro
-      avant que ScrollTrigger ait fini de recalculer ses bornes. On lit donc
-      la position via le getter interne de ScrollTrigger et on ne revient à
-      progress qu'en dernier recours. Cela évite le retour intermittent des
-      13 cellules au centre pendant une restauration de page/mobile resize.
-      */
       let progress = Number(trigger.progress);
+      const scroller = trigger.scroller;
+      const usesViewport = !scroller ||
+        scroller === window ||
+        scroller === document ||
+        scroller === document.documentElement ||
+        scroller === document.body;
+
+      /*
+      Chrome/Safari peuvent restaurer le scroll avant que ScrollTrigger ait
+      rafraichi start, end et progress. Pour le viewport natif, la geometrie
+      courante de la section donne directement la progression de
+      "top top" a "bottom bottom" et ne depend d'aucun cache interne.
+      */
+      if (usesViewport && heroWrapper) {
+        const bounds = heroWrapper.getBoundingClientRect();
+        const viewportHeight = Number(
+          document.documentElement.clientHeight || window.innerHeight
+        );
+        const scrollDistance = bounds.height - viewportHeight;
+
+        if (
+          Number.isFinite(bounds.top) &&
+          Number.isFinite(scrollDistance) &&
+          scrollDistance > 0
+        ) {
+          progress = -bounds.top / scrollDistance;
+        }
+      }
+
       const hasBounds = Number.isFinite(trigger.start) &&
         Number.isFinite(trigger.end) &&
         trigger.end > trigger.start;
 
-      if (hasBounds) {
+      if (!usesViewport && hasBounds) {
         let scrollPosition = NaN;
 
         /*
@@ -4208,22 +4230,7 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
         }
 
         if (!Number.isFinite(scrollPosition)) {
-          const scroller = trigger.scroller;
-
-          if (
-            !scroller ||
-            scroller === window ||
-            scroller === document ||
-            scroller === document.documentElement ||
-            scroller === document.body
-          ) {
-            scrollPosition = Number(
-              window.scrollY ||
-              window.pageYOffset ||
-              document.documentElement.scrollTop ||
-              0
-            );
-          } else if (typeof ScrollTrigger.getScrollFunc === "function") {
+          if (typeof ScrollTrigger.getScrollFunc === "function") {
             const getScroll = ScrollTrigger.getScrollFunc(scroller);
             scrollPosition = getScroll ? Number(getScroll()) : NaN;
           }
