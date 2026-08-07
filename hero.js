@@ -3658,6 +3658,19 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
       } else {
         cell.setAttribute("style", originalStyle);
       }
+
+      /*
+      Modifier directement l'attribut style ne suffit pas : GSAP peut encore
+      conserver dans son cache les x/y/scale de l'état central précédent.
+      La mesure suivante doit impérativement reparcourir le style Webflow
+      réellement restauré, sinon cette position centrale devient par erreur
+      la nouvelle destination de la cellule.
+      */
+      const cache = gsap.core.getCache(cell);
+
+      if (cache) {
+        cache.uncache = 1;
+      }
     }
 
     function restoreTargetStyles() {
@@ -4200,9 +4213,40 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
         Number.isFinite(trigger.end) &&
         trigger.end > trigger.start;
 
-      if (hasBounds && typeof ScrollTrigger.getScrollFunc === "function") {
-        const getScroll = ScrollTrigger.getScrollFunc(trigger.scroller);
-        const scrollPosition = getScroll ? Number(getScroll()) : NaN;
+      if (hasBounds) {
+        let scrollPosition = NaN;
+
+        /*
+        trigger.progress passe brièvement à zéro pendant certains refresh,
+        notamment lors du chargement asynchrone des SVG ou de la restauration
+        de page. L'instance ScrollTrigger expose en revanche sa position de
+        scroll réelle via scroll(), y compris avec un scroller personnalisé.
+        */
+        if (typeof trigger.scroll === "function") {
+          scrollPosition = Number(trigger.scroll());
+        }
+
+        if (!Number.isFinite(scrollPosition)) {
+          const scroller = trigger.scroller;
+
+          if (
+            !scroller ||
+            scroller === window ||
+            scroller === document ||
+            scroller === document.documentElement ||
+            scroller === document.body
+          ) {
+            scrollPosition = Number(
+              window.scrollY ||
+              window.pageYOffset ||
+              document.documentElement.scrollTop ||
+              0
+            );
+          } else if (typeof ScrollTrigger.getScrollFunc === "function") {
+            const getScroll = ScrollTrigger.getScrollFunc(scroller);
+            scrollPosition = getScroll ? Number(getScroll()) : NaN;
+          }
+        }
 
         if (Number.isFinite(scrollPosition)) {
           progress = (scrollPosition - trigger.start) /
