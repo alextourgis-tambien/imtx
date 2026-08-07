@@ -1907,7 +1907,6 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
     cellLottieSequence: {
       frameStart: 0.205,
       frameEnd: 0.82,
-      visualScale: 0.8,
       jsonUrls: [
         "imtx-website-auxcell-special.json",
         "imtx-website-auxcell-large-a.json",
@@ -2946,61 +2945,44 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
       });
     }
 
-    function normalizeCellLottieContent(cell, animation, index) {
+    function prepareCellLottieContent(cell, index) {
       const svg = cell.querySelector("svg");
 
-      if (!svg || typeof svg.getBBox !== "function") {
+      if (!svg) {
         renderCellLottieFrame(index);
         return Promise.resolve();
       }
 
-      const frameCount = Math.max(
-        Number(animation.totalFrames) || 1,
-        1
-      );
+      /*
+      La taille appartient exclusivement à la box configurée dans Webflow.
+      On conserve donc le viewBox 400x400 produit par Lottie : recadrer le SVG
+      autour de son dessin agrandissait artificiellement les fichiers Small
+      et réduisait la différence visuelle entre Small, Medium et Large.
 
-      animation.goToAndStop(frameCount - 1, true);
+      Seule la première cellule conserve un recentrage dynamique. Sa fenêtre
+      garde toutefois exactement les dimensions du viewBox original, donc ce
+      recentrage ne crée aucun zoom.
+      */
+      const originalViewBox = svg.viewBox && svg.viewBox.baseVal;
+
+      if (
+        index === 0 &&
+        originalViewBox &&
+        originalViewBox.width > 0 &&
+        originalViewBox.height > 0
+      ) {
+        cellLottieViewBoxes[index] = {
+          width: originalViewBox.width,
+          height: originalViewBox.height
+        };
+      } else {
+        cellLottieViewBoxes[index] = null;
+      }
+
+      svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
 
       return new Promise(function (resolve) {
         window.requestAnimationFrame(function () {
-          try {
-            const bounds = getTransformedSvgContentBounds(svg);
-
-            if (bounds.width > 0 && bounds.height > 0) {
-              const padding = Math.max(
-                bounds.width,
-                bounds.height
-              ) * 0.045;
-              const visualScale =
-                CONFIG.cellLottieSequence.visualScale;
-              const normalizedWidth =
-                (bounds.width + padding * 2) / visualScale;
-              const normalizedHeight =
-                (bounds.height + padding * 2) / visualScale;
-
-              cellLottieViewBoxes[index] = {
-                width: normalizedWidth,
-                height: normalizedHeight
-              };
-
-              svg.setAttribute("viewBox", [
-                bounds.x + bounds.width / 2 - normalizedWidth / 2,
-                bounds.y + bounds.height / 2 - normalizedHeight / 2,
-                normalizedWidth,
-                normalizedHeight
-              ].join(" "));
-              svg.setAttribute(
-                "preserveAspectRatio",
-                "xMidYMid meet"
-              );
-            }
-          } catch (error) {
-            console.warn(
-              "Hero cellules : normalisation du Lottie impossible pour " +
-              "la cellule " + (index + 1) + "."
-            );
-          }
-
           renderCellLottieFrame(index);
           resolve();
         });
@@ -3036,9 +3018,8 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
                   }
                   completed = true;
                   window.clearTimeout(readyTimer);
-                  normalizeCellLottieContent(
+                  prepareCellLottieContent(
                     cell,
-                    animation,
                     index
                   ).then(resolve);
                 };
