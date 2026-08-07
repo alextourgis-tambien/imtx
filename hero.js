@@ -2909,6 +2909,43 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
       };
     }
 
+    function getCellLottieBoundsAtNaturalScale(cell, svg) {
+      const inlineTransform = cell.style.getPropertyValue("transform");
+      const transformPriority = cell.style.getPropertyPriority("transform");
+      const cache = gsap.core.getCache(cell);
+
+      /*
+      Au chargement en haut de page, positionCells place les cellules a
+      scale:0 avant l'arrivee des SVG. getScreenCTM devient alors singuliere
+      et le recadrage Lottie echoue. Le wrapper est encore masque a ce stade :
+      on peut donc mesurer une frame a son echelle naturelle sans aucun flash,
+      puis restaurer exactement le transform anime.
+      */
+      cell.style.setProperty("transform", "none", "important");
+
+      if (cache) {
+        cache.uncache = 1;
+      }
+
+      try {
+        return getTransformedSvgContentBounds(svg);
+      } finally {
+        if (inlineTransform) {
+          cell.style.setProperty(
+            "transform",
+            inlineTransform,
+            transformPriority
+          );
+        } else {
+          cell.style.removeProperty("transform");
+        }
+
+        if (cache) {
+          cache.uncache = 1;
+        }
+      }
+    }
+
     function centerFirstCellLottieFrame(index) {
       if (index !== 0 || !cellLottieViewBoxes[index]) {
         return;
@@ -2968,7 +3005,7 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
         window.requestAnimationFrame(function () {
           window.requestAnimationFrame(function () {
             try {
-              const bounds = getTransformedSvgContentBounds(svg);
+              const bounds = getCellLottieBoundsAtNaturalScale(cell, svg);
 
               if (bounds.width > 0 && bounds.height > 0) {
                 const padding = Math.max(bounds.width, bounds.height) * 0.045;
