@@ -2945,46 +2945,59 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
       });
     }
 
-    function prepareCellLottieContent(cell, index) {
+    function normalizeCellLottieContent(cell, animation, index) {
       const svg = cell.querySelector("svg");
 
-      if (!svg) {
+      if (!svg || typeof svg.getBBox !== "function") {
         renderCellLottieFrame(index);
         return Promise.resolve();
       }
 
       /*
-      La taille appartient exclusivement à la box configurée dans Webflow.
-      On conserve donc le viewBox 400x400 produit par Lottie : recadrer le SVG
-      autour de son dessin agrandissait artificiellement les fichiers Small
-      et réduisait la différence visuelle entre Small, Medium et Large.
-
-      Seule la première cellule conserve un recentrage dynamique. Sa fenêtre
-      garde toutefois exactement les dimensions du viewBox original, donc ce
-      recentrage ne crée aucun zoom.
+      Les JSON Small, Medium et Large n'occupent pas la meme proportion de
+      leur composition. Garder le viewBox complet multiplie leur taille
+      interne par celle deja definie dans Webflow. On recadre donc uniquement
+      la fenetre SVG autour du dessin final : la box Webflow redevient ainsi
+      l'unique source de taille, sans scale correctif en JavaScript.
       */
-      const originalViewBox = svg.viewBox && svg.viewBox.baseVal;
+      const frameCount = Math.max(Number(animation.totalFrames) || 1, 1);
 
-      if (
-        index === 0 &&
-        originalViewBox &&
-        originalViewBox.width > 0 &&
-        originalViewBox.height > 0
-      ) {
-        cellLottieViewBoxes[index] = {
-          width: originalViewBox.width,
-          height: originalViewBox.height
-        };
-      } else {
-        cellLottieViewBoxes[index] = null;
-      }
-
-      svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+      animation.goToAndStop(frameCount - 1, true);
 
       return new Promise(function (resolve) {
         window.requestAnimationFrame(function () {
-          renderCellLottieFrame(index);
-          resolve();
+          window.requestAnimationFrame(function () {
+            try {
+              const bounds = getTransformedSvgContentBounds(svg);
+
+              if (bounds.width > 0 && bounds.height > 0) {
+                const padding = Math.max(bounds.width, bounds.height) * 0.045;
+                const normalizedWidth = bounds.width + padding * 2;
+                const normalizedHeight = bounds.height + padding * 2;
+
+                cellLottieViewBoxes[index] = {
+                  width: normalizedWidth,
+                  height: normalizedHeight
+                };
+
+                svg.setAttribute("viewBox", [
+                  bounds.x + bounds.width / 2 - normalizedWidth / 2,
+                  bounds.y + bounds.height / 2 - normalizedHeight / 2,
+                  normalizedWidth,
+                  normalizedHeight
+                ].join(" "));
+                svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+              }
+            } catch (error) {
+              console.warn(
+                "Hero cellules : normalisation du Lottie impossible pour " +
+                "la cellule " + (index + 1) + "."
+              );
+            }
+
+            renderCellLottieFrame(index);
+            resolve();
+          });
         });
       });
     }
@@ -3018,8 +3031,9 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
                   }
                   completed = true;
                   window.clearTimeout(readyTimer);
-                  prepareCellLottieContent(
+                  normalizeCellLottieContent(
                     cell,
+                    animation,
                     index
                   ).then(resolve);
                 };
@@ -4071,7 +4085,8 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
           scale: measurement.targetScale * visibility * exitScale,
           rotation: measurement.targetRotation,
           opacity: visibility,
-          transformOrigin: "50% 50%"
+          transformOrigin: "50% 50%",
+          force3D: false
         });
       });
     }

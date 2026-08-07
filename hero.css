@@ -496,7 +496,7 @@ html.hero-animation-ready.hero-cells-ready .hh__cells-wrapper{
 }
 
 .hh__cells-lottie{
-  will-change:transform;
+  will-change:auto;
 }
 
 .hh__cencer-lottie{
