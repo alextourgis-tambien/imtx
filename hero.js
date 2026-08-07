@@ -2655,6 +2655,9 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
     });
     let cellLottiesLoadPromise = null;
     let cellLottiesInitializationAttempt = 0;
+    let cellLottiesLoaded = false;
+    let cellLottiesReadyForReveal = false;
+    let cellLottieRevealNormalizationPromise = null;
     let cellSyncFrame = 0;
     const cancerLottieStates = cancerCells.map(function () {
       return { progress: 0 };
@@ -3004,7 +3007,11 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
       return new Promise(function (resolve) {
         window.requestAnimationFrame(function () {
           window.requestAnimationFrame(function () {
+            let normalized = false;
+
             try {
+              /* Un scroll entre les deux frames ne doit pas changer la frame mesuree. */
+              animation.goToAndStop(frameCount - 1, true);
               const bounds = getCellLottieBoundsAtNaturalScale(cell, svg);
 
               if (bounds.width > 0 && bounds.height > 0) {
@@ -3024,6 +3031,7 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
                   normalizedHeight
                 ].join(" "));
                 svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+                normalized = true;
               }
             } catch (error) {
               console.warn(
@@ -3033,9 +3041,69 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
             }
 
             renderCellLottieFrame(index);
-            resolve();
+            resolve(normalized);
           });
         });
+      });
+    }
+
+    function ensureCellLottiesReadyForReveal(time) {
+      if (
+        !cellLottiesLoaded ||
+        cellLottiesReadyForReveal ||
+        cellLottieRevealNormalizationPromise ||
+        !cells.length
+      ) {
+        return;
+      }
+
+      const revealPreparationStart = Math.max(
+        CONFIG.scroll.firstCellStart - 0.03,
+        0
+      );
+
+      if (!prefersReducedMotion && time < revealPreparationStart) {
+        return;
+      }
+
+      /*
+      Le recadrage final est volontairement reporte juste avant l'apparition.
+      A cet instant la section possede sa geometrie de rendu definitive. Le
+      wrapper reste masque jusqu'a ce que les 13 viewBox soient valides, ce
+      qui rend identiques un chargement en haut et un chargement sur place.
+      */
+      document.documentElement.classList.remove("hero-cells-ready");
+
+      cellLottieRevealNormalizationPromise = Promise.all(
+        cells.map(function (cell, index) {
+          return normalizeCellLottieContent(
+            cell,
+            cellLottieAnimations[index],
+            index
+          );
+        })
+      ).then(function (results) {
+        if (!results.every(Boolean)) {
+          throw new Error("recadrage incomplet des 13 cellules");
+        }
+
+        measureCells();
+
+        if (!prefersReducedMotion) {
+          createFloating();
+        }
+
+        cellLottiesReadyForReveal = true;
+        cellLottieRevealNormalizationPromise = null;
+
+        ScrollTrigger.refresh();
+        ScrollTrigger.update();
+        syncCellsToScrollTrigger();
+        document.documentElement.classList.add("hero-cells-ready");
+        queueCellSyncBurst();
+      }).catch(function (error) {
+        console.warn("Hero cellules : " + error.message + ".");
+        cellLottieRevealNormalizationPromise = null;
       });
     }
 
@@ -3158,6 +3226,8 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
               );
             }
 
+            cellLottiesLoaded = true;
+            cellLottiesReadyForReveal = false;
             renderAllCellLottieFrames();
 
             /*
@@ -3183,9 +3253,6 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
             ScrollTrigger.update();
             syncCellsToScrollTrigger();
             cellLottiesInitializationAttempt = 0;
-            document.documentElement.classList.add("hero-cells-ready");
-
-            queueCellSyncBurst();
           });
         })
         .catch(function (error) {
@@ -3194,6 +3261,9 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
           );
 
           document.documentElement.classList.remove("hero-cells-ready");
+          cellLottiesLoaded = false;
+          cellLottiesReadyForReveal = false;
+          cellLottieRevealNormalizationPromise = null;
           cellLottieAnimations.forEach(function (animation, index) {
             if (animation && typeof animation.destroy === "function") {
               animation.destroy();
@@ -4189,6 +4259,7 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
       });
 
       positionCells();
+      ensureCellLottiesReadyForReveal(time);
     }
 
     function syncCellLottieFramesFromTimelineTime(time) {
