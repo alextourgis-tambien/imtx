@@ -5893,6 +5893,204 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 /*==================================================
+MENU BURGER — OUVERTURE PLEIN ÉCRAN
+==================================================*/
+
+(function () {
+  "use strict";
+
+  function initFullscreenBurgerNavigation() {
+    if (typeof window.gsap === "undefined") {
+      window.setTimeout(initFullscreenBurgerNavigation, 50);
+      return;
+    }
+
+    const nav = document.querySelector(".nav");
+    const burger = document.querySelector(".menu__burger-nav");
+    const linksWrapper =
+      (nav && nav.querySelector(".nav-link__wrapper")) ||
+      document.querySelector(".nav-link__wrapper");
+    const burgerLines = burger && burger.querySelectorAll(".nav__burger-line");
+    const cross =
+      (burger && burger.querySelector(".cross")) ||
+      (nav && nav.querySelector(".cross")) ||
+      document.querySelector(".cross");
+
+    if (
+      !nav ||
+      !burger ||
+      !linksWrapper ||
+      !burgerLines.length ||
+      !cross ||
+      burger.dataset.fullscreenMenuReady === "true"
+    ) {
+      return;
+    }
+
+    burger.dataset.fullscreenMenuReady = "true";
+
+    let isOpen = false;
+    let animation = null;
+    let closedHeight = nav.getBoundingClientRect().height;
+
+    function getViewportHeight() {
+      return window.visualViewport?.height || window.innerHeight;
+    }
+
+    function setExpandedState(open) {
+      burger.setAttribute("aria-expanded", open ? "true" : "false");
+      nav.classList.toggle("is-menu-open", open);
+    }
+
+    function openMenu() {
+      if (isOpen) {
+        return;
+      }
+
+      isOpen = true;
+      setExpandedState(true);
+
+      if (animation) {
+        animation.kill();
+      }
+
+      gsap.set(linksWrapper, {
+        display: "flex",
+        opacity: 0,
+        visibility: "visible",
+        pointerEvents: "auto"
+      });
+      gsap.set(cross, {
+        display: "flex",
+        opacity: 0,
+        visibility: "visible",
+        pointerEvents: "auto"
+      });
+      gsap.set(nav, { overflow: "hidden" });
+
+      animation = gsap.timeline({
+        defaults: {
+          overwrite: "auto"
+        }
+      });
+
+      animation
+        .to(nav, {
+          height: getViewportHeight,
+          duration: 0.72,
+          ease: "power3.inOut"
+        }, 0)
+        .to(burgerLines, {
+          opacity: 0,
+          duration: 0.22,
+          ease: "power2.out"
+        }, 0)
+        .to(cross, {
+          opacity: 1,
+          duration: 0.28,
+          ease: "power2.out"
+        }, 0.12)
+        .to(linksWrapper, {
+          opacity: 1,
+          duration: 0.42,
+          ease: "power2.out"
+        }, 0.26);
+    }
+
+    function closeMenu() {
+      if (!isOpen) {
+        return;
+      }
+
+      isOpen = false;
+      setExpandedState(false);
+
+      if (animation) {
+        animation.kill();
+      }
+
+      animation = gsap.timeline({
+        defaults: {
+          overwrite: "auto"
+        },
+        onComplete: function () {
+          gsap.set(nav, { clearProps: "height,overflow" });
+          gsap.set(linksWrapper, {
+            clearProps: "display,opacity,visibility,pointerEvents"
+          });
+          gsap.set(cross, {
+            clearProps: "display,opacity,visibility,pointerEvents"
+          });
+          gsap.set(burgerLines, { clearProps: "opacity" });
+          closedHeight = nav.getBoundingClientRect().height;
+        }
+      });
+
+      animation
+        .to(linksWrapper, {
+          opacity: 0,
+          duration: 0.24,
+          ease: "power2.in"
+        }, 0)
+        .to(cross, {
+          opacity: 0,
+          duration: 0.2,
+          ease: "power2.in"
+        }, 0)
+        .to(burgerLines, {
+          opacity: 1,
+          duration: 0.28,
+          ease: "power2.out"
+        }, 0.16)
+        .to(nav, {
+          height: closedHeight,
+          duration: 0.66,
+          ease: "power3.inOut"
+        }, 0.08);
+    }
+
+    function toggleMenu() {
+      if (isOpen) {
+        closeMenu();
+      } else {
+        openMenu();
+      }
+    }
+
+    setExpandedState(false);
+
+    burger.addEventListener("click", function (event) {
+      event.preventDefault();
+      toggleMenu();
+    });
+
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape" && isOpen) {
+        closeMenu();
+      }
+    });
+
+    window.addEventListener("resize", function () {
+      if (isOpen) {
+        gsap.set(nav, { height: getViewportHeight() });
+      } else if (!animation || !animation.isActive()) {
+        closedHeight = nav.getBoundingClientRect().height;
+      }
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener(
+      "DOMContentLoaded",
+      initFullscreenBurgerNavigation,
+      { once: true }
+    );
+  } else {
+    initFullscreenBurgerNavigation();
+  }
+})();
+
+/*==================================================
 HOVERS GSAP — BOUTONS ET LIENS DE NAVIGATION
 ==================================================*/
 

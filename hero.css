@@ -40,6 +40,18 @@ HERO — LA HAUTEUR DU WRAPPER RESTE GÉRÉE DANS WEBFLOW
   background-color:rgba(15,18,21,0.72) !important;
 }
 
+/*==================================================
+MENU BURGER — OUVERTURE PLEIN ÉCRAN
+==================================================*/
+
+.menu__burger-nav{
+  cursor:pointer;
+}
+
+.nav.is-menu-open{
+  overflow:hidden;
+}
+
 
 /* Menu button */
 .twostep-nav__toggle-bar{
