@@ -5967,6 +5967,9 @@ MENU BURGER — OUVERTURE PLEIN ÉCRAN
     let isOpen = false;
     let animation = null;
     let closedHeight = nav.getBoundingClientRect().height;
+    let lockedScrollY = 0;
+    let previousBodyTop = "";
+    let scrollIsLocked = false;
 
     function getViewportHeight() {
       return window.visualViewport?.height || window.innerHeight;
@@ -5977,12 +5980,38 @@ MENU BURGER — OUVERTURE PLEIN ÉCRAN
       nav.classList.toggle("is-menu-open", open);
     }
 
+    function lockPageScroll() {
+      if (scrollIsLocked) {
+        return;
+      }
+
+      scrollIsLocked = true;
+      lockedScrollY = window.scrollY || window.pageYOffset || 0;
+      previousBodyTop = document.body.style.top;
+      document.body.style.top = -lockedScrollY + "px";
+      document.documentElement.classList.add("imtx-menu-scroll-locked");
+      document.body.classList.add("imtx-menu-scroll-locked");
+    }
+
+    function unlockPageScroll() {
+      if (!scrollIsLocked) {
+        return;
+      }
+
+      scrollIsLocked = false;
+      document.documentElement.classList.remove("imtx-menu-scroll-locked");
+      document.body.classList.remove("imtx-menu-scroll-locked");
+      document.body.style.top = previousBodyTop;
+      window.scrollTo(0, lockedScrollY);
+    }
+
     function openMenu() {
       if (isOpen) {
         return;
       }
 
       isOpen = true;
+      lockPageScroll();
       setExpandedState(true);
 
       if (animation) {
@@ -6058,6 +6087,7 @@ MENU BURGER — OUVERTURE PLEIN ÉCRAN
           });
           gsap.set(burgerLines, { clearProps: "opacity" });
           closedHeight = nav.getBoundingClientRect().height;
+          unlockPageScroll();
         }
       });
 
