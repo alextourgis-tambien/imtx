@@ -33,6 +33,27 @@ HERO — LA HAUTEUR DU WRAPPER RESTE GÉRÉE DANS WEBFLOW
 /* Flou limité au panneau ouvert sur desktop. */
 @media screen and (min-width:992px){
   /*
+  Un backdrop-filter directement sur .nav empêcherait les descendants
+  d'échantillonner la page. Le même verre est donc peint sur un calque
+  enfant, qui n'est pas un ancêtre de .nav__navigation.
+  */
+  .nav{
+    -webkit-backdrop-filter:none !important;
+    backdrop-filter:none !important;
+  }
+
+  .nav::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    border-radius:inherit;
+    pointer-events:none;
+    -webkit-backdrop-filter:saturate(120%) blur(100px);
+    backdrop-filter:saturate(120%) blur(100px);
+    will-change:backdrop-filter;
+  }
+
+  /*
   Le wrapper Webflow ne doit créer ni fond opaque ni backdrop root :
   sinon le panneau enfant ne peut pas échantillonner la page derrière lui.
   */
