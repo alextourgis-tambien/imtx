@@ -30,6 +30,12 @@ HERO — LA HAUTEUR DU WRAPPER RESTE GÉRÉE DANS WEBFLOW
   --animation-default-half: var(--duration-default-half) var(--cubic-default);
 }
 
+/* Le flou Webflow n'est pas toujours préfixé pour Safari. */
+.nav__navigation{
+  -webkit-backdrop-filter:blur(100px) !important;
+  backdrop-filter:blur(100px) !important;
+}
+
 
 /* Menu button */
 .twostep-nav__toggle-bar{
