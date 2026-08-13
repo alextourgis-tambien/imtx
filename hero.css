@@ -30,8 +30,7 @@ HERO — LA HAUTEUR DU WRAPPER RESTE GÉRÉE DANS WEBFLOW
   --animation-default-half: var(--duration-default-half) var(--cubic-default);
 }
 
-/* Le wrapper Webflow du dropdown porte le fond réellement visible. */
-.navbar__dropdown,
+/* Flou limité au panneau ouvert, jamais au wrapper du dropdown. */
 .nav__navigation{
   -webkit-backdrop-filter:blur(100px) !important;
   backdrop-filter:blur(100px) !important;
