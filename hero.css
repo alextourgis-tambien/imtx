@@ -33,13 +33,32 @@ HERO — LA HAUTEUR DU WRAPPER RESTE GÉRÉE DANS WEBFLOW
 /* Flou limité au panneau ouvert sur desktop. */
 @media screen and (min-width:992px){
   /*
-  Le blur original de .nav reste intact. Il est neutralisé uniquement
-  pendant l'ouverture d'un dropdown, afin que le panneau enfant puisse
-  échantillonner directement la page sans modifier le layout de la navbar.
+  Le verre de la navbar vit sur un calque frère du dropdown. Contrairement
+  au premier essai, .nav est la référence de position et le calque reste
+  derrière tous ses contenus : aucune incidence sur la taille ou le layout.
   */
-  .nav:has(.nav__navigation.w--open){
+  .nav.imtx-nav-backdrop-ready{
     -webkit-backdrop-filter:none !important;
     backdrop-filter:none !important;
+  }
+
+  .nav.imtx-nav-static{
+    position:relative;
+  }
+
+  .nav.imtx-nav-backdrop-ready::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    z-index:0;
+    border-radius:inherit;
+    pointer-events:none;
+    -webkit-backdrop-filter:saturate(120%) blur(100px);
+    backdrop-filter:saturate(120%) blur(100px);
+  }
+
+  .nav.imtx-nav-backdrop-ready > *{
+    z-index:1;
   }
 
   /*

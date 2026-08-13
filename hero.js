@@ -5899,6 +5899,41 @@ MENU BURGER — OUVERTURE PLEIN ÉCRAN
 (function () {
   "use strict";
 
+  function initDesktopNavBackdropLayer() {
+    const nav = document.querySelector(".nav");
+
+    if (!nav || nav.dataset.backdropLayerReady === "true") {
+      return;
+    }
+
+    nav.dataset.backdropLayerReady = "true";
+
+    function updateContainingBlock() {
+      nav.classList.remove("imtx-nav-static");
+
+      if (window.getComputedStyle(nav).position === "static") {
+        nav.classList.add("imtx-nav-static");
+      }
+
+      nav.classList.add("imtx-nav-backdrop-ready");
+    }
+
+    updateContainingBlock();
+    window.addEventListener("resize", updateContainingBlock);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initDesktopNavBackdropLayer, {
+      once: true
+    });
+  } else {
+    initDesktopNavBackdropLayer();
+  }
+})();
+
+(function () {
+  "use strict";
+
   function initFullscreenBurgerNavigation() {
     if (typeof window.gsap === "undefined") {
       window.setTimeout(initFullscreenBurgerNavigation, 50);
