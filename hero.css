@@ -32,6 +32,16 @@ HERO — LA HAUTEUR DU WRAPPER RESTE GÉRÉE DANS WEBFLOW
 
 /* Flou limité au panneau ouvert sur desktop. */
 @media screen and (min-width:992px){
+  /*
+  Le wrapper Webflow ne doit créer ni fond opaque ni backdrop root :
+  sinon le panneau enfant ne peut pas échantillonner la page derrière lui.
+  */
+  .navbar__dropdown{
+    background-color:transparent !important;
+    -webkit-backdrop-filter:none !important;
+    backdrop-filter:none !important;
+  }
+
   .nav__navigation{
     background-color:rgba(15,18,21,0.52) !important;
     -webkit-backdrop-filter:saturate(120%) blur(100px) !important;
