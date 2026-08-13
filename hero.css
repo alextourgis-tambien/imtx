@@ -33,24 +33,13 @@ HERO — LA HAUTEUR DU WRAPPER RESTE GÉRÉE DANS WEBFLOW
 /* Flou limité au panneau ouvert sur desktop. */
 @media screen and (min-width:992px){
   /*
-  Un backdrop-filter directement sur .nav empêcherait les descendants
-  d'échantillonner la page. Le même verre est donc peint sur un calque
-  enfant, qui n'est pas un ancêtre de .nav__navigation.
+  Le blur original de .nav reste intact. Il est neutralisé uniquement
+  pendant l'ouverture d'un dropdown, afin que le panneau enfant puisse
+  échantillonner directement la page sans modifier le layout de la navbar.
   */
-  .nav{
+  .nav:has(.nav__navigation.w--open){
     -webkit-backdrop-filter:none !important;
     backdrop-filter:none !important;
-  }
-
-  .nav::before{
-    content:"";
-    position:absolute;
-    inset:0;
-    border-radius:inherit;
-    pointer-events:none;
-    -webkit-backdrop-filter:saturate(120%) blur(100px);
-    backdrop-filter:saturate(120%) blur(100px);
-    will-change:backdrop-filter;
   }
 
   /*
