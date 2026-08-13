@@ -5992,9 +5992,9 @@ MENU BURGER — OUVERTURE PLEIN ÉCRAN
         }, 0.12)
         .to(linksWrapper, {
           opacity: 1,
-          duration: 0.42,
+          duration: 0.32,
           ease: "power2.out"
-        }, 0.26);
+        }, 0.04);
     }
 
     function closeMenu() {

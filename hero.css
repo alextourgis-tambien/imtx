@@ -30,14 +30,14 @@ HERO — LA HAUTEUR DU WRAPPER RESTE GÉRÉE DANS WEBFLOW
   --animation-default-half: var(--duration-default-half) var(--cubic-default);
 }
 
-/* Flou limité au panneau ouvert, jamais au wrapper du dropdown. */
-.nav__navigation{
-  -webkit-backdrop-filter:blur(100px) !important;
-  backdrop-filter:blur(100px) !important;
-}
-
-.nav__navigation{
-  background-color:rgba(15,18,21,0.72) !important;
+/* Flou limité au panneau ouvert sur desktop. */
+@media screen and (min-width:992px){
+  .nav__navigation{
+    background-color:rgba(15,18,21,0.52) !important;
+    -webkit-backdrop-filter:saturate(120%) blur(100px) !important;
+    backdrop-filter:saturate(120%) blur(100px) !important;
+    will-change:backdrop-filter;
+  }
 }
 
 /*==================================================
