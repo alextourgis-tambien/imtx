@@ -1907,20 +1907,24 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
     cellLottieSequence: {
       frameStart: 0.205,
       frameEnd: 0.82,
+      depthOpacities: [
+        1, 1, 0.75, 0.75, 0.5, 0.75, 0.5,
+        1, 1, 0.75, 0.5, 0.75, 1
+      ],
       jsonUrls: [
         "imtx-website-auxcell-special.json",
         "imtx-website-auxcell-altp-a-v01.json",
         "imtx-website-auxcell-altp-b-v01.json",
         "imtx-website-auxcell-altp-c-v01.json",
         "imtx-website-auxcell-small.json",
-        "imtx-website-auxcell-altp-d-v01.json",
+        "imtx-website-auxcell-altp-e-v01.json",
         "imtx-website-auxcell-small.json",
         "imtx-website-auxcell-altp-e-v01.json",
         "imtx-website-auxcell-altp-a-v01.json",
         "imtx-website-auxcell-altp-b-v01.json",
         "imtx-website-auxcell-small.json",
         "imtx-website-auxcell-altp-c-v01.json",
-        "imtx-website-auxcell-altp-d-v01.json"
+        "imtx-website-auxcell-altp-a-v01.json"
       ].map(function (fileName) {
         return "https://alextourgis-tambien.github.io/imtx/" + fileName;
       }),
@@ -1929,6 +1933,11 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
 
     cancerLottieSequence: {
       visualScale: 0.8,
+      depthOpacities: [
+        1, 0.5, 1, 0.75, 0.5, 1, 0.5, 0.75,
+        1, 0.5, 0.75, 0.75, 0.5, 0.75, 1, 1,
+        0.75, 0.5, 0.5, 1, 0.75, 0.5, 0.5
+      ],
       jsonUrls: [
         "imtx-website-auxcell-altp-a-v01.json",
         "imtx-website-auxcell-small.json",
@@ -1941,10 +1950,10 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
         "imtx-website-auxcell-blue-c-v01.json",
         "imtx-website-auxcell-small.json",
         "imtx-website-auxcell-altp-c-v01.json",
-        "imtx-website-auxcell-blue-d-v01.json",
+        "imtx-website-auxcell-blue-c-v01.json",
         "imtx-website-auxcell-small.json",
         "imtx-website-auxcell-green-a-v01.json",
-        "imtx-website-auxcell-altp-d-v01.json",
+        "imtx-website-auxcell-altp-c-v01.json",
         "imtx-website-auxcell-blue-b-v01.json",
         "imtx-website-auxcell-green-e-v01.json",
         "imtx-website-auxcell-small.json",
@@ -3970,13 +3979,15 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
 
         const startX = measurement.targetX + measurement.centerOffsetX;
         const startY = measurement.targetY + measurement.centerOffsetY;
+        const depthOpacity =
+          CONFIG.cancerLottieSequence.depthOpacities[index] ?? 1;
 
         gsap.set(cell, {
           x: gsap.utils.interpolate(startX, measurement.targetX, progress),
           y: gsap.utils.interpolate(startY, measurement.targetY, progress),
           scale: measurement.targetScale * progress,
           rotation: measurement.targetRotation,
-          opacity: 1,
+          opacity: depthOpacity,
           transformOrigin: "50% 50%",
           force3D: false
         });
@@ -4185,13 +4196,15 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
         const exitScale = cellExit[index].value;
         const startX = measurement.targetX + measurement.centerOffsetX;
         const startY = measurement.targetY + measurement.centerOffsetY;
+        const depthOpacity =
+          CONFIG.cellLottieSequence.depthOpacities[index] ?? 1;
 
         gsap.set(cell, {
           x: gsap.utils.interpolate(startX, measurement.targetX, progress),
           y: gsap.utils.interpolate(startY, measurement.targetY, progress),
           scale: measurement.targetScale * visibility * exitScale,
           rotation: measurement.targetRotation,
-          opacity: visibility,
+          opacity: visibility * depthOpacity,
           transformOrigin: "50% 50%",
           force3D: false
         });
