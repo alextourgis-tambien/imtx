@@ -6248,28 +6248,35 @@ MENU BURGER — OUVERTURE PLEIN ÉCRAN
 })();
 
 /*==================================================
-INDICATEUR DE SCROLL — DISPARITION AU PREMIER SCROLL
+INDICATEURS DE SCROLL — DISPARITION AU PREMIER SCROLL
 ==================================================*/
 
 (function () {
   "use strict";
 
-  function initScrollArrowExit() {
+  function initScrollIndicatorsExit() {
     if (typeof window.gsap === "undefined") {
-      window.setTimeout(initScrollArrowExit, 50);
+      window.setTimeout(initScrollIndicatorsExit, 50);
       return;
     }
 
-    const arrowWrapper = document.querySelector(".scroll__arrow-wrapper");
+    const indicators = [
+      {
+        element: document.querySelector(".scroll__arrow-wrapper"),
+        hiddenY: 28
+      },
+      {
+        element: document.querySelector(".nav__news"),
+        hiddenY: -28
+      }
+    ].filter(function (indicator) {
+      return indicator.element &&
+        indicator.element.dataset.scrollExitReady !== "true";
+    });
 
-    if (
-      !arrowWrapper ||
-      arrowWrapper.dataset.scrollExitReady === "true"
-    ) {
+    if (!indicators.length) {
       return;
     }
-
-    arrowWrapper.dataset.scrollExitReady = "true";
 
     const prefersReducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
@@ -6278,12 +6285,16 @@ INDICATEUR DE SCROLL — DISPARITION AU PREMIER SCROLL
     let isHidden = false;
     let ticking = false;
 
-    gsap.set(arrowWrapper, {
-      autoAlpha: 1,
-      y: 0
+    indicators.forEach(function (indicator) {
+      indicator.element.dataset.scrollExitReady = "true";
+
+      gsap.set(indicator.element, {
+        autoAlpha: 1,
+        y: 0
+      });
     });
 
-    function updateArrowState() {
+    function updateIndicatorsState() {
       ticking = false;
 
       const shouldHide = (window.scrollY || window.pageYOffset || 0) > 8;
@@ -6294,35 +6305,39 @@ INDICATEUR DE SCROLL — DISPARITION AU PREMIER SCROLL
 
       isHidden = shouldHide;
 
-      gsap.to(arrowWrapper, {
-        autoAlpha: shouldHide ? 0 : 1,
-        y: shouldHide ? 28 : 0,
-        duration: duration,
-        ease: shouldHide ? "power2.in" : "power2.out",
-        overwrite: "auto",
-        pointerEvents: shouldHide ? "none" : "auto"
+      indicators.forEach(function (indicator) {
+        gsap.to(indicator.element, {
+          autoAlpha: shouldHide ? 0 : 1,
+          y: shouldHide ? indicator.hiddenY : 0,
+          duration: duration,
+          ease: shouldHide ? "power2.in" : "power2.out",
+          overwrite: "auto",
+          pointerEvents: shouldHide ? "none" : "auto"
+        });
       });
     }
 
-    function requestArrowUpdate() {
+    function requestIndicatorsUpdate() {
       if (ticking) {
         return;
       }
 
       ticking = true;
-      window.requestAnimationFrame(updateArrowState);
+      window.requestAnimationFrame(updateIndicatorsState);
     }
 
-    window.addEventListener("scroll", requestArrowUpdate, { passive: true });
-    updateArrowState();
+    window.addEventListener("scroll", requestIndicatorsUpdate, {
+      passive: true
+    });
+    updateIndicatorsState();
   }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initScrollArrowExit, {
+    document.addEventListener("DOMContentLoaded", initScrollIndicatorsExit, {
       once: true
     });
   } else {
-    initScrollArrowExit();
+    initScrollIndicatorsExit();
   }
 })();
 
