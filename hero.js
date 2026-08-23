@@ -237,7 +237,7 @@ PRESS — ALIGNEMENT PROGRESSIF PAR STICKY INDIVIDUEL
 })();
 
 /*==================================================
-DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
+DECODE — LOTTIE LIÉ AU SCROLL + 6 CARTES FLIP
 ==================================================*/
 
 (function () {
@@ -255,7 +255,9 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
         ".flip.is--one",
         ".flip.is--two",
         ".flip.is--three",
-        ".flip.is--four"
+        ".flip.is--four",
+        ".flip.is--five",
+        ".flip.is--six"
       ]
     },
 
@@ -280,7 +282,12 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
       firstPairOut: 0.875,
       firstPairOutDuration: 0.11,
       secondPairIn: 0.95,
-      secondPairInDuration: 0.13
+      secondPairInDuration: 0.13,
+      secondPairOut: 1.15,
+      secondPairOutDuration: 0.11,
+      thirdPairIn: 1.225,
+      thirdPairInDuration: 0.13,
+      end: 1.39
     },
 
     text: {
@@ -658,6 +665,7 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
         backgroundHeight;
       const firstPair = [cards[0], cards[1]];
       const secondPair = [cards[2], cards[3]];
+      const thirdPair = [cards[4], cards[5]];
 
       gsap.set(allTitleWords(), {
         opacity: 0,
@@ -688,7 +696,7 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
         transformPerspective: 1200,
         transformOrigin: "50% 50%"
       });
-      gsap.set(secondPair, {
+      gsap.set(secondPair.concat(thirdPair), {
         opacity: 0,
         visibility: "hidden",
         rotationY: 90,
@@ -731,12 +739,17 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
           visibility: "hidden"
         });
         gsap.set(secondPair, {
+          opacity: 0,
+          rotationY: -90,
+          visibility: "hidden"
+        });
+        gsap.set(thirdPair, {
           opacity: 1,
           rotationY: 0,
           visibility: "visible"
         });
         gsap.set(
-          cardTitles[2].concat(cardTitles[3]),
+          cardTitles[4].concat(cardTitles[5]),
           { opacity: 1 }
         );
         return;
@@ -906,7 +919,56 @@ DECODE — LOTTIE LIÉ AU SCROLL + 4 CARTES FLIP
           (1 - DECODE_CONFIG.cardTextFadeRatio));
       });
 
-      timeline.to({}, { duration: 0.97 }, 0);
+      secondPair.forEach(function (card, index) {
+        const cardStart = timing.secondPairOut +
+          index * DECODE_CONFIG.cardStagger;
+
+        timeline.to(cardTitles[index + 2], {
+          opacity: 0,
+          duration:
+            timing.secondPairOutDuration *
+            DECODE_CONFIG.cardTextFadeRatio,
+          ease: "power1.in"
+        }, cardStart);
+
+        timeline.to(card, {
+          opacity: 0,
+          rotationY: -90,
+          duration: timing.secondPairOutDuration,
+          ease: "power2.in"
+        }, cardStart);
+
+        timeline.set(card, {
+          visibility: "hidden"
+        }, cardStart + timing.secondPairOutDuration);
+      });
+
+      thirdPair.forEach(function (card, index) {
+        const cardStart = timing.thirdPairIn +
+          index * DECODE_CONFIG.cardStagger;
+
+        timeline.set(card, {
+          visibility: "visible"
+        }, cardStart);
+
+        timeline.to(card, {
+          opacity: 1,
+          rotationY: 0,
+          duration: timing.thirdPairInDuration,
+          ease: "power2.out"
+        }, cardStart);
+
+        timeline.to(cardTitles[index + 4], {
+          opacity: 1,
+          duration:
+            timing.thirdPairInDuration *
+            DECODE_CONFIG.cardTextFadeRatio,
+          ease: "power1.out"
+        }, cardStart + timing.thirdPairInDuration *
+          (1 - DECODE_CONFIG.cardTextFadeRatio));
+      });
+
+      timeline.to({}, { duration: timing.end }, 0);
     }
 
     function handleResize() {
