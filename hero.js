@@ -1743,6 +1743,7 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
       oldTitle: ".h-hero__title",
       cellsWrapper: ".hh__cells-wrapper",
       cellTitleOne: ".hh__cell-title.is--one",
+      cellTitleTwo: ".hh__cell-title.is--two",
       targetWrapper: ".hh__target-wrapper",
       targetLottieWrapper: ".hh__target-lottie-wrapper",
       targetLottie: ".hh__target-lottie",
@@ -1815,10 +1816,12 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
       mediaExitDurationMax: 0.09,
 
       titleOneIn: 0.66,
-      titleOneOut: 0.78,
+      titleOneOut: 0.76,
+      titleTwoIn: 0.86,
+      titleTwoOut: 1.00,
 
-      cellsExitStart: 0.82,
-      cellsExitLatestStart: 0.89,
+      cellsExitStart: 1.08,
+      cellsExitLatestStart: 1.15,
       cellsExitDurationMin: 0.07,
       cellsExitDurationMax: 0.10
     },
@@ -1973,26 +1976,26 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
     Les valeurs supérieures à 1 prolongent volontairement la timeline.
     */
     targetSequence: {
-      mainOneIn: 0.91,
-      mainTwoIn: 0.94,
+      mainOneIn: 1.16,
+      mainTwoIn: 1.19,
 
-      mainExitStart: 1.22,
-      mainExitEnd: 1.34,
-      lottieInStart: 1.22,
-      lottieInEnd: 1.34,
+      mainExitStart: 1.47,
+      mainExitEnd: 1.59,
+      lottieInStart: 1.47,
+      lottieInEnd: 1.59,
 
-      titleOneIn: 1.48,
-      titleOneOut: 1.54,
-      titleTwoIn: 1.59,
-      titlesOutStart: 1.79,
+      titleOneIn: 1.73,
+      titleOneOut: 1.79,
+      titleTwoIn: 1.84,
+      titlesOutStart: 2.04,
 
-      paragraphTwoIn: 1.89,
+      paragraphTwoIn: 2.14,
 
-      lottieOutStart: 1.79,
-      lottieOutEnd: 1.89,
+      lottieOutStart: 2.04,
+      lottieOutEnd: 2.14,
 
-      lottieFrameStart: 1.22,
-      lottieFrameEnd: 1.70,
+      lottieFrameStart: 1.47,
+      lottieFrameEnd: 1.95,
       lottieLibraryUrl:
         "https://cdn.jsdelivr.net/npm/lottie-web@5.13.0/" +
         "build/player/lottie.min.js",
@@ -2001,7 +2004,7 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
         "imtx-website-prame-v03.json",
       lottieRenderer: "canvas",
 
-      end: 2.39,
+      end: 2.64,
       exitViewportDistance: 0.35,
 
       mobileLottieMargin: 24,
@@ -2490,6 +2493,7 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
     const oldTitle = document.querySelector(selectors.oldTitle);
     const cellsWrapper = document.querySelector(selectors.cellsWrapper);
     const titleOne = document.querySelector(selectors.cellTitleOne);
+    const titleTwo = document.querySelector(selectors.cellTitleTwo);
     const targetWrapper = document.querySelector(selectors.targetWrapper);
     const targetLottieWrapper = document.querySelector(
       selectors.targetLottieWrapper
@@ -2621,6 +2625,7 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
     const splitSources = [
       oldTitle,
       titleOne,
+      titleTwo,
       targetMainOne,
       targetMainTwo,
       targetTitleOne,
@@ -4684,7 +4689,7 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
         gsap.set(oldTextCard, { opacity: 1, y: 0 });
       }
 
-      [oldTitle, titleOne].filter(Boolean).forEach(function (title) {
+      [oldTitle, titleOne, titleTwo].filter(Boolean).forEach(function (title) {
         const hideOldTitleForLoad =
           title === oldTitle &&
           !oldTitleIntroPlayed &&
@@ -4736,6 +4741,10 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
         gsap.set(titleOne, { visibility: "visible" });
       }
 
+      if (titleTwo) {
+        gsap.set(titleTwo, { visibility: "visible" });
+      }
+
       positionCells();
       positionCancerCells();
       positionOrbitItems();
@@ -4776,7 +4785,10 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
         });
         renderAllCancerLottieFrames();
         if (titleOne) {
-          gsap.set(flattenLines(titleOne), { opacity: 1, yPercent: 0 });
+          gsap.set(flattenLines(titleOne), { opacity: 0, yPercent: 0 });
+        }
+        if (titleTwo) {
+          gsap.set(flattenLines(titleTwo), { opacity: 1, yPercent: 0 });
         }
         targetTextElements.forEach(function (element) {
           gsap.set(flattenLines(element), { opacity: 1, yPercent: 0 });
@@ -4926,6 +4938,11 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
       if (titleOne) {
         animateLinesIn(titleOne, scroll.titleOneIn);
         animateLinesOut(titleOne, scroll.titleOneOut);
+      }
+
+      if (titleTwo) {
+        animateLinesIn(titleTwo, scroll.titleTwoIn);
+        animateLinesOut(titleTwo, scroll.titleTwoOut);
       }
 
       mediaExit.forEach(function (state, index) {
