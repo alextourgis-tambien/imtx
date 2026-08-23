@@ -6186,6 +6186,85 @@ MENU BURGER — OUVERTURE PLEIN ÉCRAN
 })();
 
 /*==================================================
+INDICATEUR DE SCROLL — DISPARITION AU PREMIER SCROLL
+==================================================*/
+
+(function () {
+  "use strict";
+
+  function initScrollArrowExit() {
+    if (typeof window.gsap === "undefined") {
+      window.setTimeout(initScrollArrowExit, 50);
+      return;
+    }
+
+    const arrowWrapper = document.querySelector(".scroll__arrow-wrapper");
+
+    if (
+      !arrowWrapper ||
+      arrowWrapper.dataset.scrollExitReady === "true"
+    ) {
+      return;
+    }
+
+    arrowWrapper.dataset.scrollExitReady = "true";
+
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+    const duration = prefersReducedMotion ? 0 : 0.38;
+    let isHidden = false;
+    let ticking = false;
+
+    gsap.set(arrowWrapper, {
+      autoAlpha: 1,
+      y: 0
+    });
+
+    function updateArrowState() {
+      ticking = false;
+
+      const shouldHide = (window.scrollY || window.pageYOffset || 0) > 8;
+
+      if (shouldHide === isHidden) {
+        return;
+      }
+
+      isHidden = shouldHide;
+
+      gsap.to(arrowWrapper, {
+        autoAlpha: shouldHide ? 0 : 1,
+        y: shouldHide ? 28 : 0,
+        duration: duration,
+        ease: shouldHide ? "power2.in" : "power2.out",
+        overwrite: "auto",
+        pointerEvents: shouldHide ? "none" : "auto"
+      });
+    }
+
+    function requestArrowUpdate() {
+      if (ticking) {
+        return;
+      }
+
+      ticking = true;
+      window.requestAnimationFrame(updateArrowState);
+    }
+
+    window.addEventListener("scroll", requestArrowUpdate, { passive: true });
+    updateArrowState();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initScrollArrowExit, {
+      once: true
+    });
+  } else {
+    initScrollArrowExit();
+  }
+})();
+
+/*==================================================
 HOVERS GSAP — BOUTONS ET LIENS DE NAVIGATION
 ==================================================*/
 
