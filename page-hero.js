@@ -125,12 +125,18 @@
 
       for (let row = 0; row < settings.rows; row += 1) {
         for (let column = 0; column < settings.columns; column += 1) {
-          /* Quelques cases restent bleu clair, toujours aux mêmes endroits. */
+          /* Centre préservé pour les visages ; trous plus fréquents aux bords. */
+          const distanceFromCenter = Math.abs(
+            (column + 0.5) / settings.columns - 0.5
+          );
+          const missingChance = distanceFromCenter < 0.25
+            ? 0
+            : 0.06 + (distanceFromCenter - 0.25) / 0.25 * 0.10;
           const missingValue = Math.sin(
             (row + 1) * 33.731 + (column + 1) * 91.167
           ) * 43758.5453;
 
-          if (missingValue - Math.floor(missingValue) < 0.055) {
+          if (missingValue - Math.floor(missingValue) < missingChance) {
             continue;
           }
 
