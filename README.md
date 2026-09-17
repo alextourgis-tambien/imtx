@@ -15,8 +15,8 @@ placer l'Embed `.page-hero__embed` **dans le conteneur visuel du hero** (ce
 conteneur doit avoir une hauteur réelle). Coller dans cet Embed :
 
 ```html
-<link rel="stylesheet" href="https://alextourgis-tambien.github.io/imtx/page-hero.css?v=1">
-<script defer src="https://alextourgis-tambien.github.io/imtx/page-hero.js?v=1"></script>
+<link rel="stylesheet" href="https://alextourgis-tambien.github.io/imtx/page-hero.css?v=2">
+<script defer src="https://alextourgis-tambien.github.io/imtx/page-hero.js?v=2"></script>
 ```
 
 La classe `.page-hero__embed` suffit : le script construit puis supprime les

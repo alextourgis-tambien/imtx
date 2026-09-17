@@ -6,7 +6,7 @@
   width:100%;
   height:100%;
   overflow:hidden;
-  background:#050505;
+  background:#cce7ff;
   pointer-events:none;
 }
 
@@ -40,7 +40,7 @@
 
 .imtx-page-hero-front{
   inset:-1px;
-  background:#050505;
+  background:#cce7ff;
   transform:translateZ(.5px);
 }
 

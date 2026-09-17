@@ -4,7 +4,7 @@
 
   const SELECTOR = ".page-hero__embed";
   const TIMING = {
-    startDelay: 150,
+    startDelay: 0,
     originX: 0.5,
     originY: 0,
     horizontalWeight: 1,
@@ -135,7 +135,7 @@
       resizeObserver.observe(embed);
     }
 
-    /* Deux peintures avant le reveal, avec secours si rAF est suspendu. */
+    /* La grille est peinte avant d'ôter le fond, sans délai ajouté. */
     function revealGrid() {
       if (grid.isConnected) {
         embed.classList.add("imtx-page-hero-ready");
@@ -143,11 +143,9 @@
     }
 
     window.requestAnimationFrame(function () {
-      window.requestAnimationFrame(function () {
-        window.setTimeout(revealGrid, 60);
-      });
+      revealGrid();
     });
-    window.setTimeout(revealGrid, 160);
+    window.setTimeout(revealGrid, 50);
 
     const maximumDistance = Math.max.apply(
       null,
