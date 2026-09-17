@@ -4452,6 +4452,34 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
       renderAllCellLottieFrames();
     }
 
+    function syncCancerCellsFromTimelineTime(time) {
+      cancerProgress.forEach(function (state, index) {
+        const start = CONFIG.targetSequence.paragraphTwoIn + deterministic(
+          index,
+          0,
+          CONFIG.cancerSequence.latestStartOffset,
+          81
+        );
+        const duration = deterministic(
+          index,
+          CONFIG.cancerSequence.durationMin,
+          CONFIG.cancerSequence.durationMax,
+          82
+        );
+        const progress = gsap.utils.clamp(
+          0,
+          1,
+          (time - start) / Math.max(duration, 0.001)
+        );
+
+        state.value = progress;
+        cancerLottieStates[index].progress = progress;
+      });
+
+      positionCancerCells();
+      renderAllCancerLottieFrames();
+    }
+
     function getScrollLinkedTimelineTime() {
       if (!timeline) {
         return 0;
@@ -4553,6 +4581,7 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
 
       syncCellsFromTimelineTime(time);
       syncCellLottieFramesFromTimelineTime(time);
+      syncCancerCellsFromTimelineTime(time);
     }
 
     /*==================================================
@@ -4976,6 +5005,7 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
             */
             syncCellsFromTimelineTime(cellSceneTime);
             syncCellLottieFramesFromTimelineTime(cellSceneTime);
+            syncCancerCellsFromTimelineTime(cellSceneTime);
             updateFloating(cellSceneTime);
           },
           onRefresh: function (self) {
@@ -5209,16 +5239,12 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
 
         timeline.to(state, {
           value: 1,
-          duration: duration,
-          onUpdate: positionCancerCells
+          duration: duration
         }, targetTiming.paragraphTwoIn + startOffset);
 
         timeline.to(cancerLottieStates[index], {
           progress: 1,
-          duration: duration,
-          onUpdate: function () {
-            renderCancerLottieFrame(index);
-          }
+          duration: duration
         }, targetTiming.paragraphTwoIn + startOffset);
       });
 
