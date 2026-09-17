@@ -4067,6 +4067,13 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
       } else {
         cell.setAttribute("style", originalStyle);
       }
+
+      /* Après un resize, GSAP peut garder le x/y de l'ancienne scène en cache
+         alors que l'attribut style vient d'être restauré depuis Webflow. */
+      const cache = gsap.core.getCache(cell);
+      if (cache) {
+        cache.uncache = 1;
+      }
     }
 
     function measureCancerCells() {
