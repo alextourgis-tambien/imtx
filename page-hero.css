@@ -1,0 +1,57 @@
+/* Introduction en tuiles des pages intérieures. Indépendante du hero d'accueil. */
+.page-hero__embed{
+  position:absolute;
+  inset:0;
+  z-index:10;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:#050505;
+  pointer-events:none;
+}
+
+.page-hero__embed.imtx-page-hero-ready,
+.page-hero__embed.imtx-page-hero-finished{
+  background:transparent;
+}
+
+.imtx-page-hero-grid{
+  position:absolute;
+  z-index:1;
+  display:grid;
+  box-sizing:border-box;
+  perspective:1200px;
+  pointer-events:none;
+}
+
+.imtx-page-hero-tile{
+  position:relative;
+  transform-style:preserve-3d;
+  -webkit-transform-style:preserve-3d;
+}
+
+.imtx-page-hero-face{
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
+}
+
+.imtx-page-hero-front{
+  inset:-1px;
+  background:#050505;
+  transform:translateZ(.5px);
+}
+
+.imtx-page-hero-back{
+  background:transparent;
+}
+
+.imtx-page-hero-tile.is-flip-x .imtx-page-hero-back{
+  transform:rotateX(180deg) translateZ(.5px);
+}
+
+.imtx-page-hero-tile.is-flip-y .imtx-page-hero-back{
+  transform:rotateY(180deg) translateZ(.5px);
+}
