@@ -2047,14 +2047,14 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
       lottieInEnd: 1.59,
 
       titleOneIn: 1.73,
-      titleOneOut: 1.79,
-      titleTwoIn: 1.84,
-      titlesOutStart: 2.04,
+      titleOneOut: 1.88,
+      titleTwoIn: 1.93,
+      titlesOutStart: 2.13,
 
-      paragraphTwoIn: 2.14,
+      paragraphTwoIn: 2.23,
 
-      lottieOutStart: 2.04,
-      lottieOutEnd: 2.14,
+      lottieOutStart: 2.13,
+      lottieOutEnd: 2.23,
 
       lottieFrameStart: 1.47,
       lottieFrameEnd: 1.95,
@@ -2066,7 +2066,7 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
         "imtx-website-prame-v03.json",
       lottieRenderer: "canvas",
 
-      end: 2.64,
+      end: 2.73,
       exitViewportDistance: 0.35,
 
       mobileLottieMargin: 24,
@@ -3442,57 +3442,125 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
 
       cancerLottiesLoadPromise = loadStandaloneLottieRuntime()
         .then(function (standaloneLottie) {
-          const loadPromises = cancerCells.map(function (cell, index) {
-            return new Promise(function (resolve) {
-              const jsonUrl =
-                CONFIG.cancerLottieSequence.jsonUrls[index];
+          function loadCancerCell(index, attempt) {
+            const cell = cancerCells[index];
+            const jsonUrl = CONFIG.cancerLottieSequence.jsonUrls[index];
 
-              if (!jsonUrl) {
+            if (!jsonUrl) {
+              console.warn(
+                "Hero cellules cancer : JSON absent pour la cellule " +
+                (index + 1) + "."
+              );
+              return Promise.resolve();
+            }
+
+            /* Les 23 cellules partagent leurs JSON : une requête par fichier. */
+            return loadLottieJson(jsonUrl).then(function (animationData) {
+              const renderer = document.createElement("div");
+              renderer.className = "hh-cancer-lottie-renderer";
+              renderer.style.visibility = "hidden";
+              cell.appendChild(renderer);
+
+              let animation = null;
+              let readyTimer = null;
+
+              return new Promise(function (resolve, reject) {
+                let completed = false;
+
+                function complete() {
+                  if (completed || !animation) {
+                    return;
+                  }
+                  completed = true;
+                  window.clearTimeout(readyTimer);
+                  normalizeCancerLottieContent(
+                    cell,
+                    animation,
+                    index
+                  ).then(resolve, reject);
+                }
+
+                animation = standaloneLottie.loadAnimation({
+                  container: renderer,
+                  renderer: CONFIG.cancerLottieSequence.renderer,
+                  loop: false,
+                  autoplay: false,
+                  animationData: cloneLottieJson(animationData),
+                  rendererSettings: {
+                    preserveAspectRatio: "xMidYMid meet",
+                    clearCanvas: true
+                  }
+                });
+
+                cancerLottieAnimations[index] = animation;
+                animation.addEventListener("DOMLoaded", complete);
+                animation.addEventListener("data_failed", function () {
+                  if (!completed) {
+                    completed = true;
+                    window.clearTimeout(readyTimer);
+                    reject(new Error("initialisation Lottie impossible"));
+                  }
+                });
+
+                /* iOS peut déclencher DOMLoaded avant l'abonnement ci-dessus. */
+                window.requestAnimationFrame(function () {
+                  window.requestAnimationFrame(function () {
+                    if (animation.isLoaded && renderer.querySelector("svg")) {
+                      complete();
+                    }
+                  });
+                });
+
+                readyTimer = window.setTimeout(function () {
+                  if (animation.isLoaded && renderer.querySelector("svg")) {
+                    complete();
+                  } else if (!completed) {
+                    completed = true;
+                    reject(new Error("délai d'initialisation dépassé"));
+                  }
+                }, 8000);
+              }).then(function () {
+                renderCancerLottieFrame(index);
+                Array.from(cell.children).forEach(function (child) {
+                  if (child !== renderer) {
+                    child.remove();
+                  }
+                });
+                renderer.style.visibility = "";
+              }).catch(function (error) {
+                window.clearTimeout(readyTimer);
+                if (animation) {
+                  animation.destroy();
+                }
+                cancerLottieAnimations[index] = null;
+                renderer.remove();
+                throw error;
+              });
+            }).catch(function (error) {
+              if (attempt >= 2) {
                 console.warn(
-                  "Hero cellules cancer : JSON absent pour la cellule " +
-                  (index + 1) + "."
+                  "Hero cellules cancer : cellule " + (index + 1) +
+                  " indisponible — " + error.message
                 );
-                resolve();
                 return;
               }
 
-              const renderer = document.createElement("div");
-              renderer.className = "hh-cancer-lottie-renderer";
-              cell.replaceChildren(renderer);
-
-              const animation = standaloneLottie.loadAnimation({
-                container: renderer,
-                renderer: CONFIG.cancerLottieSequence.renderer,
-                loop: false,
-                autoplay: false,
-                path: jsonUrl,
-                rendererSettings: {
-                  preserveAspectRatio: "xMidYMid meet",
-                  clearCanvas: true
-                }
-              });
-
-              cancerLottieAnimations[index] = animation;
-
-              animation.addEventListener("DOMLoaded", function () {
-                normalizeCancerLottieContent(
-                  cell,
-                  animation,
-                  index
-                ).then(resolve);
-              });
-              animation.addEventListener("data_failed", function () {
-                console.warn(
-                  "Hero cellules cancer : chargement du JSON Lottie " +
-                  "impossible pour la cellule " + (index + 1) + "."
-                );
-                resolve();
+              return new Promise(function (resolve) {
+                window.setTimeout(resolve, 1000 * (attempt + 1));
+              }).then(function () {
+                return loadCancerCell(index, attempt + 1);
               });
             });
+          }
+
+          const loadPromises = cancerCells.map(function (_, index) {
+            return loadCancerCell(index, 0);
           });
 
           return Promise.all(loadPromises).then(function () {
             renderAllCancerLottieFrames();
+            measureCancerCells();
+            positionCancerCells();
 
             if (!prefersReducedMotion) {
               createFloating();
@@ -3505,6 +3573,8 @@ FINAL — 2 TITRES + ORBITE DES 8 VIDÉOS
         })
         .catch(function (error) {
           console.warn("Hero cellules cancer : " + error.message);
+          cancerLottiesLoadPromise = null;
+          window.setTimeout(lockCancerLottiesToScroll, 1800);
         });
     }
 

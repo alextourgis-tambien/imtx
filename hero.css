@@ -745,6 +745,12 @@ MOBILE
     max-height:var(--imtx-hero-viewport-height) !important;
   }
 
+  /* Le breakpoint Webflow ne doit pas supprimer les Lottie cancer sur iPhone. */
+  .hh__cancer-wrapper,
+  .hh__cencer-lottie{
+    display:block !important;
+  }
+
   .hero-tile-wrapper,
   .h-hero__text-grid{
     --grid-columns:8;
